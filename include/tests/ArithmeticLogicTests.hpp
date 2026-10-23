@@ -2,7 +2,7 @@
 
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/WordComponent.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "tests/TruthTableComponentTest.hpp"
@@ -79,17 +79,12 @@ public:
     DecoderWidth5ZeroDisabledTest();
 };
 
-class AdderRippleWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Adder,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
+class RippleCarryAdderWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::RippleAdder,8>> {
 public:
-    AdderRippleWidth8Test();
+    RippleCarryAdderWidth8Test();
 };
 
-class ZeroDetectWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
+class ZeroDetectWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8>> {
 public:
     ZeroDetectWidth8Test();
-};
-
-class ALUExtendedWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::ALU,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
-public:
-    ALUExtendedWidth8Test();
 };

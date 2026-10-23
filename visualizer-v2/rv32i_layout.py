@@ -14,14 +14,14 @@ ALU_AUTOMATIC_REVISION = "word-alu-auto-v1"
 SINGLE_CYCLE_REVISION = "rv32i-single-cycle-stage-order-v3-store-intent"
 ADVANCED_REVISION = "rv32i-advanced-grouping-v2"
 ALU_AUTOMATIC_TYPES = {
-    "ALU<32,integer,prefix>", "ALU<32,integer,prefix,core>", "AddSub<32,integer,prefix>", "LogicUnit<32,integer>", "BarrelShifter<32,integer>", "ALUControlDecoder<integer>",
-    "CompareSelect<32,integer>", "ALUResultSelector<32,integer>", "ALUFlagUnit<32,integer>", "ZeroDetect<32>",
+    "RV32IALU", "RV32IALUAddSub", "RV32IALULogic", "RV32IALUShifter", "RV32IALUControl",
+    "RV32IALUCompare", "RV32IALUResultSelect", "ALUControlDecoder", "ZeroDetect<32>",
 }
 BLOCK_TYPES = {
     "Decoder<5>",
     "Mux<2,4>", "Mux<2,32>",
     "RV32IDecodeControlField",
-    "AddSub<32,integer,prefix>", "ZeroDetect<32>", "CompareSelect<32,integer>", "ALUFlagUnit<32,integer>",
+    "RV32IALUAddSub", "ZeroDetect<32>", "RV32IALUCompare",
     "RV32IDecodeControlUnit", "RV32IInstructionRecognition", "RV32IDecodeControlSignals",
     "RV32IDecodeControlField", "RV32IMemoryAlignmentUnit",
     "RV32IMemoryLanes", "RV32IMemoryAddress", "RV32ILoadExtender", "RV32ILoadByte",
@@ -56,8 +56,8 @@ ASPECTS = {
     "RV32IBaselineExecuteStage": .95, "RV32IBaselineMemoryStage": 1.0,
     "RV32IBaselineDependencyUnit": .65, "RV32IBaselineControl": .6,
     "RV32IBaselinePacketStatus": .65,
-    "AddSub<32,integer,prefix>": .61,
-    "ZeroDetect<32>": .38, "CompareSelect<32,integer>": .84, "ALUFlagUnit<32,integer>": .725,
+    "RV32IALUAddSub": .61,
+    "ZeroDetect<32>": .38, "RV32IALUCompare": .84,
     "RV32ISingleCycleCore": .52, "RV32IFiveStageCore": .52,
     "RV32IFetchStage": .8, "RV32IDecodeStage": 1.0,
     "RV32IExecuteStage": .95, "RV32IMemoryStage": .95,
@@ -85,16 +85,9 @@ ASPECTS = {
 
 # Width-aware parts use the same layout policy for every declared geometry.
 for width in (8,16,32):
-    for operations in ("extended","integer"):
-        for topology in ("ripple","prefix"):
-            ALU_AUTOMATIC_TYPES.add(f"ALU<{width},{operations},{topology}>")
-            if operations=="integer":ALU_AUTOMATIC_TYPES.add(f"ALU<{width},{operations},{topology},core>")
-        for unit in ("AddSub","LogicUnit","BarrelShifter","CompareSelect","ALUResultSelector","ALUFlagUnit"):
-            suffix=",integer" if operations=="integer" else ""
-            if unit=="AddSub":
-                for topology in ("ripple","prefix"):ALU_AUTOMATIC_TYPES.add(f"{unit}<{width}{suffix},{topology}>")
-            else:ALU_AUTOMATIC_TYPES.add(f"{unit}<{width}{suffix}>")
-    ALU_AUTOMATIC_TYPES.add(f"ZeroDetect<{width}>")
+    for unit in ("ALU","AddSub","ArithmeticUnit","LogicUnit","BarrelShifter","CompareSelect",
+                 "ALUResultSelector","ALUFlagUnit","ZeroDetect"):
+        ALU_AUTOMATIC_TYPES.add(f"{unit}<{width}>")
 for width in (4,8,16,32):
     kind=f"Mux<2,{width}>"
     BLOCK_TYPES.add(kind);ASPECTS[kind]=max(.8,2.1*width/32)

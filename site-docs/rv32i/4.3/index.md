@@ -8,7 +8,7 @@ Component references for the RV32I datapath and its control and memory-access lo
 | --- | --- |
 | [4.3.1. Register&lt;W&gt;](register.md) | Width-parametric FF storage, reset, clocked capture, and PC/pipeline/control uses |
 | [4.3.2. Register File](register-file.md) | Register addressing, two independent reads, clocked writes, x0, and FF storage construction |
-| [4.3.3. ALU Configuration](alu.md) | The shared integer ALU at W=32, its CPU interface and Execute integration |
+| [4.3.3. RV32I ALU](alu.md) | The 32-bit ALU shared by every core: its six parts, operation codes and comparisons |
 | [4.3.4. Instruction Decoder](instruction-decoder.md) | Field extraction, immediate construction, recognition, illegal encodings, and control outputs |
 | [4.3.5. Memory Access](memory-access.md) | Byte/halfword/word formatting, sign extension, masks, alignment, and transaction requests |
 | [4.3.6. Execution Control and Status](execution-status.md) | Reset, execution enable, halt/trap handling, and architectural update control |
@@ -19,12 +19,12 @@ Component references for the RV32I datapath and its control and memory-access lo
 | --- | --- |
 | `Register<W>` | One word at widths 1/2/3/4/5/8/16/32; structurally contains W `FlipFlopCell` instances. Also `ClockedStateBit`, the always-clocked handshake state bit |
 | Register File | `RegisterFile<W,Count>` at W=32, Count=32, hardwired-zero enabled (`RegisterFile32x32`); 31 writable `Register<32>` words |
-| ALU Configuration | `ALU<W>` at W=32 with integer operations, prefix addition and core flags (`ALU<32,integer,prefix,core>`); reusable component references are in Chapter 2 |
+| RV32I ALU | `RV32IALU` and its parts `RV32IALUControl`, `RV32IALUAddSub`, `RV32IALULogic`, `RV32IALUShifter`, `RV32IALUCompare`, `RV32IALUResultSelect` |
 | Instruction Decoder | `RV32IDecodeControlUnit`, `RV32IBitPatternMatcher` |
 | Memory Access | `RV32IMemoryLanes`, `RV32IMemoryAlignmentUnit`, `RV32IMemoryRequest` |
 | Execution Control and Status | `RV32IExecutionControlStatusUnit` |
 
-[Chapter 2](../../alu/2.1.md) defines reusable arithmetic/logic components and their [integer operation contract](../../alu/2.7.md). This section specifies the CPU configurations: a 32×32 register file with hardwired x0 and an integer/prefix ALU with result/comparison outputs. W describes hardware width; RV32I specifies the instruction encoding and architectural register semantics.
+[Chapter 2](../../alu/2.1.md) defines general arithmetic and logic components; the RV32I ALU is built from its parallel-prefix adder and zero detector. This section specifies the CPU parts: a 32×32 register file with hardwired x0 and a 32-bit ALU with result and comparison outputs. W describes hardware width; RV32I specifies the instruction encoding and architectural register semantics.
 
 There is no separate program-counter block: the stage-wise cores distribute PC storage, branch decisions and next-PC selection across Fetch, Execute, and Next PC ([4.4](../4.4/index.md)), allowing JAL/JALR targets to reuse the main ALU.
 
@@ -48,7 +48,7 @@ implementation ends with a **Timing** paragraph and the paths that matter.
 | --- | --- |
 | `Register<W>` | One whole-word write enable; expand the register to inspect its numbered bit cells |
 | Register File | Address decoder → 31 whole-word registers → two independent read muxes; keep word/bit ordering inside storage |
-| ALU Configuration | Six functional groups in the core interface; full-flag mode also has FLAGS. Shared component circuits use connectivity layouts |
+| RV32I ALU | Six functional parts; the Chapter 2 adder and zero detector inside them use connectivity layouts |
 | Instruction Decoder | Field extraction and recognition feed named control fields and immediate selection; expand each field to inspect its bit equations |
 | Control Flow | Automatic connectivity layout for the PC, arithmetic, branch decision, and next-PC selection |
 | Memory Access | Address guard → byte routing/selection → load extension and write mask; request payload/state are separate from the tag-comparison block |

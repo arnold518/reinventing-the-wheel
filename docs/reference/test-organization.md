@@ -17,7 +17,7 @@ same file. Display names are independent of C++ test IDs, scenario URLs and
 saved layout/profile keys. An unclassified visible component fails the catalog
 test instead of silently appearing in an arbitrary group.
 
-The menu groups logic, wiring, configurable ALUs by operation contract, memory
+The menu groups logic, wiring, arithmetic and logic components by function, memory
 technologies and interfaces, registers, RV32I building blocks/stages, and
 developer circuits. Programs
 are shown once in functional (01–08), fault (09–16) and performance (17–22)

@@ -5,6 +5,52 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-23
+
+### ALU interface: `ALU<W>` in Chapter 2, `RV32IALU` for the cores
+
+- **Why:** the operation-contract switch gave eight ALU unit names two
+  unrelated pin sets, and configuration fields were silently ignored. The
+  owner chose two named ALUs and dropped the adder-topology parameter
+  ([record](records/2026-10-22-alu-exposure-review.md)).
+- **Chapter 2:** one header per component; word datapath units take only W.
+  `RippleCarryAdder<W>` and `ParallelPrefixAdder<W>` replace `Adder<W>` with a
+  topology argument; `AddSub<W>`, `ArithmeticUnit<W>` and `ALU<W>` always use
+  the prefix adder. Carry ports are `C_IN`/`C_OUT` (`C_SIGN` on the prefix
+  adder). Contract IDs lose the operation and topology segments (34 instead
+  of 77). New compact forms: ripple adder at 16/32, prefix adder at 8/16;
+  the 8-bit add/subtract, arithmetic unit and ALU forms were recharacterized
+  for prefix carry.
+- **RV32I:** fixed 32-bit `RV32IALU` and six `RV32IALU*` parts (`rv32i.alu*`),
+  with the former integer gates unchanged; opcodes `rv32i::ALUOp` with
+  `CLEAR` = 12. The integer full-flag ALU, flag unit and 8/16-bit/ripple
+  integer variants are retired. Branch-target and PC adders are requested as
+  prefix-adder families.
+- **Site:** pages 2.1–2.6 describe only the Chapter 2 components, with a
+  ripple-versus-prefix comparison and a construction section; page 2.7 is
+  removed; § 4.3.3 now specifies `RV32IALU` and its parts. Visualizer menu,
+  palette, layout keys and Python bindings follow the new names.
+  `create_rv32i_alu` replaces `create_alu`; `create_word_component` takes only
+  unit, name, width and fidelity, and the control decoder is width-independent.
+- **Layouts and preview:** migrated 44 saved scopes to current structural
+  signatures while preserving geometry. The pruning formatter preserves
+  bracketed storage keys. Restored port 8893 with the fresh package and a
+  service restart; the timing hook now refreshes its table cache each build.
+- **Checked:** guarded serial native/WASM builds; focused native ALU,
+  documentation and SRAM/cache layout checks; all 156 generated example groups;
+  strict site build; 18 changed tables in all three profiles; all compiled
+  native/WASM delay snapshots match (809 entries per profile). The three
+  focused portable parity registrations and all six selected browser
+  registrations pass, including 731 Chapter 2 table rows, live fidelity
+  switching and 32 camera bounds checks. The preview passes six live routes
+  and 26 exact non-HTML asset hashes. Failed fixture/environment attempts and
+  their successful corrections are retained in the topic record.
+- **Limits:** the complete static scan cleared 367 scenarios, then its two
+  fetch-root findings were repaired and verified with a focused recheck.
+  No full native/web suite, remaining phase-6 game campaign, complete
+  gate-level reanalysis of all timing entries, push or published-site check
+  is claimed.
+
 ## 2026-10-22
 
 ### Complete replacement of fixed components with parameterized recipes

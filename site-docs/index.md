@@ -10,7 +10,7 @@ proven on them.
 | Chapter | What it builds |
 | --- | --- |
 | [§ 1 Time and Delay](timing.md) | How long every part takes: timing profiles, gate delays, proven delay tables, clocked parts and certified clocks |
-| [§ 2 ALU](alu/2.1.md) | Width-parameterized adders, logic, shifts, comparison and flags; extended and integer ALU operation contracts |
+| [§ 2 ALU](alu/2.1.md) | Ripple and prefix adders, logic, shifts, comparison, flags and the 29-operation `ALU<W>` at 8, 16 or 32 bits |
 | [§ 3 Memories](memory/architecture.md) | Flip-flop storage, SRAM, DRAM, ROM and NOR flash from cell to device, a common transaction protocol, controllers, measured timing, and caches |
 | [§ 4 RV32I](rv32i/4.1/index.md) | The instruction set, building blocks, a single-cycle core, a baseline and an advanced five-stage pipeline, memory systems with caches, and experiments comparing them |
 

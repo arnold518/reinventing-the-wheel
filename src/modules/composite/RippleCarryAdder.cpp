@@ -1,19 +1,12 @@
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordBuilder.hpp"
-#include "modules/composite/ParallelPrefixAdder.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "components/StructuralNetBuilder.hpp"
+#include "modules/composite/WordRecipes.hpp"
 #include "modules/composite/FullAdder.hpp"
-#include "modules/utility/Rewire.hpp"
+#include "modules/utility/BitAdapter.hpp"
 namespace circuit::word {
-using OneBitPin=std::shared_ptr<Pin<>>;using SinkList=std::vector<OneBitPin>;
-template<size_t W>void integerAdder(IOComponent& root,ComponentBuilder& builder,ALUConfig config) {
+// W full adders: each cell's Carry_out feeds the next cell's Carry_in.
+template<size_t W>void rippleAdder(IOComponent& root,ComponentBuilder& builder) {
     circuit::detail::StructuralWiring w(builder);
-    if (config.adder==AdderTopology::ParallelPrefix) {
-        auto adder=builder.addNewComponent<ParallelPrefixAdder<W>>("PREFIX_ADDER");
-        for (auto p:{"A","B","Cin"}) w.connect(root.getInputPinDynamic(p),adder->getInputPinDynamic(p));
-        for (auto p:{"Sum","Cout"}) w.connect(adder->getOutputPinDynamic(p),root.getOutputPinDynamic(p));
-        w.finish(); return;
-    }
     builder.addNewComponent<BitSplitter<W>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<W>>("B_SPLIT");
     builder.addNewComponent<BitJoiner<W>>("SUM_JOIN");
@@ -36,7 +29,7 @@ template<size_t W>void integerAdder(IOComponent& root,ComponentBuilder& builder,
             {builder.getInputPin<BitJoiner<W>>("SUM_JOIN", "IN_" + index)});
     }
 
-    w.connect(root.getInputPin("Cin"),
+    w.connect(root.getInputPin("C_IN"),
         {builder.getInputPin<FullAdder>("FA0", "Carry_in")});
 
     for (size_t i = 0; i < W-1; ++i) {
@@ -45,13 +38,13 @@ template<size_t W>void integerAdder(IOComponent& root,ComponentBuilder& builder,
     }
 
     w.connect(builder.getOutputPin<FullAdder>("FA"+std::to_string(W-1), "Carry_out"),
-        {root.getOutputPin("Cout")});
+        {root.getOutputPin("C_OUT")});
 
     w.connect(builder.getOutputPin<BitJoiner<W>, W>("SUM_JOIN", "OUT"),
-        {root.getOutputPin<W>("Sum")});
+        {root.getOutputPin<W>("OUT")});
     w.finish();
 }
-void buildIntegerAdder(IOComponent& root,ComponentBuilder& b,size_t w,ALUConfig c){
-    if(w==8)integerAdder<8>(root,b,c);else if(w==16)integerAdder<16>(root,b,c);else integerAdder<32>(root,b,c);
+void buildRippleAdder(IOComponent& root,ComponentBuilder& b,size_t w){
+    if(w==8)rippleAdder<8>(root,b);else if(w==16)rippleAdder<16>(root,b);else rippleAdder<32>(root,b);
 }
 }

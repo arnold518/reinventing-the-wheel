@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-22.
+Updated: 2026-10-23.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -32,9 +32,12 @@ work state changes. Keep dated decisions and validation results in
   simulator package. The replacement ALU references now use `/alu/`; the
   original canvas has a fresh native 18-checkpoint Pong capture with exact
   host-reference frames and identical retained pin/wire states to its prior
-  capture. Live HTTP checks cover 30 exact asset hashes and two HTML entry
-  points with verified preview-script injection. The matching local package
-  passes the focused ALU/device/Pong browser checks. Bring-up/2048 frame-only exports retain their source snapshots.
+  capture. After the ALU interface refactor, the refreshed preview passes six
+  live reference/simulator routes and 26 exact non-HTML asset hashes; its
+  strict build passes with the per-build timing-cache fix loaded. The prior
+  checkpoint passed focused ALU/device/Pong browser checks; current interface
+  acceptance is in the completed ALU record below.
+  Bring-up/2048 frame-only exports retain their source snapshots.
   Full phase-6
   acceptance remains open in the [game record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
   The preview service is capped at 768 MiB with no swap. See the closed
@@ -50,12 +53,23 @@ work state changes. Keep dated decisions and validation results in
 - The completed [component replacement](records/2026-10-22-general-component-retirement.md)
   implements shared word/mux/decoder/register-file/M-unit/bus/pixel recipes,
   removes fixed components and retired-ID aliases, and updates public ALU/RV32I
-  references, scenarios and saved layouts. `RegisterFile32x32` remains the
-  architectural exception. Focused native/API/reference/portable/browser
-  acceptance passes; all 158 example groups and complete unit timing-file
-  verification pass. The three regenerated timing profiles have 809 entries
+  references, scenarios and saved layouts. The current ISA exceptions are
+  `RegisterFile32x32` and `RV32IALU`. Its checkpoint passed focused
+  native/API/reference/portable/browser checks, all 158 then-current example
+  groups and complete unit timing-file verification. The three profiles had 809 entries
   each. The [width record](records/2026-10-22-width-component-audit.md) is closed;
   full game acceptance remains below.
+- The completed [ALU interface review](records/2026-10-22-alu-exposure-review.md)
+  exposes width-only Chapter 2 components at 8/16/32 bits with prefix
+  arithmetic and a separate fixed-width `RV32IALU` with six parts. References,
+  contracts, bindings, scenarios and saved identities follow that interface.
+  Serial native/WASM builds, focused native checks, all 156 current example
+  groups, strict package/preview builds and nine selected web checks pass.
+  The 18 affected table families verify in every timing profile; compiled
+  native/WASM snapshots match at 809 entries per profile. Migrated 44 layout
+  scopes: 367 scenarios cleared the complete scan, and the final fetch-root
+  correction passes a focused recheck. Full suites and game acceptance remain
+  outside that selection.
 - The completed [device parameter/view work](records/2026-10-21-device-parameters-and-visuals.md)
   covers configurable geometry/queues, declarative maps and observational
   display/keyboard views. Current native/API checks cover direct 320x200 and
@@ -120,12 +134,6 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
-- [ALU interface and documentation review](records/2026-10-22-alu-exposure-review.md):
-  the operation contract still gives eight ALU unit names two different pin
-  sets; the Chapter 2 pages repeat them and contain factual errors. The
-  owner chose two ALUs: the extended `ALU<W>` in Chapter 2 and `RV32IALU`
-  in 4.3. Interface details are being settled; nothing is implemented.
-
 - [FF controller startup](records/2026-10-21-memory-controller-startup.md):
   initialization preserves provisioned images in structural, fused and mixed
   profiles. Current native startup and all three large SRAM subarray/clocked/
@@ -134,11 +142,11 @@ work state changes. Keep dated decisions and validation results in
 
 - [Compiler memory prerequisites](records/2026-10-21-delay-table-compile-memory.md):
   optional table partitions and split binding registrations build within the
-  local caps. All 808 timing entries per profile match exactly in native and
-  WASM in the prior checkpoint. The current API audit preserves the 175-name
-  legacy snapshot and retains all five later additions, with three new
-  exports. Current full example regeneration uses isolated processes and is
-  in progress.
+  local caps. The preceding checkpoint preserved the 175-name legacy Python
+  snapshot and five later additions, with three new exports. The ALU interface
+  change intentionally replaces its configuration API. Current native/WASM
+  timing snapshots match at 809 entries per profile, and all 156 current
+  example groups regenerate in isolated processes; see the ALU record above.
 
 - [64-bit simulation time prerequisite](records/2026-10-21-simulation-time-width.md):
   explicit ticks, checked scheduling, wide histories and exact JS transport

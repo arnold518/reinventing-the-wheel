@@ -1,4 +1,4 @@
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "components/selection/StandardProfiles.hpp"
@@ -151,15 +151,6 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
 }
 }
 void appendRV32IMPhase3Scenarios(std::vector<TestRegistryEntry>& entries) {
-    const std::string word_alu(circuit::word::family(circuit::word::Unit::ALU,16,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}).id());
-    entries.push_back({"ALUWidth16RippleScenarioTest","ALUWidthContractTest",RegisteredTestKind::TruthTable,{word_alu},"contract",{"simulation","width"},
-        [word_alu]{Sequence s("ALUWidth16RippleScenarioTest",word_alu);
-            s.step("wide-add",{{"A",0x1234},{"B",0x100},{"OP",0},{"C_IN",0}},{{"OUT",0x1334},{"ZERO",0},{"CARRY",0}});
-            s.step("wide-carry",{{"A",0xffff},{"B",1}},{{"OUT",0},{"ZERO",1},{"CARRY",1}});
-            s.step("wide-shift",{{"A",1},{"B",12},{"OP",16}},{{"OUT",0x1000},{"CARRY",0}});
-            s.step("signed-minimum",{{"A",0x8000},{"B",1},{"OP",26}},{{"OUT",0x8000},{"NEGATIVE",1}});
-            return std::make_unique<ComponentScenarioTest>(std::move(s.spec),"contract",scenarioProfile());},true});
-
     const std::vector<std::pair<std::string,std::string>> cases{
         {"MultiplyStep","arithmetic.multiply-step.4"},{"DivideStep","arithmetic.divide-step.4"},
         {"MultiplierWidth32","arithmetic.iterative.multiplier.32"},{"DividerWidth32","arithmetic.iterative.divider.32"},{"MulDivUnitWidth32","arithmetic.iterative.mul-div.32"},

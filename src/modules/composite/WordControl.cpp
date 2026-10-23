@@ -1,6 +1,5 @@
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordDatapath.hpp"
-#include "modules/composite/WordBehavioral.hpp"
+#include "modules/composite/WordRecipes.hpp"
 #include "modules/composite/WordSliceBuilder.hpp"
 #include "modules/basic/Decoder.hpp"
 namespace circuit::word {
@@ -48,42 +47,16 @@ void controlExtended(IOComponent& root,ComponentBuilder& builder){
     n.connect(decoded(29), n.output("PASS_B_ENABLE"));
     n.finish();
 }
-void controlIntegerDatapath(IOComponent& root,ComponentBuilder& builder){
-    circuit::detail::WordSliceBuilder n(root, builder);
-    auto op = n.split<5>("OP_SPLIT", n.input("OP"));
-    std::array<circuit::detail::WordSliceBuilder::Signal, 3> low{op[0], op[1], op[2]};
-    n.connect(n.join<3>("OP_LOW_JOIN", low), n.output("LOCAL_OP"));
-    n.connect(op[3], n.output("HIGH_HALF"));
-    n.connect(op[4], n.output("OUT_OF_RANGE"));
-    auto not4 = n.invert("NOT_OP4", op[4]);
-    auto not2 = n.invert("NOT_OP2", op[2]);
-    auto not1 = n.invert("NOT_OP1", op[1]);
-    auto selector = n.binary<ORGate>("SUB_SELECTOR_OR", op[3], op[0]);
-    auto valid1 = n.binary<ANDGate>("ARITHMETIC_VALID_1", not4, not2);
-    auto valid = n.binary<ANDGate>("ARITHMETIC_VALID_2", valid1, not1);
-    n.connect(valid, n.output("ARITHMETIC_ENABLE"));
-    n.connect(n.binary<ANDGate>("SUB_CONTROL", valid, selector), n.output("SUB"));
-    n.connect(not1, n.output("SHIFT_LEFT"));
-    n.connect(op[0], n.output("SHIFT_ARITHMETIC"));
-    n.finish();
 }
-}
-const ComponentFamily& controlFamily(Operations operations) {
-    static const ComponentFamily extended{"word.control.extended","ALUControlDecoder<extended>",[](IOComponent* p){
+const ComponentFamily& controlFamily() {
+    static const ComponentFamily family{"word.alu-control-decoder","ALUControlDecoder",[](IOComponent* p){
         p->addPin<5>("OP",PinType::INPUT);
         for(auto name:{"LOCAL_OP","ARITH_OP","COMPARE_OP"})p->addPin<3>(name,PinType::OUTPUT);
         for(auto name:{"ARITHMETIC_ENABLE","LOGIC_ENABLE","SHIFT_ENABLE","COMPARE_ENABLE","PASS_A_ENABLE","PASS_B_ENABLE","INVALID_OP"})p->addPin(name,PinType::OUTPUT);
-    },[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<ControlDecoder>(c,n,Operations::Extended);},controlBehavioralFactory(Operations::Extended)};
-    static const ComponentFamily integer{"word.control.integer","ALUControlDecoder<integer>",[](IOComponent* p){
-        p->addPin<5>("OP",PinType::INPUT);p->addPin<3>("LOCAL_OP",PinType::OUTPUT);
-        for(auto name:{"HIGH_HALF","OUT_OF_RANGE","ARITHMETIC_ENABLE","SUB","SHIFT_LEFT","SHIFT_ARITHMETIC"})p->addPin(name,PinType::OUTPUT);
-    },[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<ControlDecoder>(c,n,Operations::IntegerDatapath);}};
-    if(operations==Operations::Extended)return extended;
-    if(operations==Operations::IntegerDatapath)return integer;
-    throw std::invalid_argument("Invalid operation decoding contract");
+    },[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<ALUControlDecoder>(c,n);},controlBehavioralFactory()};
+    return family;
 }
-ControlDecoder::ControlDecoder(std::string n,Operations o):IOComponent(std::move(n),controlFamily(o).pinInitializer()),operations_(o),
-    type_(o==Operations::Extended?"ALUControlDecoder<extended>":"ALUControlDecoder<integer>"){}
-void ControlDecoder::buildInternals(ComponentBuilder& b){buildControl(*this,b,operations_);}
-void buildControl(IOComponent& root,ComponentBuilder& b,Operations o){if(o==Operations::Extended)controlExtended(root,b);else if(o==Operations::IntegerDatapath)controlIntegerDatapath(root,b);else throw std::invalid_argument("Invalid operation decoding contract");}
+void buildControl(IOComponent& root,ComponentBuilder& b){controlExtended(root,b);}
 }
+ALUControlDecoder::ALUControlDecoder(std::string n):IOComponent(std::move(n),circuit::word::controlFamily().pinInitializer()){}
+void ALUControlDecoder::buildInternals(ComponentBuilder& b){circuit::word::buildControl(*this,b);}

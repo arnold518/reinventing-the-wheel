@@ -1,6 +1,6 @@
 #include "tests/RV32IControlTests.hpp"
 
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "rv32i/RV32IControl.hpp"
 #include <cstdint>
 #include <iostream>
@@ -89,7 +89,7 @@ uint32_t encodeJ(int32_t imm, uint8_t rd) {
 
 struct Expected {
     uint32_t raw = 0;
-    uint8_t alu_op = circuit::word::IntegerOp::ZERO;
+    uint8_t alu_op = ::rv32i::ALUOp::CLEAR;
     RV32IALUSourceA alu_a = RV32IALUSourceA::Zero;
     RV32IALUSourceB alu_b = RV32IALUSourceB::Zero;
     bool reg_write = false;
@@ -170,7 +170,7 @@ Expected iAlu(const char* label, uint32_t raw, uint8_t alu_op) {
 }
 
 Expected load(const char* label, uint32_t raw, RV32IMemorySize size, bool sign_extend) {
-    Expected expected = iAlu(label, raw, circuit::word::IntegerOp::ADD);
+    Expected expected = iAlu(label, raw, ::rv32i::ALUOp::ADD);
     expected.writeback = RV32IWritebackSource::Memory;
     expected.mem_read = true;
     expected.mem_size = size;
@@ -182,7 +182,7 @@ Expected store(const char* label, uint32_t raw, RV32IMemorySize size) {
     Expected expected;
     expected.label = label;
     expected.raw = raw;
-    expected.alu_op = circuit::word::IntegerOp::ADD;
+    expected.alu_op = ::rv32i::ALUOp::ADD;
     expected.alu_a = RV32IALUSourceA::RS1;
     expected.alu_b = RV32IALUSourceB::Immediate;
     expected.mem_write = true;
@@ -197,7 +197,7 @@ Expected branch(const char* label, uint32_t raw, RV32IBranchType branch_type) {
     Expected expected;
     expected.label = label;
     expected.raw = raw;
-    expected.alu_op = circuit::word::IntegerOp::SUB;
+    expected.alu_op = ::rv32i::ALUOp::SUB;
     expected.alu_a = RV32IALUSourceA::RS1;
     expected.alu_b = RV32IALUSourceB::RS2;
     expected.branch = branch_type;
@@ -209,26 +209,26 @@ Expected branch(const char* label, uint32_t raw, RV32IBranchType branch_type) {
 
 void testControlMappings() {
     const std::vector<Expected> cases{
-        rAlu("ADD", encodeR(0x00, 12, 11, 0x0, 10), circuit::word::IntegerOp::ADD),
-        rAlu("SUB", encodeR(0x20, 12, 11, 0x0, 10), circuit::word::IntegerOp::SUB),
-        rAlu("SLL", encodeR(0x00, 12, 11, 0x1, 10), circuit::word::IntegerOp::SLL),
-        rAlu("SLT", encodeR(0x00, 12, 11, 0x2, 10), circuit::word::IntegerOp::SLT),
-        rAlu("SLTU", encodeR(0x00, 12, 11, 0x3, 10), circuit::word::IntegerOp::SLTU),
-        rAlu("XOR", encodeR(0x00, 12, 11, 0x4, 10), circuit::word::IntegerOp::XOR),
-        rAlu("SRL", encodeR(0x00, 12, 11, 0x5, 10), circuit::word::IntegerOp::SRL),
-        rAlu("SRA", encodeR(0x20, 12, 11, 0x5, 10), circuit::word::IntegerOp::SRA),
-        rAlu("OR", encodeR(0x00, 12, 11, 0x6, 10), circuit::word::IntegerOp::OR),
-        rAlu("AND", encodeR(0x00, 12, 11, 0x7, 10), circuit::word::IntegerOp::AND),
+        rAlu("ADD", encodeR(0x00, 12, 11, 0x0, 10), ::rv32i::ALUOp::ADD),
+        rAlu("SUB", encodeR(0x20, 12, 11, 0x0, 10), ::rv32i::ALUOp::SUB),
+        rAlu("SLL", encodeR(0x00, 12, 11, 0x1, 10), ::rv32i::ALUOp::SLL),
+        rAlu("SLT", encodeR(0x00, 12, 11, 0x2, 10), ::rv32i::ALUOp::SLT),
+        rAlu("SLTU", encodeR(0x00, 12, 11, 0x3, 10), ::rv32i::ALUOp::SLTU),
+        rAlu("XOR", encodeR(0x00, 12, 11, 0x4, 10), ::rv32i::ALUOp::XOR),
+        rAlu("SRL", encodeR(0x00, 12, 11, 0x5, 10), ::rv32i::ALUOp::SRL),
+        rAlu("SRA", encodeR(0x20, 12, 11, 0x5, 10), ::rv32i::ALUOp::SRA),
+        rAlu("OR", encodeR(0x00, 12, 11, 0x6, 10), ::rv32i::ALUOp::OR),
+        rAlu("AND", encodeR(0x00, 12, 11, 0x7, 10), ::rv32i::ALUOp::AND),
 
-        iAlu("ADDI", encodeI(-1, 5, 0x0, 6, 0x13), circuit::word::IntegerOp::ADD),
-        iAlu("SLTI", encodeI(-2048, 5, 0x2, 6, 0x13), circuit::word::IntegerOp::SLT),
-        iAlu("SLTIU", encodeI(2047, 5, 0x3, 6, 0x13), circuit::word::IntegerOp::SLTU),
-        iAlu("XORI", encodeI(0x55, 5, 0x4, 6, 0x13), circuit::word::IntegerOp::XOR),
-        iAlu("ORI", encodeI(0x123, 5, 0x6, 6, 0x13), circuit::word::IntegerOp::OR),
-        iAlu("ANDI", encodeI(0x321, 5, 0x7, 6, 0x13), circuit::word::IntegerOp::AND),
-        iAlu("SLLI", encodeShiftI(0x00, 5, 5, 0x1, 6), circuit::word::IntegerOp::SLL),
-        iAlu("SRLI", encodeShiftI(0x00, 6, 5, 0x5, 6), circuit::word::IntegerOp::SRL),
-        iAlu("SRAI", encodeShiftI(0x20, 31, 5, 0x5, 6), circuit::word::IntegerOp::SRA),
+        iAlu("ADDI", encodeI(-1, 5, 0x0, 6, 0x13), ::rv32i::ALUOp::ADD),
+        iAlu("SLTI", encodeI(-2048, 5, 0x2, 6, 0x13), ::rv32i::ALUOp::SLT),
+        iAlu("SLTIU", encodeI(2047, 5, 0x3, 6, 0x13), ::rv32i::ALUOp::SLTU),
+        iAlu("XORI", encodeI(0x55, 5, 0x4, 6, 0x13), ::rv32i::ALUOp::XOR),
+        iAlu("ORI", encodeI(0x123, 5, 0x6, 6, 0x13), ::rv32i::ALUOp::OR),
+        iAlu("ANDI", encodeI(0x321, 5, 0x7, 6, 0x13), ::rv32i::ALUOp::AND),
+        iAlu("SLLI", encodeShiftI(0x00, 5, 5, 0x1, 6), ::rv32i::ALUOp::SLL),
+        iAlu("SRLI", encodeShiftI(0x00, 6, 5, 0x5, 6), ::rv32i::ALUOp::SRL),
+        iAlu("SRAI", encodeShiftI(0x20, 31, 5, 0x5, 6), ::rv32i::ALUOp::SRA),
 
         load("LB", encodeI(-16, 3, 0x0, 4, 0x03), RV32IMemorySize::Byte, true),
         load("LH", encodeI(18, 3, 0x1, 4, 0x03), RV32IMemorySize::Halfword, true),
@@ -251,7 +251,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "JAL";
             expected.raw = encodeJ(2048, 1);
-            expected.alu_op = circuit::word::IntegerOp::ADD;
+            expected.alu_op = ::rv32i::ALUOp::ADD;
             expected.alu_a = RV32IALUSourceA::PC;
             expected.alu_b = RV32IALUSourceB::Immediate;
             expected.reg_write = true;
@@ -265,7 +265,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "JALR";
             expected.raw = encodeI(-12, 5, 0x0, 1, 0x67);
-            expected.alu_op = circuit::word::IntegerOp::ADD;
+            expected.alu_op = ::rv32i::ALUOp::ADD;
             expected.alu_a = RV32IALUSourceA::RS1;
             expected.alu_b = RV32IALUSourceB::Immediate;
             expected.reg_write = true;
@@ -280,7 +280,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "LUI";
             expected.raw = encodeU(0x12345000, 9, 0x37);
-            expected.alu_op = circuit::word::IntegerOp::PASS_B;
+            expected.alu_op = ::rv32i::ALUOp::PASS_B;
             expected.alu_a = RV32IALUSourceA::Zero;
             expected.alu_b = RV32IALUSourceB::Immediate;
             expected.reg_write = true;
@@ -293,7 +293,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "AUIPC";
             expected.raw = encodeU(0xFFFFF000, 9, 0x17);
-            expected.alu_op = circuit::word::IntegerOp::ADD;
+            expected.alu_op = ::rv32i::ALUOp::ADD;
             expected.alu_a = RV32IALUSourceA::PC;
             expected.alu_b = RV32IALUSourceB::Immediate;
             expected.reg_write = true;
@@ -306,7 +306,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "FENCE";
             expected.raw = encodeI(0x0FF, 0, 0x0, 0, 0x0F);
-            expected.alu_op = circuit::word::IntegerOp::ZERO;
+            expected.alu_op = ::rv32i::ALUOp::CLEAR;
             return expected;
         }(),
         [] {
@@ -321,7 +321,7 @@ void testControlMappings() {
             Expected expected;
             expected.label = "EBREAK";
             expected.raw = 0x00100073U;
-            expected.alu_op = circuit::word::IntegerOp::ZERO;
+            expected.alu_op = ::rv32i::ALUOp::CLEAR;
             expected.halt = true;
             return expected;
         }(),

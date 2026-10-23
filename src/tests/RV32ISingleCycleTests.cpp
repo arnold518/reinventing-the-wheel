@@ -7,7 +7,7 @@
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/storage/RegisterFile.hpp"
@@ -468,7 +468,7 @@ profileToggleAuditCases() {
          "register and program-counter bit cells"},
         {&circuit::families::FlipFlopCell, 9,
          "halt and trap-status bit cells"},
-        {&circuit::word::family(circuit::word::Unit::ALU,32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,false}), 2,
+        {&circuit::families::rv32iALU(), 2,
          "complete ALU operation coverage"},
     };
     return cases;

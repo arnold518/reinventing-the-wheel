@@ -1,9 +1,9 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "modules/rv32i/RV32IFiveStageCoreBehavioral.hpp"
 
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "rv32i/RV32IDecoder.hpp"
 #include "RV32IPipelineRules.hpp"

@@ -21,11 +21,11 @@ import rv32i_layout
 helpers = runpy.run_path(str(ROOT / "tools/generate-rv32i-memory-layouts.py"))
 walk, placements, reflow = (helpers[key] for key in ("walk", "placements", "reflow"))
 ALU_SCENARIOS = {
-    "addsub-integer-prefix-w32": "AddSubIntegerWidth32Test",
-    "logic-integer-w32": "LogicIntegerWidth32Test", "shift-integer-w32": "ShiftIntegerWidth32Test",
-    "alu-control-integer": "ALUControlIntegerTest", "compare-integer-w32": "CompareIntegerWidth32Test",
-    "result-selector-integer-w32": "ResultSelectorIntegerWidth32Test", "flags-integer-w32": "FlagsIntegerWidth32Test",
-    "alu-integer-prefix-w32": "ALUIntegerWidth32Test",
+    "rv32i-alu-add-sub": "RV32IALUAddSubTest",
+    "rv32i-alu-logic": "RV32IALULogicTest", "rv32i-alu-shifter": "RV32IALUShifterTest",
+    "rv32i-alu-control": "RV32IALUControlTest", "rv32i-alu-compare": "RV32IALUCompareTest",
+    "rv32i-alu-result-select": "RV32IALUResultSelectTest",
+    "rv32i-alu": "RV32IALUTest",
 }
 SCENARIOS = {
     "register32": "RegisterTest",
@@ -41,7 +41,7 @@ SCENARIOS = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--integer-alu-only", action="store_true", help="Refresh all eight 4.3.3 scenarios and their descendants")
+    parser.add_argument("--integer-alu-only", action="store_true", help="Refresh all seven 4.3.3 scenarios and their descendants")
     parser.add_argument("--memory-request-only", action="store_true", help="Refresh only the revised zero-wait requester")
     parser.add_argument("--scenario", choices=SCENARIOS, action="append",
                         help="Refresh only a named 4.3 scenario (repeatable)")

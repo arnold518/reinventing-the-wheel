@@ -35,7 +35,7 @@ assert.equal(result.revision, 4);
 assert.equal(JSON.stringify(saved), before);
 result = await sandbox.loadScenario('rv32i-program9');
 assert.equal(result.overrides['RV32I_PROGRAM_ROOT.CORE'], 'structural');
-await assert.rejects(sandbox.loadScenario('adder-ripple-w8', null, null, 'behavioral'), /core_fidelity/);
+await assert.rejects(sandbox.loadScenario('ripple-carry-adder-w8', null, null, 'behavioral'), /core_fidelity/);
 await assert.rejects(sandbox.loadScenario('rv32i-program9', null, null, 'automatic'), /core_fidelity/);
 // The timing profile is set before building and reported with the payload;
 // it defaults to unit.

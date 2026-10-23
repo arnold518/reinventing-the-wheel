@@ -3,7 +3,7 @@
 #include "tests/RV32ISingleCycleTests.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <iostream>
 #include <optional>
@@ -71,16 +71,16 @@ ComponentTestSpec executeSpec() {
         {"ALU_B_SEL",logicBits(2,0)},{"ALU_OP",logicBits(5,0)},{"BRANCH_TYPE",logicBits(3,0)},{"JUMP_TYPE",logicBits(2,0)}};
     s.add("inputs",defaults);
     const uint32_t expected[]{0x80000001,0x7fffffff,0,0x80000001,0x80000001,0,0x40000000,0xc0000000,1,0,0x80000000,1,0};
-    // ALU<32> opcode values are contiguous through ZERO; check reserved codes too.
+    // RV32IALU opcode values are contiguous through CLEAR; check reserved codes too.
     for(unsigned op=0;op<32;++op) s.add("alu-op-"+std::to_string(op),{{"ALU_OP",logicBits(5,op)}},
         {{"ALU_RESULT",logicBits(32,op<13?expected[op]:0)}});
-    s.add("address-and-jalr",{{"ALU_OP",logicBits(5,circuit::word::IntegerOp::ADD)}, {"RS1_VALUE",logicBits(32,0x101)},
+    s.add("address-and-jalr",{{"ALU_OP",logicBits(5,::rv32i::ALUOp::ADD)}, {"RS1_VALUE",logicBits(32,0x101)},
         {"ALU_B_SEL",logicBits(2,1)},{"IMM",logicBits(32,4)},{"JUMP_TYPE",logicBits(2,2)}},
         {{"ALU_RESULT",logicBits(32,0x105)},{"CONTROL_TARGET",logicBits(32,0x104)}});
     s.add("jal-shares-alu",{{"ALU_A_SEL",logicBits(2,1)},{"JUMP_TYPE",logicBits(2,1)}},
         {{"ALU_RESULT",logicBits(32,0x104)},{"CONTROL_TARGET",logicBits(32,0x104)}});
     s.add("signed-unsigned-branch",{{"RS1_VALUE",logicBits(32,0xffffffff)},{"RS2_VALUE",logicBits(32,1)},
-        {"ALU_OP",logicBits(5,circuit::word::IntegerOp::SUB)},{"ALU_A_SEL",logicBits(2,0)},{"ALU_B_SEL",logicBits(2,0)},
+        {"ALU_OP",logicBits(5,::rv32i::ALUOp::SUB)},{"ALU_A_SEL",logicBits(2,0)},{"ALU_B_SEL",logicBits(2,0)},
         {"JUMP_TYPE",logicBits(2,0)},{"IMM",logicBits(32,0xfffffffc)}});
     const bool taken[]{false,false,true,true,false,false,true,false};
     for(unsigned branch=0;branch<8;++branch) s.add("branch-"+std::to_string(branch),{{"BRANCH_TYPE",logicBits(3,branch)}},
@@ -210,8 +210,8 @@ void RV32ISingleCycleStageIntegrationTest::verifyResults() {
             auto typed=std::dynamic_pointer_cast<RV32ISingleCycleCore>(core);
             size_t alus=0,adders=0;
             for(auto child:typed->executeStage()->getChildren()) {
-                alus+=std::string(child->getTypeName())=="ALU<32,integer,prefix,core>";
-                adders+=std::string(child->getTypeName())=="Adder<32,prefix>";
+                alus+=std::string(child->getTypeName())=="RV32IALU";
+                adders+=std::string(child->getTypeName())=="ParallelPrefixAdder<32>";
                 if(child->getName()=="RS1_IMM_ADD") throw std::runtime_error("Duplicate JALR adder");
             }
             if(alus!=1||adders!=1) throw std::runtime_error("Execute must share one ALU plus one concurrent branch adder");

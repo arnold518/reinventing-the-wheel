@@ -112,8 +112,8 @@ uint8_t knownLogicExpected(
 }
 
 TestRow adderRow(uint64_t a, uint64_t b, bool cin, uint64_t sum, bool cout) {
-    return {{{"A", pinBits(a)}, {"B", pinBits(b)}, {"Cin", pinBit(cin)}},
-            {{"Sum", pinBits(sum)}, {"Cout", pinBit(cout)}}};
+    return {{{"A", pinBits(a)}, {"B", pinBits(b)}, {"C_IN", pinBit(cin)}},
+            {{"OUT", pinBits(sum)}, {"C_OUT", pinBit(cout)}}};
 }
 
 std::string muxInputName(size_t input_count, size_t index) {
@@ -598,9 +598,9 @@ DecoderWidth5ZeroDisabledTest::DecoderWidth5ZeroDisabledTest()
     : TruthTableComponentTest<Decoder<5>>("DecoderWidth5ZeroDisabledTest", "DECODER_ADDR5_ZERO_DISABLED_ROOT",
                                             decoderX0UnusedRows(), {}, "logic.decoder.5.zero-disabled") {}
 
-AdderRippleWidth8Test::AdderRippleWidth8Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Adder,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>>(
-          "AdderRippleWidth8Test", "ADDER_W8_RIPPLE_ROOT", adder8Rows()) {}
+RippleCarryAdderWidth8Test::RippleCarryAdderWidth8Test()
+    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::RippleAdder,8>>(
+          "RippleCarryAdderWidth8Test", "RIPPLE_CARRY_ADDER_W8_ROOT", adder8Rows()) {}
 
 std::vector<TestRow> adder8Rows() {
     std::vector<TestRow> rows{
@@ -626,11 +626,11 @@ std::vector<TestRow> adder8Rows() {
             {
                 {"A", pinVector(left)},
                 {"B", bits(0)},
-                {"Cin", bit(false)},
+                {"C_IN", bit(false)},
             },
             {
-                {"Sum", pinVector(expected)},
-                {"Cout", bit(false)},
+                {"OUT", pinVector(expected)},
+                {"C_OUT", bit(false)},
             },
         });
     }
@@ -638,7 +638,7 @@ std::vector<TestRow> adder8Rows() {
 }
 
 ZeroDetectWidth8Test::ZeroDetectWidth8Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>>(
+    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8>>(
           "ZeroDetectWidth8Test", "ZERO_DETECT_W8_ROOT", zeroDetect8Rows()) {}
 
 std::vector<TestRow> zeroDetect8Rows() {

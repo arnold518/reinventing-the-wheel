@@ -37,9 +37,9 @@ with sync_playwright() as p:
     page.wait_for_function("document.querySelectorAll('mjx-container').length > 0")
     page.evaluate("MathJax.startup.promise")
     headings = page.locator("article h2").all_text_contents()
-    for index, name in enumerate(("HalfAdder", "FullAdder", "Adder<W>", "AddSub<W>", "ArithmeticUnit<W>", "ParallelPrefixAdder<W>"), 1):
+    for index, name in enumerate(("HalfAdder", "FullAdder", "RippleCarryAdder<W>", "ParallelPrefixAdder<W>", "AddSub<W>", "ArithmeticUnit<W>"), 1):
         assert any(f"2.1.{index}. {name}" in heading for heading in headings), (name, headings)
-    for anchor in ("213-adderw", "214-addsubw", "215-arithmeticunitw"):
+    for anchor in ("213-ripplecarryadderw", "214-parallelprefixadderw", "215-addsubw", "216-arithmeticunitw"):
         assert page.locator(f'[id="{anchor}"]').count() == 1, anchor
     assert page.locator(".simulator-embed iframe").count() == 6
     source = (ROOT / "site-docs/alu/2.1.md").read_text()

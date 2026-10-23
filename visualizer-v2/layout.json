@@ -6174,7 +6174,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:6f873caab599",
             "layout_mode": "automatic"
         },
-        "Adder<8,ripple>": {
+        "RippleCarryAdder<8>": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "color": [80, 60, 120, 190],
@@ -6397,228 +6397,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:9c0b3166141f",
             "layout_mode": "automatic"
         },
-        "ALU<8,extended,ripple>": {
-            "min_aspect_ratio": 0.955,
-            "aspect_ratio": 0.955,
-            "color": [55, 65, 115, 190],
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"CONTROL":{"rel_pos":[0.06276144144144145, 0.47398915145512],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24610144144144147, 0.2748988255270978],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "LOGIC": {
-                            "rel_pos": [0.24610144144144147, 0.5334652139050045],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "SHIFTER": {
-                            "rel_pos": [0.24610144144144147, 0.7750384415829442],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "COMPARE_SELECT": {
-                            "rel_pos": [0.4294414414414414, 0.507975472855054],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6127814414414414, 0.456995990755153],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7961214414414414, 0.507975472855054],
-                            "rel_width": 0.14111711711711708
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:5705b90615b1",
-            "layout_mode": "automatic"
-        },
-        "Adder<32,prefix>": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
-            "children": {
-                "PREFIX_ADDER": {
-                    "rel_pos": [0.24412500000000004, 0.3670758196721312],
-                    "rel_width": 0.5117499999999999
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"A_SPLIT":{"rel_pos":[0.07136676986584108, 0.39202684870324317],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "B_SPLIT": {
-                            "rel_pos": [0.07136676986584108, 0.7276006191950463],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA0": {
-                            "rel_pos": [0.09675286612252557, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA1": {
-                            "rel_pos": [0.12213896237921007, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA2": {
-                            "rel_pos": [0.14752505863589457, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA3": {
-                            "rel_pos": [0.17291115489257905, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA4": {
-                            "rel_pos": [0.19829725114926353, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA5": {
-                            "rel_pos": [0.223683347405948, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA6": {
-                            "rel_pos": [0.24906944366263248, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA7": {
-                            "rel_pos": [0.2744555399193169, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA8": {
-                            "rel_pos": [0.2998416361760014, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA9": {
-                            "rel_pos": [0.3252277324326859, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA10": {
-                            "rel_pos": [0.35061382868937035, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA11": {
-                            "rel_pos": [0.37599992494605483, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA12": {
-                            "rel_pos": [0.4013860212027393, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA13": {
-                            "rel_pos": [0.4267721174594238, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA14": {
-                            "rel_pos": [0.45215821371610826, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA15": {
-                            "rel_pos": [0.47754430997279274, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA16": {
-                            "rel_pos": [0.5029304062294773, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA17": {
-                            "rel_pos": [0.5283165024861618, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA18": {
-                            "rel_pos": [0.5537025987428463, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA19": {
-                            "rel_pos": [0.5790886949995309, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA20": {
-                            "rel_pos": [0.6044747912562154, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA21": {
-                            "rel_pos": [0.6298608875128999, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA22": {
-                            "rel_pos": [0.6552469837695845, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA23": {
-                            "rel_pos": [0.680633080026269, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA24": {
-                            "rel_pos": [0.7060191762829535, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA25": {
-                            "rel_pos": [0.731405272539638, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA26": {
-                            "rel_pos": [0.7567913687963226, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA27": {
-                            "rel_pos": [0.7821774650530071, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA28": {
-                            "rel_pos": [0.8075635613096916, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA29": {
-                            "rel_pos": [0.8329496575663762, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA30": {
-                            "rel_pos": [0.8583357538230607, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "FA31": {
-                            "rel_pos": [0.8837218500797452, 0.6131881777732664],
-                            "rel_width": 0.019525283797729616
-                        },
-                        "SUM_JOIN": {
-                            "rel_pos": [0.9091079463364292, 0.5598137339491448],
-                            "rel_width": 0.019525283797729616
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:c88415c27275",
-            "layout_mode": "automatic"
-        },
-        "AddSub<32,integer,prefix>": {
+        "RV32IALUAddSub": {
             "min_aspect_ratio": 0.203,
             "aspect_ratio": 0.61,
             "children": {
@@ -7481,7 +7260,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:b809f32ee212",
             "layout_mode": "automatic"
         },
-        "LogicUnit<32,integer>": {
+        "RV32IALULogic": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "children": {
@@ -9273,7 +9052,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:82d94f9457d3",
             "layout_mode": "automatic"
         },
-        "BarrelShifter<32,integer>": {
+        "RV32IALUShifter": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "children": {
@@ -12052,111 +11831,6 @@
                 }
             ],
             "automatic_layout_revision": "automatic-stub-clearance-v1:cfb0e61f41d7",
-            "layout_mode": "automatic"
-        },
-        "ALU<32,integer,prefix>": {
-            "min_aspect_ratio": 1.185,
-            "aspect_ratio": 1.185,
-            "children": {
-                "LOGIC": {
-                    "rel_pos": [0.0629329650092081, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "CONTROL": {
-                    "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                    "rel_width": 0.14423572744014732
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "SHIFT": {
-                    "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                    "rel_width": 0.14423572744014732
-                },
-                "COMPARE": {
-                    "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                    "rel_width": 0.14423572744014732
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                    "rel_width": 0.14423572744014732
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                    "rel_width": 0.14423572744014732
-                }
-            },
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.185,
-                "aspect_ratio": 1.185,
-                "children": {
-                    "LOGIC": {
-                        "rel_pos": [0.06276144144144145, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "CONTROL": {
-                        "rel_pos": [0.06276144144144145, 0.693915478769909],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "ARITHMETIC": {
-                        "rel_pos": [0.24610144144144147, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "SHIFT": {
-                        "rel_pos": [0.24610144144144147, 0.7144578439198691],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "COMPARE": {
-                        "rel_pos": [0.4294414414414414, 0.5132749458319078],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "RESULT_SELECT": {
-                        "rel_pos": [0.6127814414414414, 0.4653427604820009],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "FLAGS": {
-                        "rel_pos": [0.7961214414414414, 0.5201224008818944],
-                        "rel_width": 0.14111711711711708
-                    }
-                }
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"LOGIC":{"rel_pos":[0.0629329650092081, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "CONTROL": {
-                            "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "SHIFT": {
-                            "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "COMPARE": {
-                            "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                            "rel_width": 0.14423572744014732
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:26e8e301a5af",
             "layout_mode": "automatic"
         },
         "RV32IDecodeControlUnit": {
@@ -26449,346 +26123,6 @@
                 }
             }
         },
-        "ArithmeticUnit<8,ripple>": {
-            "min_aspect_ratio": 0.725,
-            "aspect_ratio": 0.725,
-            "children": {
-                "LOW": {
-                    "rel_pos": [0.06226000000000001, 0.4806224137931034],
-                    "rel_width": 0.132
-                },
-                "HIGH": {
-                    "rel_pos": [0.06226000000000001, 0.3041568965517241],
-                    "rel_width": 0.132
-                },
-                "ZERO8": {
-                    "rel_pos": [0.06226000000000001, 0.8335534482758622],
-                    "rel_width": 0.132
-                },
-                "ONE8": {
-                    "rel_pos": [0.06226000000000001, 0.6570879310344828],
-                    "rel_width": 0.132
-                },
-                "ADD_SUB": {
-                    "rel_pos": [0.33757740039940715, 0.3609827586206897],
-                    "rel_width": 0.132
-                },
-                "X_SELECT": {
-                    "rel_pos": [0.23325380658268224, 0.6860491562729273],
-                    "rel_width": 0.06532978723404256
-                },
-                "Y_SELECT": {
-                    "rel_pos": [0.23325380658268224, 0.8272215700660309],
-                    "rel_width": 0.06532978723404256
-                },
-                "SUB_SELECT": {
-                    "rel_pos": [0.23325380658268224, 0.5448767424798239],
-                    "rel_width": 0.06532978723404256
-                },
-                "CARRY_IN_SELECT": {
-                    "rel_pos": [0.23325380658268224, 0.40370432868672046],
-                    "rel_width": 0.06532978723404256
-                },
-                "INVALID_SELECT": {
-                    "rel_pos": [0.23325380658268224, 0.26253191489361705],
-                    "rel_width": 0.06532978723404256
-                },
-                "VALID": {
-                    "rel_pos": [0.33757740039940715, 0.7453206896551725],
-                    "rel_width": 0.132
-                },
-                "RESULT_MASK_SPLIT": {
-                    "rel_pos": [0.511498435479584, 0.27127521856832204],
-                    "rel_width": 0.11855212355212354
-                },
-                "RESULT_MASK_BIT_0": {
-                    "rel_pos": [0.669945400930066, 0.2621479231974922],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_1": {
-                    "rel_pos": [0.669945400930066, 0.3503806818181818],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_2": {
-                    "rel_pos": [0.669945400930066, 0.4386134404388715],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_3": {
-                    "rel_pos": [0.669945400930066, 0.5268461990595612],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_4": {
-                    "rel_pos": [0.669945400930066, 0.6150789576802509],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_5": {
-                    "rel_pos": [0.669945400930066, 0.7033117163009405],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_6": {
-                    "rel_pos": [0.669945400930066, 0.79154447492163],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_7": {
-                    "rel_pos": [0.669945400930066, 0.8797772335423197],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_JOIN": {
-                    "rel_pos": [0.8057399999999999, 0.49557241379310346],
-                    "rel_width": 0.132
-                },
-                "CARRY_MASK": {
-                    "rel_pos": [0.511498435479584, 0.5629770336839303],
-                    "rel_width": 0.11855212355212354
-                },
-                "OVERFLOW_MASK": {
-                    "rel_pos": [0.511498435479584, 0.7982643900057694],
-                    "rel_width": 0.11855212355212354
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"LOW":{"rel_pos":[0.06226000000000001, 0.4806224137931034],
-                            "rel_width": 0.132
-                        },
-                        "HIGH": {
-                            "rel_pos": [0.06226000000000001, 0.3041568965517241],
-                            "rel_width": 0.132
-                        },
-                        "ZERO8": {
-                            "rel_pos": [0.06226000000000001, 0.8335534482758622],
-                            "rel_width": 0.132
-                        },
-                        "ONE8": {
-                            "rel_pos": [0.06226000000000001, 0.6570879310344828],
-                            "rel_width": 0.132
-                        },
-                        "ADD_SUB": {
-                            "rel_pos": [0.33440456964216003, 0.3609827586206897],
-                            "rel_width": 0.132
-                        },
-                        "X_SELECT": {
-                            "rel_pos": [0.23077490777189968, 0.6844488411531938],
-                            "rel_width": 0.06711475409836067
-                        },
-                        "Y_SELECT": {
-                            "rel_pos": [0.23077490777189968, 0.8256212549462975],
-                            "rel_width": 0.06711475409836067
-                        },
-                        "SUB_SELECT": {
-                            "rel_pos": [0.23077490777189968, 0.5432764273600904],
-                            "rel_width": 0.06711475409836067
-                        },
-                        "CARRY_IN_SELECT": {
-                            "rel_pos": [0.23077490777189968, 0.402104013566987],
-                            "rel_width": 0.06711475409836067
-                        },
-                        "INVALID_SELECT": {
-                            "rel_pos": [0.23077490777189968, 0.2609315997738836],
-                            "rel_width": 0.06711475409836067
-                        },
-                        "VALID": {
-                            "rel_pos": [0.33440456964216003, 0.7453206896551725],
-                            "rel_width": 0.132
-                        },
-                        "RESULT_MASK_SPLIT": {
-                            "rel_pos": [0.5059429770718508, 0.2683859829528576],
-                            "rel_width": 0.12208747514910535
-                        },
-                        "RESULT_MASK_BIT_0": {
-                            "rel_pos": [0.6658885127343472, 0.260001291204618],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_1": {
-                            "rel_pos": [0.6658885127343472, 0.3482340498253076],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_2": {
-                            "rel_pos": [0.6658885127343472, 0.4364668084459973],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_3": {
-                            "rel_pos": [0.6658885127343472, 0.524699567066687],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_4": {
-                            "rel_pos": [0.6658885127343472, 0.6129323256873767],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_5": {
-                            "rel_pos": [0.6658885127343472, 0.7011650843080662],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_6": {
-                            "rel_pos": [0.6658885127343472, 0.7893978429287558],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_BIT_7": {
-                            "rel_pos": [0.6658885127343472, 0.8776306015494455],
-                            "rel_width": 0.10144823788546256
-                        },
-                        "RESULT_MASK_JOIN": {
-                            "rel_pos": [0.8057399999999999, 0.49557241379310346],
-                            "rel_width": 0.132
-                        },
-                        "CARRY_MASK": {
-                            "rel_pos": [0.5059429770718508, 0.561770137793926],
-                            "rel_width": 0.12208747514910535
-                        },
-                        "OVERFLOW_MASK": {
-                            "rel_pos": [0.5059429770718508, 0.7970574941157652],
-                            "rel_width": 0.12208747514910535
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:b84e8431bf79",
-            "layout_mode": "automatic"
-        },
-        "AddSub<8,ripple>": {
-            "min_aspect_ratio": 0.725,
-            "aspect_ratio": 0.725,
-            "children": {
-                "A_SPLIT": {
-                    "rel_pos": [0.06067268779309572, 0.3426926641402078],
-                    "rel_width": 0.10313977805628582
-                },
-                "B_SPLIT": {
-                    "rel_pos": [0.06067268779309572, 0.6956236986229665],
-                    "rel_width": 0.10313977805628582
-                },
-                "B_XOR_SUB_0": {
-                    "rel_pos": [0.19205623409111014, 0.2650200179050374],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_1": {
-                    "rel_pos": [0.19205623409111014, 0.353252776525727],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_2": {
-                    "rel_pos": [0.19205623409111014, 0.4414855351464167],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_3": {
-                    "rel_pos": [0.19205623409111014, 0.5297182937671063],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_4": {
-                    "rel_pos": [0.19205623409111014, 0.617951052387796],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_5": {
-                    "rel_pos": [0.19205623409111014, 0.7061838110084856],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_6": {
-                    "rel_pos": [0.19205623409111014, 0.7944165696291752],
-                    "rel_width": 0.08674691724787047
-                },
-                "B_XOR_SUB_7": {
-                    "rel_pos": [0.19205623409111014, 0.8826493282498649],
-                    "rel_width": 0.08674691724787047
-                },
-                "ADD": {
-                    "rel_pos": [0.4393320732231865, 0.3835929209556315],
-                    "rel_width": 0.10313977805628582
-                },
-                "B_JOIN": {
-                    "rel_pos": [0.30704691958070923, 0.3426926641402078],
-                    "rel_width": 0.10313977805628582
-                },
-                "RESULT_SPLIT": {
-                    "rel_pos": [0.5716172268656639, 0.5191581813815871],
-                    "rel_width": 0.10313977805628582
-                },
-                "INPUT_SIGNS": {
-                    "rel_pos": [0.30704691958070923, 0.7447040068014749],
-                    "rel_width": 0.10313977805628582
-                },
-                "SAME_SIGN": {
-                    "rel_pos": [0.4393320732231865, 0.7528840581645596],
-                    "rel_width": 0.10313977805628582
-                },
-                "RESULT_SIGN_CHANGED": {
-                    "rel_pos": [0.7039023805081412, 0.5682384895600955],
-                    "rel_width": 0.10313977805628582
-                },
-                "OVERFLOW_AND": {
-                    "rel_pos": [0.8361875341506184, 0.5682384895600955],
-                    "rel_width": 0.10313977805628582
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"A_SPLIT":{"rel_pos":[0.060626974271252215, 0.34337191835192643],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "B_SPLIT": {
-                            "rel_pos": [0.060626974271252215, 0.6963029528346851],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "B_XOR_SUB_0": {
-                            "rel_pos": [0.1914079332358749, 0.26331758329845145],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_1": {
-                            "rel_pos": [0.1914079332358749, 0.3515503419191411],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_2": {
-                            "rel_pos": [0.1914079332358749, 0.4397831005398308],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_3": {
-                            "rel_pos": [0.1914079332358749, 0.5280158591605204],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_4": {
-                            "rel_pos": [0.1914079332358749, 0.6162486177812101],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_5": {
-                            "rel_pos": [0.1914079332358749, 0.7044813764018997],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_6": {
-                            "rel_pos": [0.1914079332358749, 0.7927141350225893],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "B_XOR_SUB_7": {
-                            "rel_pos": [0.1914079332358749, 0.8809468936432789],
-                            "rel_width": 0.09173384690352619
-                        },
-                        "ADD": {
-                            "rel_pos": [0.4429766876465282, 0.38394257924183267],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "B_JOIN": {
-                            "rel_pos": [0.3116141159903473, 0.34337191835192643],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "RESULT_SPLIT": {
-                            "rel_pos": [0.5743392593027092, 0.5198374355933058],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "INPUT_SIGNS": {
-                            "rel_pos": [0.3116141159903473, 0.7449877459025726],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "SAME_SIGN": {
-                            "rel_pos": [0.4429766876465282, 0.7531018780805537],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "RESULT_SIGN_CHANGED": {
-                            "rel_pos": [0.7057018309588903, 0.5685222286611932],
-                            "rel_width": 0.10230862311367656
-                        },
-                        "OVERFLOW_AND": {
-                            "rel_pos": [0.8370644026150711, 0.5685222286611932],
-                            "rel_width": 0.10230862311367656
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:6eeb6e36f01f",
-            "layout_mode": "automatic"
-        },
         "LogicUnit<8>": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
@@ -28373,7 +27707,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:da4cda75b6f9",
             "layout_mode": "automatic"
         },
-        "ALUControlDecoder<extended>": {
+        "ALUControlDecoder": {
             "min_aspect_ratio": 1.415,
             "aspect_ratio": 1.415,
             "children": {
@@ -29650,7 +28984,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:1398ec4fb43f",
             "layout_mode": "automatic"
         },
-        "ALUControlDecoder<integer>": {
+        "RV32IALUControl": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
             "children": {
@@ -29779,7 +29113,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:bdc40c36a950",
             "layout_mode": "automatic"
         },
-        "CompareSelect<32,integer>": {
+        "RV32IALUCompare": {
             "min_aspect_ratio": 0.244,
             "aspect_ratio": 0.84,
             "children": {
@@ -29925,7 +29259,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:edaa93fb0b2f",
             "layout_mode": "automatic"
         },
-        "ALUResultSelector<32,integer>": {
+        "RV32IALUResultSelect": {
             "min_aspect_ratio": 1.645,
             "aspect_ratio": 1.645,
             "children": {
@@ -30781,80 +30115,6 @@
                 }
             ],
             "automatic_layout_revision": "automatic-stub-clearance-v1:cbc784de89a0",
-            "layout_mode": "automatic"
-        },
-        "ALUFlagUnit<32,integer>": {
-            "min_aspect_ratio": 0.223,
-            "aspect_ratio": 0.725,
-            "children": {
-                "CARRY_VALID": {
-                    "rel_pos": [0.399875, 0.2358887931034483],
-                    "rel_width": 0.20025
-                },
-                "OVERFLOW_VALID": {
-                    "rel_pos": [0.399875, 0.42156120689655174],
-                    "rel_width": 0.20025
-                },
-                "RESULT_ZERO": {
-                    "rel_pos": [0.399875, 0.6231155172413794],
-                    "rel_width": 0.20025
-                },
-                "SIGN_BIT": {
-                    "rel_pos": [0.399875, 0.8087879310344828],
-                    "rel_width": 0.20025
-                }
-            },
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.12,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "previous_default": {
-                "title_bar_ratio": 0.12,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.025,
-                "pin_size_ratio": 0.018,
-                "min_aspect_ratio": 0.223,
-                "aspect_ratio": 0.725,
-                "children": {
-                    "CARRY_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.22284358296936563],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "OVERFLOW_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "RESULT_ZERO": {
-                        "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "SIGN_BIT": {
-                        "rel_pos": [0.3807683790965456, 0.798773426285086],
-                        "rel_width": 0.23846324180690875
-                    }
-                },
-                "aspect_ratio_floor": 0.08
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"CARRY_VALID":{"rel_pos":[0.3807683790965456, 0.22284358296936563],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "OVERFLOW_VALID": {
-                            "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "RESULT_ZERO": {
-                            "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "SIGN_BIT": {
-                            "rel_pos": [0.3807683790965456, 0.798773426285086],
-                            "rel_width": 0.23846324180690875
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:086b96914fdf",
             "layout_mode": "automatic"
         },
         "FFArray8": {
@@ -67137,7 +66397,7 @@
             },
             "layout_revision": "rv32i-blocks-v4"
         },
-        "ALU<32,integer,prefix,core>": {
+        "RV32IALU": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "children": {
@@ -80391,7 +79651,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:2e9557f427e2",
             "layout_mode": "automatic"
         },
-        "FFArray8[MemoryStorageBank<FFArray, 8, 4>]": {
+        "FFArray8[MemoryStorageBank<FFArray,8,4>]": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
             "layout_mode": "automatic",
@@ -80414,7 +79674,7 @@
                 }
             }
         },
-        "SRAM<8>[SRAMStorageBank<8, 4, 1>]": {
+        "SRAM<8>[SRAMStorageBank<8,4,1>]": {
             "min_aspect_ratio": 0.493,
             "aspect_ratio": 1.02,
             "previous_default": {
@@ -80525,7 +79785,7 @@
                 }
             }
         },
-        "FFArray32[MemoryStorageBank<FFArray, 32, 2>]": {
+        "FFArray32[MemoryStorageBank<FFArray,32,2>]": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
             "layout_mode": "automatic",
@@ -80548,7 +79808,7 @@
                 }
             }
         },
-        "SRAM<32>[SRAMStorageBank<32, 8, 2>]": {
+        "SRAM<32>[SRAMStorageBank<32,8,2>]": {
             "aspect_ratio": 1.02,
             "min_aspect_ratio": 0.556,
             "aspect_ratio_floor": 0.08,
@@ -80850,7 +80110,7 @@
                 }
             }
         },
-        "SRAM<32>[SRAMStorageBank<32, 16, 2>]": {
+        "SRAM<32>[SRAMStorageBank<32,16,2>]": {
             "aspect_ratio": 1.02,
             "min_aspect_ratio": 0.556,
             "aspect_ratio_floor": 0.08,
@@ -81152,7 +80412,7 @@
                 }
             }
         },
-        "FFArray32[MemoryStorageBank<FFArray, 32, 1>]": {
+        "FFArray32[MemoryStorageBank<FFArray,32,1>]": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
             "layout_mode": "automatic",
@@ -81175,7 +80435,7 @@
                 }
             }
         },
-        "FFArray8[MemoryStorageBank<FFArray, 8, 1>]": {
+        "FFArray8[MemoryStorageBank<FFArray,8,1>]": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
             "layout_mode": "automatic",
@@ -81198,7 +80458,7 @@
                 }
             }
         },
-        "SRAM<8>[SRAMStorageBank<8, 4, 2>]": {
+        "SRAM<8>[SRAMStorageBank<8,4,2>]": {
             "aspect_ratio": 1.02,
             "min_aspect_ratio": 0.493,
             "aspect_ratio_floor": 0.08,
@@ -86134,77 +85394,7 @@
                 }
             }
         },
-        "RV32IBranchPredictor[layout-0f79a9d5bba024fd]": {
-            "aspect_ratio": 0.8,
-            "min_aspect_ratio": 0.368,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.12,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "layout_revision": "rv32i-stages-v2",
-            "previous_default": {
-                "title_bar_ratio": 0.12,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.025,
-                "pin_size_ratio": 0.018,
-                "aspect_ratio": 0.8,
-                "min_aspect_ratio": 0.368,
-                "aspect_ratio_floor": 0.08,
-                "children": {
-                    "TABLE": {
-                        "rel_pos": [0.12063157894736842, 0.2670526315789473],
-                        "rel_width": 0.2987368421052632
-                    },
-                    "COUNTER_BITS": {
-                        "rel_pos": [0.5526923076923077, 0.47013790485829954],
-                        "rel_width": 0.0846153846153846
-                    },
-                    "BRANCH_DIRECTION": {
-                        "rel_pos": [0.7376923076923076, 0.2828846153846154],
-                        "rel_width": 0.1846153846153846
-                    },
-                    "TAKEN": {
-                        "rel_pos": [0.7376923076923076, 0.5086740890688259],
-                        "rel_width": 0.1846153846153846
-                    },
-                    "NEXT_PC_SELECT": {
-                        "rel_pos": [0.7930135338345864, 0.6944894736842105],
-                        "rel_width": 0.07397293233082708
-                    },
-                    "NO_TABLE": {
-                        "rel_pos": [0.14653846153846153, 0.4152176113360324],
-                        "rel_width": 0.17692307692307693
-                    },
-                    "STATIC_DIRECTION": {
-                        "rel_pos": [0.14653846153846153, 0.6583755060728744],
-                        "rel_width": 0.17692307692307693
-                    }
-                }
-            },
-            "children": {
-                "NO_TABLE": {
-                    "rel_pos": [0.14653846153846153, 0.4152176113360324],
-                    "rel_width": 0.17692307692307693
-                },
-                "STATIC_DIRECTION": {
-                    "rel_pos": [0.14653846153846153, 0.6583755060728744],
-                    "rel_width": 0.17692307692307693
-                },
-                "BRANCH_DIRECTION": {
-                    "rel_pos": [0.7376923076923076, 0.2828846153846154],
-                    "rel_width": 0.1846153846153846
-                },
-                "TAKEN": {
-                    "rel_pos": [0.7376923076923076, 0.5086740890688259],
-                    "rel_width": 0.1846153846153846
-                },
-                "NEXT_PC_SELECT": {
-                    "rel_pos": [0.7930135338345864, 0.6944894736842105],
-                    "rel_width": 0.07397293233082708
-                }
-            }
-        },
-        "RV32IPredictionTable<4>[layout-28123149c4fc1b28]": {
+        "RV32IPredictionTable<4>[layout-d9f77ce478030afa]": {
             "aspect_ratio": 1.6,
             "min_aspect_ratio": 0.265,
             "aspect_ratio_floor": 0.08,
@@ -86488,7 +85678,7 @@
                 }
             }
         },
-        "RV32IBranchPredictor[layout-6b8eac73f76f37fd]": {
+        "RV32IBranchPredictor[layout-07c3d874d215706f]": {
             "aspect_ratio": 0.8,
             "min_aspect_ratio": 0.368,
             "aspect_ratio_floor": 0.08,
@@ -86496,7 +85686,7 @@
             "pin_size_ratio": 0.018,
             "boundary_area_ratio": 0.025
         },
-        "RV32IBranchPredictor[layout-f3f48600ccb0c342]": {
+        "RV32IBranchPredictor[layout-d0889a5e1d77967c]": {
             "aspect_ratio": 0.8,
             "min_aspect_ratio": 0.368,
             "aspect_ratio_floor": 0.08,
@@ -86562,7 +85752,7 @@
                 }
             }
         },
-        "RV32IBranchPredictor[layout-1a80b305a0cc7d5a]": {
+        "RV32IBranchPredictor[layout-cfb793e9cae852ec]": {
             "aspect_ratio": 0.8,
             "min_aspect_ratio": 0.368,
             "aspect_ratio_floor": 0.08,
@@ -86632,7 +85822,7 @@
                 }
             }
         },
-        "RV32IPredictionTable<16>[layout-eaba57d247f5ff14]": {
+        "RV32IPredictionTable<16>[layout-1f9f5ea08a2f541f]": {
             "aspect_ratio": 1.6,
             "min_aspect_ratio": 0.265,
             "aspect_ratio_floor": 0.08,
@@ -87416,7 +86606,7 @@
                 }
             }
         },
-        "RV32IPredictionTable<16>[layout-e2f5fd82545e61b2]": {
+        "RV32IPredictionTable<16>[layout-9a207fb5e975fa90]": {
             "aspect_ratio": 1.6,
             "min_aspect_ratio": 0.265,
             "aspect_ratio_floor": 0.08,
@@ -88844,7 +88034,7 @@
                 }
             }
         },
-        "CacheBankController<8>[layout-e011f11da11cc1b4]": {
+        "CacheBankController<8>[layout-49cc3644e5b8e214]": {
             "min_aspect_ratio": 4.06,
             "aspect_ratio": 4.06,
             "children": {
@@ -89866,7 +89056,7 @@
                 }
             }
         },
-        "CacheBankController<32>[layout-fb6bc1577715e46b]": {
+        "CacheBankController<32>[layout-31839d4b5f1d0efb]": {
             "min_aspect_ratio": 2.91,
             "aspect_ratio": 2.91,
             "children": {
@@ -90628,7 +89818,7 @@
                 }
             }
         },
-        "CacheBankController<32>[layout-85e7cc1bdeb0c22c]": {
+        "CacheBankController<32>[layout-fe469cb19fc7074c]": {
             "min_aspect_ratio": 4.06,
             "aspect_ratio": 4.06,
             "children": {
@@ -91738,7 +90928,7 @@
                 }
             }
         },
-        "CacheBankController<8>[layout-2a227e72f5d08f4f]": {
+        "CacheBankController<8>[layout-42ee7f86135bdb0b]": {
             "min_aspect_ratio": 2.91,
             "aspect_ratio": 2.91,
             "children": {
@@ -92500,7 +91690,7 @@
                 }
             }
         },
-        "CacheBankController<32>[layout-02f4fe44887bdb49]": {
+        "CacheBankController<32>[layout-39fdea917a61b47d]": {
             "min_aspect_ratio": 2.91,
             "aspect_ratio": 2.91,
             "children": {
@@ -93308,7 +92498,7 @@
                 }
             }
         },
-        "CacheBankController<32>[layout-59fb890c93aaf58c]": {
+        "CacheBankController<32>[layout-1590f8d1a66d472c]": {
             "min_aspect_ratio": 4.06,
             "aspect_ratio": 4.06
         },
@@ -126929,290 +126119,11 @@
             "min_aspect_ratio": 2.105,
             "aspect_ratio": 2.105
         },
-        "ALU<16,extended,ripple>": {
-            "min_aspect_ratio": 0.955,
-            "aspect_ratio": 0.955,
-            "automatic_layout_history": [{"revision":null, "children":{}}],
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "automatic_layout_revision": "automatic-stub-clearance-v1:5705b90615b1",
-            "layout_mode": "automatic"
-        },
-        "ArithmeticUnit<16,ripple>": {
-            "min_aspect_ratio": 0.725,
-            "aspect_ratio": 0.725,
-            "automatic_layout_history": [{"revision":null, "children":{}}],
-            "children": {
-                "HIGH": {
-                    "rel_pos": [0.06122285714285714, 0.3090987684729064],
-                    "rel_width": 0.11314285714285716
-                },
-                "LOW": {
-                    "rel_pos": [0.06122285714285714, 0.48556428571428567],
-                    "rel_width": 0.11314285714285716
-                },
-                "ONE16": {
-                    "rel_pos": [0.06122285714285714, 0.662029802955665],
-                    "rel_width": 0.11314285714285716
-                },
-                "ZERO16": {
-                    "rel_pos": [0.06122285714285714, 0.8384953201970444],
-                    "rel_width": 0.11314285714285716
-                },
-                "INVALID_SELECT": {
-                    "rel_pos": [0.20960287104258518, 0.26253191489361705],
-                    "rel_width": 0.06532978723404256
-                },
-                "CARRY_IN_SELECT": {
-                    "rel_pos": [0.20960287104258518, 0.40370432868672046],
-                    "rel_width": 0.06532978723404256
-                },
-                "SUB_SELECT": {
-                    "rel_pos": [0.20960287104258518, 0.5448767424798239],
-                    "rel_width": 0.06532978723404256
-                },
-                "X_SELECT": {
-                    "rel_pos": [0.20960287104258518, 0.6860491562729273],
-                    "rel_width": 0.06532978723404256
-                },
-                "Y_SELECT": {
-                    "rel_pos": [0.20960287104258518, 0.8272215700660309],
-                    "rel_width": 0.06532978723404256
-                },
-                "ADD_SUB": {
-                    "rel_pos": [0.3101698150334986, 0.3704113300492611],
-                    "rel_width": 0.11314285714285716
-                },
-                "VALID": {
-                    "rel_pos": [0.3101698150334986, 0.7502625615763547],
-                    "rel_width": 0.11314285714285716
-                },
-                "RESULT_MASK_SPLIT": {
-                    "rel_pos": [0.4587688238181986, 0.2675397239303599],
-                    "rel_width": 0.06931151241534989
-                },
-                "CARRY_MASK": {
-                    "rel_pos": [0.4587688238181986, 0.5797867595547599],
-                    "rel_width": 0.06931151241534989
-                },
-                "OVERFLOW_MASK": {
-                    "rel_pos": [0.4587688238181986, 0.8150741158765991],
-                    "rel_width": 0.06931151241534989
-                },
-                "RESULT_MASK_BIT_0": {
-                    "rel_pos": [0.562547437550716, 0.2621479231974922],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_1": {
-                    "rel_pos": [0.562547437550716, 0.3503806818181818],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_2": {
-                    "rel_pos": [0.562547437550716, 0.4386134404388715],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_3": {
-                    "rel_pos": [0.562547437550716, 0.5268461990595612],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_4": {
-                    "rel_pos": [0.562547437550716, 0.6150789576802509],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_5": {
-                    "rel_pos": [0.562547437550716, 0.7033117163009405],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_6": {
-                    "rel_pos": [0.562547437550716, 0.79154447492163],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_7": {
-                    "rel_pos": [0.562547437550716, 0.8797772335423197],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_8": {
-                    "rel_pos": [0.6935963364701632, 0.2621479231974922],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_9": {
-                    "rel_pos": [0.6935963364701632, 0.3503806818181818],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_10": {
-                    "rel_pos": [0.6935963364701632, 0.4386134404388715],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_11": {
-                    "rel_pos": [0.6935963364701632, 0.5268461990595612],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_12": {
-                    "rel_pos": [0.6935963364701632, 0.6150789576802509],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_13": {
-                    "rel_pos": [0.6935963364701632, 0.7033117163009405],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_14": {
-                    "rel_pos": [0.6935963364701632, 0.79154447492163],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_BIT_15": {
-                    "rel_pos": [0.6935963364701632, 0.8797772335423197],
-                    "rel_width": 0.09516012396694216
-                },
-                "RESULT_MASK_JOIN": {
-                    "rel_pos": [0.8256342857142855, 0.43919605911330045],
-                    "rel_width": 0.11314285714285716
-                }
-            },
-            "automatic_layout_revision": "automatic-stub-clearance-v1:c2f7446bfbac",
-            "layout_mode": "automatic"
-        },
         "ConstantValue<16>": {
             "min_aspect_ratio": 0.38,
             "aspect_ratio": 0.38
         },
-        "AddSub<16,ripple>": {
-            "min_aspect_ratio": 0.725,
-            "aspect_ratio": 0.725,
-            "automatic_layout_history": [{"revision":null, "children":{}}],
-            "children": {
-                "A_SPLIT": {
-                    "rel_pos": [0.05989839899407694, 0.2976895939494426],
-                    "rel_width": 0.08906179989230795
-                },
-                "B_SPLIT": {
-                    "rel_pos": [0.05989839899407694, 0.6506206284322013],
-                    "rel_width": 0.08906179989230795
-                },
-                "B_XOR_SUB_0": {
-                    "rel_pos": [0.17382414735897747, 0.26540902786734133],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_1": {
-                    "rel_pos": [0.17382414735897747, 0.35364178648803096],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_2": {
-                    "rel_pos": [0.17382414735897747, 0.44187454510872065],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_3": {
-                    "rel_pos": [0.17382414735897747, 0.5301073037294104],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_4": {
-                    "rel_pos": [0.17382414735897747, 0.6183400623501001],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_5": {
-                    "rel_pos": [0.17382414735897747, 0.7065728209707897],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_6": {
-                    "rel_pos": [0.17382414735897747, 0.7948055795914792],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_7": {
-                    "rel_pos": [0.17382414735897747, 0.8830383382121689],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_8": {
-                    "rel_pos": [0.28410549657473483, 0.26540902786734133],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_9": {
-                    "rel_pos": [0.28410549657473483, 0.35364178648803096],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_10": {
-                    "rel_pos": [0.28410549657473483, 0.44187454510872065],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_11": {
-                    "rel_pos": [0.28410549657473483, 0.5301073037294104],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_12": {
-                    "rel_pos": [0.28410549657473483, 0.6183400623501001],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_13": {
-                    "rel_pos": [0.28410549657473483, 0.7065728209707897],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_14": {
-                    "rel_pos": [0.28410549657473483, 0.7948055795914792],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_XOR_SUB_15": {
-                    "rel_pos": [0.28410549657473483, 0.8830383382121689],
-                    "rel_width": 0.0856073931158689
-                },
-                "B_JOIN": {
-                    "rel_pos": [0.39457683816319633, 0.2976895939494426],
-                    "rel_width": 0.08906179989230795
-                },
-                "INPUT_SIGNS": {
-                    "rel_pos": [0.39457683816319633, 0.7495099372781432],
-                    "rel_width": 0.08906179989230795
-                },
-                "ADD": {
-                    "rel_pos": [0.508692578900801, 0.3895153807349601],
-                    "rel_width": 0.08906179989230795
-                },
-                "SAME_SIGN": {
-                    "rel_pos": [0.508692578900801, 0.7565734593385676],
-                    "rel_width": 0.08906179989230795
-                },
-                "RESULT_SPLIT": {
-                    "rel_pos": [0.6228083196384057, 0.4741551111908219],
-                    "rel_width": 0.08906179989230795
-                },
-                "RESULT_SIGN_CHANGED": {
-                    "rel_pos": [0.7369240603760103, 0.5730444200367638],
-                    "rel_width": 0.08906179989230795
-                },
-                "OVERFLOW_AND": {
-                    "rel_pos": [0.851039801113615, 0.5730444200367638],
-                    "rel_width": 0.08906179989230795
-                }
-            },
-            "automatic_layout_revision": "automatic-stub-clearance-v1:283c1f90145a",
-            "layout_mode": "automatic"
-        },
-        "Adder<16,ripple>": {
+        "RippleCarryAdder<16>": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -129747,6 +128658,46 @@
             "title_bar_ratio": 0.12,
             "pin_size_ratio": 0.018,
             "boundary_area_ratio": 0.025,
+            "layout_revision": "rv32i-stages-v2",
+            "previous_default": {
+                "title_bar_ratio": 0.12,
+                "font_width_ratio": 0.1,
+                "boundary_area_ratio": 0.025,
+                "pin_size_ratio": 0.018,
+                "aspect_ratio": 0.8,
+                "min_aspect_ratio": 0.368,
+                "aspect_ratio_floor": 0.08,
+                "children": {
+                    "TABLE": {
+                        "rel_pos": [0.12063157894736842, 0.2670526315789473],
+                        "rel_width": 0.2987368421052632
+                    },
+                    "COUNTER_BITS": {
+                        "rel_pos": [0.5526923076923077, 0.47013790485829954],
+                        "rel_width": 0.0846153846153846
+                    },
+                    "BRANCH_DIRECTION": {
+                        "rel_pos": [0.7376923076923076, 0.2828846153846154],
+                        "rel_width": 0.1846153846153846
+                    },
+                    "TAKEN": {
+                        "rel_pos": [0.7376923076923076, 0.5086740890688259],
+                        "rel_width": 0.1846153846153846
+                    },
+                    "NEXT_PC_SELECT": {
+                        "rel_pos": [0.7930135338345864, 0.6944894736842105],
+                        "rel_width": 0.07397293233082708
+                    },
+                    "NO_TABLE": {
+                        "rel_pos": [0.14653846153846153, 0.4152176113360324],
+                        "rel_width": 0.17692307692307693
+                    },
+                    "STATIC_DIRECTION": {
+                        "rel_pos": [0.14653846153846153, 0.6583755060728744],
+                        "rel_width": 0.17692307692307693
+                    }
+                }
+            },
             "children": {
                 "NO_TABLE": {
                     "rel_pos": [0.14653846153846153, 0.4152176113360324],
@@ -130376,20 +129327,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:a08466d5822f",
             "layout_mode": "automatic"
         },
-        "Adder<16,prefix>": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
-            "automatic_layout_history": [{"revision":null, "children":{}}],
-            "children": {
-                "PREFIX_ADDER": {
-                    "rel_pos": [0.24412500000000004, 0.3670758196721312],
-                    "rel_width": 0.5117499999999999
-                }
-            },
-            "automatic_layout_revision": "automatic-stub-clearance-v1:a6bc792fc3a0",
-            "layout_mode": "automatic"
-        },
-        "AddSub<16,prefix>": {
+        "AddSub<16>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -130498,7 +129436,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:283c1f90145a",
             "layout_mode": "automatic"
         },
-        "ArithmeticUnit<16,prefix>": {
+        "ArithmeticUnit<16>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -130631,7 +129569,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:c2f7446bfbac",
             "layout_mode": "automatic"
         },
-        "ALU<16,extended,prefix>": {
+        "ALU<16>": {
             "min_aspect_ratio": 0.955,
             "aspect_ratio": 0.955,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -130988,20 +129926,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:da8ede3a045c",
             "layout_mode": "automatic"
         },
-        "Adder<8,prefix>": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
-            "automatic_layout_history": [{"revision":null, "children":{}}],
-            "children": {
-                "PREFIX_ADDER": {
-                    "rel_pos": [0.24412500000000004, 0.3670758196721312],
-                    "rel_width": 0.5117499999999999
-                }
-            },
-            "automatic_layout_revision": "automatic-stub-clearance-v1:a6bc792fc3a0",
-            "layout_mode": "automatic"
-        },
-        "AddSub<8,prefix>": {
+        "AddSub<8>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -131078,7 +130003,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:6eeb6e36f01f",
             "layout_mode": "automatic"
         },
-        "ArithmeticUnit<8,prefix>": {
+        "ArithmeticUnit<8>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -131179,7 +130104,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:b84e8431bf79",
             "layout_mode": "automatic"
         },
-        "ALU<8,extended,prefix>": {
+        "ALU<8>": {
             "min_aspect_ratio": 0.955,
             "aspect_ratio": 0.955,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -135653,7 +134578,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:72ef0725e678",
             "layout_mode": "automatic"
         },
-        "AddSub<32,prefix>": {
+        "AddSub<32>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -135826,7 +134751,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:7f837b89c820",
             "layout_mode": "automatic"
         },
-        "ArithmeticUnit<32,prefix>": {
+        "ArithmeticUnit<32>": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -136023,7 +134948,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:61ed587be32a",
             "layout_mode": "automatic"
         },
-        "ALU<32,extended,prefix>": {
+        "ALU<32>": {
             "min_aspect_ratio": 0.955,
             "aspect_ratio": 0.955,
             "automatic_layout_history": [{"revision":null, "children":{}}],
@@ -153604,7 +152529,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:8628083f8274",
                 "layout_mode": "automatic"
             },
-            "FFArray8[MemoryStorageBank<FFArray, 8, 4>]": {
+            "FFArray8[MemoryStorageBank<FFArray,8,4>]": {
                 "layout_mode": "automatic",
                 "children": {
                     "ADDRESS_DECODE": {
@@ -153625,7 +152550,7 @@
                     }
                 }
             },
-            "SRAM<8>[SRAMStorageBank<8, 4, 1>]": {
+            "SRAM<8>[SRAMStorageBank<8,4,1>]": {
                 "aspect_ratio": 1.02,
                 "min_aspect_ratio": 0.1,
                 "aspect_ratio_floor": 0.08,
@@ -173754,7 +172679,7 @@
                 "boundary_area_ratio": 0.025,
                 "layout_revision": "rv32i-blocks-v4"
             },
-            "ALU<32,integer,prefix,core>": {
+            "RV32IALU": {
                 "children": {
                     "LOGIC": {
                         "rel_pos": [0.06472896336061035, 0.35256686332323117],
@@ -174729,7 +173654,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:e00112799afb",
                 "layout_mode": "floorplan"
             },
-            "ALU<32,integer,prefix,core>": {
+            "RV32IALU": {
                 "children": {
                     "LOGIC": {
                         "rel_pos": [0.06472896336061035, 0.35256686332323117],
@@ -187173,7 +186098,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:8628083f8274",
                 "layout_mode": "automatic"
             },
-            "FFArray32[MemoryStorageBank<FFArray, 32, 2>]": {
+            "FFArray32[MemoryStorageBank<FFArray,32,2>]": {
                 "children": {
                     "ADDRESS_DECODE": {
                         "rel_pos": [0.0647018018018018, 0.5103329965479497],
@@ -187193,8 +186118,8 @@
                     }
                 }
             },
-            "FFArray8[MemoryStorageBank<FFArray, 8, 4>]": {},
-            "SRAM<32>[SRAMStorageBank<32, 8, 2>]": {
+            "FFArray8[MemoryStorageBank<FFArray,8,4>]": {},
+            "SRAM<32>[SRAMStorageBank<32,8,2>]": {
                 "children": {
                     "ACCESS_CONTROL": {
                         "rel_pos": [0.08352046902240323, 0.10776638913295832],
@@ -187490,7 +186415,7 @@
                     }
                 }
             },
-            "SRAM<32>[SRAMStorageBank<32, 16, 2>]": {
+            "SRAM<32>[SRAMStorageBank<32,16,2>]": {
                 "children": {
                     "ACCESS_CONTROL": {
                         "rel_pos": [0.17827258042252825, 0.0877096810602937],
@@ -187786,7 +186711,7 @@
                     }
                 }
             },
-            "CacheBankController<8>[layout-e011f11da11cc1b4]": {
+            "CacheBankController<8>[layout-49cc3644e5b8e214]": {
                 "children": {
                     "NOT_DONE": {
                         "rel_pos": [0.05581152976639035, 0.14279317328430735],
@@ -188806,7 +187731,7 @@
                     }
                 }
             },
-            "CacheBankController<32>[layout-fb6bc1577715e46b]": {
+            "CacheBankController<32>[layout-31839d4b5f1d0efb]": {
                 "children": {
                     "NOT_DONE": {
                         "rel_pos": [0.05597280939476061, 0.16285104075063003],
@@ -189566,7 +188491,7 @@
                     }
                 }
             },
-            "CacheBankController<32>[layout-85e7cc1bdeb0c22c]": {
+            "CacheBankController<32>[layout-fe469cb19fc7074c]": {
                 "children": {
                     "NOT_DONE": {
                         "rel_pos": [0.05579490680937443, 0.14280731731401192],
@@ -190731,7 +189656,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:8628083f8274",
                 "layout_mode": "automatic"
             },
-            "FFArray32[MemoryStorageBank<FFArray, 32, 1>]": {
+            "FFArray32[MemoryStorageBank<FFArray,32,1>]": {
                 "layout_mode": "automatic",
                 "children": {
                     "ADDRESS_DECODE": {
@@ -190752,7 +189677,7 @@
                     }
                 }
             },
-            "FFArray8[MemoryStorageBank<FFArray, 8, 1>]": {
+            "FFArray8[MemoryStorageBank<FFArray,8,1>]": {
                 "layout_mode": "automatic",
                 "children": {
                     "ADDRESS_DECODE": {
@@ -190773,13 +189698,13 @@
                     }
                 }
             },
-            "FFArray32[MemoryStorageBank<FFArray, 32, 2>]": {
+            "FFArray32[MemoryStorageBank<FFArray,32,2>]": {
                 "layout_mode": "automatic"
             },
-            "FFArray8[MemoryStorageBank<FFArray, 8, 4>]": {
+            "FFArray8[MemoryStorageBank<FFArray,8,4>]": {
                 "layout_mode": "automatic"
             },
-            "CacheBankController<8>[layout-2a227e72f5d08f4f]": {
+            "CacheBankController<8>[layout-42ee7f86135bdb0b]": {
                 "children": {
                     "NOT_DONE": {
                         "rel_pos": [0.056049865951742626, 0.16275956467548738],
@@ -191539,7 +190464,7 @@
                     }
                 }
             },
-            "CacheBankController<8>[layout-e011f11da11cc1b4]": {}
+            "CacheBankController<8>[layout-49cc3644e5b8e214]": {}
         },
         "5627bf74381b9d40": {
             "MemoryWord<FFArray,8>": {
@@ -260380,7 +259305,7 @@
                     }
                 }
             },
-            "ArithmeticUnit<16,ripple>": {
+            "ArithmeticUnit<16>": {
                 "children": {
                     "LOW": {
                         "rel_pos": [0.06122285714285714, 0.48556428571428567],
@@ -260636,7 +259561,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:c2f7446bfbac",
                 "layout_mode": "automatic"
             },
-            "AddSub<16,ripple>": {
+            "AddSub<16>": {
                 "children": {
                     "A_SPLIT": {
                         "rel_pos": [0.05989839899407694, 0.2976895939494426],
@@ -260844,7 +259769,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:283c1f90145a",
                 "layout_mode": "automatic"
             },
-            "Adder<16,ripple>": {
+            "RippleCarryAdder<16>": {
                 "children": {
                     "A_SPLIT": {
                         "rel_pos": [0.057155955955955955, 0.38752925056203746],
@@ -265820,7 +264745,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:d59885adc099",
                 "layout_mode": "automatic"
             },
-            "ALU<16,extended,ripple>": {},
+            "ALU<16>": {},
             "BusErrorTarget<32>": {},
             "FramebufferDisplay": {},
             "IndexedPixelSelector<32>": {},
@@ -266382,13 +265307,13 @@
             "BarrelShifter<8>": {},
             "LogicUnit<8>": {},
             "Mux<8,8>": {},
-            "Adder<8,ripple>": {},
-            "AddSub<8,ripple>": {},
-            "ArithmeticUnit<8,ripple>": {},
-            "ALUControlDecoder<extended>": {},
-            "ALU<8,extended,ripple>": {}
+            "RippleCarryAdder<8>": {},
+            "AddSub<8>": {},
+            "ArithmeticUnit<8>": {},
+            "ALUControlDecoder": {},
+            "ALU<8>": {}
         },
-        "6e35985d45ade9c7": {
+        "980aff15538fb6f1": {
             "ALUResultSelector<8>": {
                 "automatic_layout_history": [{"revision":null, "children":{}}],
                 "children": {
@@ -267073,13 +265998,13 @@
             "RV32ISingleCycleWritebackStage": {},
             "RV32IMemoryAlignmentUnit": {},
             "RV32ISingleCycleMemoryStage": {},
-            "ALUResultSelector<32,integer>": {},
-            "CompareSelect<32,integer>": {},
-            "BarrelShifter<32,integer>": {},
-            "LogicUnit<32,integer>": {},
-            "AddSub<32,integer,prefix>": {},
-            "ALUControlDecoder<integer>": {},
-            "ALU<32,integer,prefix,core>": {},
+            "RV32IALUResultSelect": {},
+            "RV32IALUCompare": {},
+            "RV32IALUShifter": {},
+            "RV32IALULogic": {},
+            "RV32IALUAddSub": {},
+            "RV32IALUControl": {},
+            "RV32IALU": {},
             "RV32ISingleCycleExecuteStage": {},
             "RV32IDecodeControlUnit": {},
             "RV32ISingleCycleDecodeStage": {},
@@ -268113,7 +267038,7 @@
                 "layout_mode": "automatic"
             }
         },
-        "7eb3e628b93137e0": {
+        "aa206b2ab46331f9": {
             "RV32IBaselineMemoryStage": {
                 "children": {
                     "CONTROL_FIELDS": {
@@ -270063,31 +268988,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:ee7de92e6c20",
                 "layout_mode": "automatic"
             },
-            "RV32IBranchPredictor[layout-0f79a9d5bba024fd]": {
-                "children": {
-                    "NO_TABLE": {
-                        "rel_pos": [0.14653846153846153, 0.4152176113360324],
-                        "rel_width": 0.17692307692307693
-                    },
-                    "STATIC_DIRECTION": {
-                        "rel_pos": [0.14653846153846153, 0.6583755060728744],
-                        "rel_width": 0.17692307692307693
-                    },
-                    "BRANCH_DIRECTION": {
-                        "rel_pos": [0.7376923076923076, 0.2828846153846154],
-                        "rel_width": 0.1846153846153846
-                    },
-                    "TAKEN": {
-                        "rel_pos": [0.7376923076923076, 0.5086740890688259],
-                        "rel_width": 0.1846153846153846
-                    },
-                    "NEXT_PC_SELECT": {
-                        "rel_pos": [0.7930135338345864, 0.6944894736842105],
-                        "rel_width": 0.07397293233082708
-                    }
-                }
-            },
-            "RV32IBranchPredictor[layout-f3f48600ccb0c342]": {
+            "RV32IBranchPredictor[layout-d0889a5e1d77967c]": {
                 "children": {
                     "NO_TABLE": {
                         "rel_pos": [0.14653846153846153, 0.4152176113360324],
@@ -270107,7 +269008,7 @@
                     }
                 }
             },
-            "RV32IBranchPredictor[layout-1a80b305a0cc7d5a]": {
+            "RV32IBranchPredictor[layout-cfb793e9cae852ec]": {
                 "children": {
                     "TABLE": {
                         "rel_pos": [0.12063157894736842, 0.2670526315789473],
@@ -270131,7 +269032,7 @@
                     }
                 }
             },
-            "CacheBankController<32>[layout-02f4fe44887bdb49]": {
+            "CacheBankController<32>[layout-39fdea917a61b47d]": {
                 "children": {
                     "NOT_DONE": {
                         "rel_pos": [0.05597280939476061, 0.16285104075063003],
@@ -270891,7 +269792,7 @@
                     }
                 }
             },
-            "CacheBankController<32>[layout-59fb890c93aaf58c]": {
+            "CacheBankController<32>[layout-1590f8d1a66d472c]": {
                 "children": {
                     "LOW": {
                         "rel_pos": [0.0757675340338054, 0.5177361784290913],
@@ -271803,13 +270704,13 @@
             "RV32IMemoryAlignmentUnit": {},
             "RV32ISingleCycleMemoryStage": {},
             "RV32ISingleCycleNextPCStage": {},
-            "ALUResultSelector<32,integer>": {},
-            "CompareSelect<32,integer>": {},
-            "BarrelShifter<32,integer>": {},
-            "LogicUnit<32,integer>": {},
-            "AddSub<32,integer,prefix>": {},
-            "ALUControlDecoder<integer>": {},
-            "ALU<32,integer,prefix,core>": {},
+            "RV32IALUResultSelect": {},
+            "RV32IALUCompare": {},
+            "RV32IALUShifter": {},
+            "RV32IALULogic": {},
+            "RV32IALUAddSub": {},
+            "RV32IALUControl": {},
+            "RV32IALU": {},
             "RV32ISingleCycleExecuteStage": {},
             "RV32IBaselineExecuteStage": {},
             "RV32IDecodeControlUnit": {},
@@ -271817,7 +270718,30 @@
             "RV32ISingleCycleFetchStage": {},
             "RV32IBaselineFetchStage": {},
             "RV32IBranchRecovery": {},
-            "RV32IBranchPredictor[layout-3613922161372c4f]": {},
+            "RV32IBranchPredictor[layout-3613922161372c4f]": {
+                "children": {
+                    "NO_TABLE": {
+                        "rel_pos": [0.14653846153846153, 0.4152176113360324],
+                        "rel_width": 0.17692307692307693
+                    },
+                    "STATIC_DIRECTION": {
+                        "rel_pos": [0.14653846153846153, 0.6583755060728744],
+                        "rel_width": 0.17692307692307693
+                    },
+                    "BRANCH_DIRECTION": {
+                        "rel_pos": [0.7376923076923076, 0.2828846153846154],
+                        "rel_width": 0.1846153846153846
+                    },
+                    "TAKEN": {
+                        "rel_pos": [0.7376923076923076, 0.5086740890688259],
+                        "rel_width": 0.1846153846153846
+                    },
+                    "NEXT_PC_SELECT": {
+                        "rel_pos": [0.7930135338345864, 0.6944894736842105],
+                        "rel_width": 0.07397293233082708
+                    }
+                }
+            },
             "RV32IBranchPredecode": {},
             "RV32IPredictionPath": {},
             "RV32IMemoryStage": {},
@@ -271827,7 +270751,7 @@
             "RV32IFetchStage": {}
         },
         "a852a301de56adab": {
-            "RV32IBranchPredictor[layout-0f79a9d5bba024fd]": {}
+            "RV32IBranchPredictor[layout-3613922161372c4f]": {}
         },
         "ed03f70afe360dba": {
             "ALUResultSelector<8>": {
@@ -272217,8 +271141,7 @@
                 "automatic_layout_revision": "automatic-stub-clearance-v1:c1717f909924",
                 "layout_mode": "automatic"
             },
-            "Adder<16,prefix>": {},
-            "Adder<16,ripple>": {},
+            "RippleCarryAdder<16>": {},
             "ZeroDetect<16>": {},
             "ALUFlagUnit<16>": {},
             "ALUResultSelector<16>": {},
@@ -272226,10 +271149,10 @@
             "BarrelShifter<16>": {},
             "LogicUnit<16>": {},
             "Mux<8,16>": {},
-            "AddSub<16,prefix>": {},
-            "ArithmeticUnit<16,prefix>": {},
-            "ALUControlDecoder<extended>": {},
-            "ALU<16,extended,prefix>": {},
+            "AddSub<16>": {},
+            "ArithmeticUnit<16>": {},
+            "ALUControlDecoder": {},
+            "ALU<16>": {},
             "ZeroDetect<32>": {},
             "ALUFlagUnit<32>": {},
             "ALUResultSelector<32>": {},
@@ -272237,87 +271160,79 @@
             "BarrelShifter<32>": {},
             "LogicUnit<32>": {},
             "Mux<8,32>": {},
-            "Adder<32,prefix>": {},
-            "AddSub<32,prefix>": {},
-            "ArithmeticUnit<32,prefix>": {},
-            "ALU<32,extended,prefix>": {},
+            "AddSub<32>": {},
+            "ArithmeticUnit<32>": {},
+            "ALU<32>": {},
             "ZeroDetect<8>": {},
             "ALUFlagUnit<8>": {},
             "CompareSelect<8>": {},
             "BarrelShifter<8>": {},
             "LogicUnit<8>": {},
             "Mux<8,8>": {},
-            "Adder<8,prefix>": {},
-            "AddSub<8,prefix>": {},
-            "ArithmeticUnit<8,prefix>": {},
-            "ALU<8,extended,prefix>": {}
+            "AddSub<8>": {},
+            "ArithmeticUnit<8>": {},
+            "ALU<8>": {}
         },
-        "322d573d080b862b": {
-            "Adder<32,prefix>": {}
+        "24d102cdfc99a5d1": {},
+        "d404a427614f0884": {
+            "RippleCarryAdder<8>": {}
         },
-        "2932ecf2f5068d68": {
-            "Adder<8,ripple>": {}
+        "0154a95ee8ac2827": {
+            "RippleCarryAdder<8>": {},
+            "AddSub<8>": {}
         },
-        "8242c56907b59251": {
-            "Adder<8,ripple>": {},
-            "AddSub<8,ripple>": {}
+        "55baed4cb55da977": {
+            "RV32IALUAddSub": {}
         },
-        "155100ab74e3dd95": {
-            "AddSub<32,integer,prefix>": {}
+        "f460db03758b6b34": {
+            "ALUControlDecoder": {}
         },
-        "01e02c64780689d9": {
-            "ALUControlDecoder<extended>": {}
+        "b8d5df55a6f49b98": {
+            "RV32IALUControl": {}
         },
-        "d4bf42f386e8f815": {
-            "ALUControlDecoder<integer>": {}
-        },
-        "c8de4a76f65e1783": {
-            "ALUResultSelector<32,integer>": {},
-            "CompareSelect<32,integer>": {},
-            "BarrelShifter<32,integer>": {},
-            "LogicUnit<32,integer>": {},
-            "AddSub<32,integer,prefix>": {},
-            "ALUControlDecoder<integer>": {},
-            "ALU<32,integer,prefix,core>": {}
+        "7cea21c01e018dae": {
+            "RV32IALUResultSelect": {},
+            "RV32IALUCompare": {},
+            "RV32IALUShifter": {},
+            "RV32IALULogic": {},
+            "RV32IALUAddSub": {},
+            "RV32IALUControl": {},
+            "RV32IALU": {}
         },
         "c049124b74be3073": {
-            "ALUFlagUnit<32,integer>": {},
-            "ALUResultSelector<32,integer>": {},
-            "CompareSelect<32,integer>": {},
-            "BarrelShifter<32,integer>": {},
-            "LogicUnit<32,integer>": {},
-            "AddSub<32,integer,prefix>": {},
-            "ALUControlDecoder<integer>": {},
-            "ALU<32,integer,prefix>": {}
+            "RV32IALUResultSelect": {},
+            "RV32IALUCompare": {},
+            "RV32IALUShifter": {},
+            "RV32IALULogic": {},
+            "RV32IALUAddSub": {},
+            "RV32IALUControl": {}
         },
-        "cbabd573e1618a41": {
+        "caf47888b718cb78": {
             "Mux<8,8>": {},
-            "Adder<8,ripple>": {},
-            "AddSub<8,ripple>": {},
-            "ArithmeticUnit<8,ripple>": {}
+            "RippleCarryAdder<8>": {},
+            "AddSub<8>": {},
+            "ArithmeticUnit<8>": {}
         },
-        "ed5c92399b8c7b78": {
+        "acd48ff7da7addd7": {
             "ZeroDetect<8>": {},
             "CompareSelect<8>": {}
         },
-        "8e171d0fdff09203": {
-            "CompareSelect<32,integer>": {}
+        "09c5a59769ae41ba": {
+            "RV32IALUCompare": {}
         },
         "81e433f71bf0bb74": {
             "Decoder<5>": {}
         },
-        "f5f87d6e461bb120": {
+        "8a419dd1ff3fde93": {
             "ZeroDetect<8>": {},
             "ALUFlagUnit<8>": {}
         },
-        "2550faf04c2a9a4f": {
-            "ALUFlagUnit<32,integer>": {}
-        },
-        "ed7391d73d22d3a1": {
+        "2550faf04c2a9a4f": {},
+        "20c0fc1bfc5b6e58": {
             "LogicUnit<8>": {}
         },
-        "ea91e7e6eeade145": {
-            "LogicUnit<32,integer>": {}
+        "26bf0fcf1cc69527": {
+            "RV32IALULogic": {}
         },
         "58f075fd36975edc": {
             "Mux<32,1>": {}
@@ -272328,19 +271243,19 @@
         "8677c013de612f75": {
             "Mux<4,32>": {}
         },
-        "44fd3d711835bf3b": {
-            "ALUResultSelector<32,integer>": {}
+        "0778fc648b1567cf": {
+            "RV32IALUResultSelect": {}
         },
         "b3399052dc128d3a": {
             "FlipFlopCell": {},
             "Register<32>": {},
             "RegisterFile32x32": {}
         },
-        "7e1a2443997abc17": {
+        "94c81904d544e407": {
             "BarrelShifter<8>": {}
         },
-        "1fe628ab383a5763": {
-            "BarrelShifter<32,integer>": {}
+        "fb68ed8b32647f92": {
+            "RV32IALUShifter": {}
         },
         "69f3c69960c74aa2": {
             "ZeroDetect<32>": {}
@@ -293699,170 +292614,6 @@
             },
             "layout_revision": "register-file-ff-v1"
         },
-        "register-file32x32": {
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.07,
-                "aspect_ratio": 1.07
-            },
-            "aspect_ratio": 1.07,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.1,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "RD_DECODER": {
-                    "rel_pos": [0.050769230769230775, 0.3364588141813917],
-                    "rel_width": 0.13846153846153844
-                },
-                "STORAGE": {
-                    "rel_pos": [0.28500000000000003, 0.42348253812100334],
-                    "rel_width": 0.3
-                },
-                "RS1_MUX": {
-                    "rel_pos": [0.6761538461538462, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "RS2_MUX": {
-                    "rel_pos": [0.8461538461538461, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "X0_ZERO": {
-                    "rel_pos": [0.7207692307692307, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                }
-            },
-            "layout_revision": "register-file-ff-v1"
-        },
-        "register-file-32x32": {
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.07,
-                "aspect_ratio": 1.07
-            },
-            "aspect_ratio": 1.07,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.1,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "RD_DECODER": {
-                    "rel_pos": [0.050769230769230775, 0.3364588141813917],
-                    "rel_width": 0.13846153846153844
-                },
-                "STORAGE": {
-                    "rel_pos": [0.28500000000000003, 0.42348253812100334],
-                    "rel_width": 0.3
-                },
-                "RS1_MUX": {
-                    "rel_pos": [0.6761538461538462, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "RS2_MUX": {
-                    "rel_pos": [0.8461538461538461, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "X0_ZERO": {
-                    "rel_pos": [0.7207692307692307, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                }
-            },
-            "layout_revision": "register-file-ff-v1"
-        },
-        "registerfile32x32": {
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.07,
-                "aspect_ratio": 1.07
-            },
-            "aspect_ratio": 1.07,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.1,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "RD_DECODER": {
-                    "rel_pos": [0.050769230769230775, 0.3364588141813917],
-                    "rel_width": 0.13846153846153844
-                },
-                "STORAGE": {
-                    "rel_pos": [0.28500000000000003, 0.42348253812100334],
-                    "rel_width": 0.3
-                },
-                "RS1_MUX": {
-                    "rel_pos": [0.6761538461538462, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "RS2_MUX": {
-                    "rel_pos": [0.8461538461538461, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "FULL_WRITE_MASK": {
-                    "rel_pos": [0.31076923076923074, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                },
-                "X0_ZERO": {
-                    "rel_pos": [0.7207692307692307, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                }
-            },
-            "layout_revision": "register-file-ff-v1"
-        },
-        "rf32x32": {
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.07,
-                "aspect_ratio": 1.07
-            },
-            "aspect_ratio": 1.07,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.1,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "RD_DECODER": {
-                    "rel_pos": [0.050769230769230775, 0.3364588141813917],
-                    "rel_width": 0.13846153846153844
-                },
-                "STORAGE": {
-                    "rel_pos": [0.28500000000000003, 0.42348253812100334],
-                    "rel_width": 0.3
-                },
-                "RS1_MUX": {
-                    "rel_pos": [0.6761538461538462, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "RS2_MUX": {
-                    "rel_pos": [0.8461538461538461, 0.38739339362064396],
-                    "rel_width": 0.1076923076923077
-                },
-                "FULL_WRITE_MASK": {
-                    "rel_pos": [0.31076923076923074, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                },
-                "X0_ZERO": {
-                    "rel_pos": [0.7207692307692307, 0.15418735101592948],
-                    "rel_width": 0.13846153846153844
-                }
-            },
-            "layout_revision": "register-file-ff-v1"
-        },
         "rv32i-pattern-matcher@a820042d14b9ff55": {
             "children": {
                 "INPUT_SPLIT": {
@@ -298363,7 +297114,7 @@
             },
             "layout_revision": "rv32i-blocks-v4"
         },
-        "addsub-integer-prefix-w32": {
+        "rv32i-alu-add-sub": {
             "previous_default": {
                 "title_bar_ratio": 0.12,
                 "font_width_ratio": 0.1,
@@ -299226,7 +297977,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:b809f32ee212",
             "layout_mode": "automatic"
         },
-        "compare-integer-w32": {
+        "rv32i-alu-compare": {
             "previous_default": {
                 "title_bar_ratio": 0.12,
                 "font_width_ratio": 0.1,
@@ -299372,81 +298123,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:edaa93fb0b2f",
             "layout_mode": "automatic"
         },
-        "flags-integer-w32": {
-            "previous_default": {
-                "title_bar_ratio": 0.12,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.025,
-                "pin_size_ratio": 0.018,
-                "min_aspect_ratio": 0.08,
-                "aspect_ratio": 0.725,
-                "children": {
-                    "CARRY_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.22284358296936563],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "OVERFLOW_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "RESULT_ZERO": {
-                        "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "SIGN_BIT": {
-                        "rel_pos": [0.3807683790965456, 0.798773426285086],
-                        "rel_width": 0.23846324180690875
-                    }
-                },
-                "aspect_ratio_floor": 0.08
-            },
-            "aspect_ratio": 0.725,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.12,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "CARRY_VALID": {
-                    "rel_pos": [0.399875, 0.2358887931034483],
-                    "rel_width": 0.20025
-                },
-                "OVERFLOW_VALID": {
-                    "rel_pos": [0.399875, 0.42156120689655174],
-                    "rel_width": 0.20025
-                },
-                "RESULT_ZERO": {
-                    "rel_pos": [0.399875, 0.6231155172413794],
-                    "rel_width": 0.20025
-                },
-                "SIGN_BIT": {
-                    "rel_pos": [0.399875, 0.8087879310344828],
-                    "rel_width": 0.20025
-                }
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"CARRY_VALID":{"rel_pos":[0.3807683790965456, 0.22284358296936563],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "OVERFLOW_VALID": {
-                            "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "RESULT_ZERO": {
-                            "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "SIGN_BIT": {
-                            "rel_pos": [0.3807683790965456, 0.798773426285086],
-                            "rel_width": 0.23846324180690875
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:086b96914fdf",
-            "layout_mode": "automatic"
-        },
-        "logic-integer-w32": {
+        "rv32i-alu-logic": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -300677,7 +299354,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:2083217e5655",
             "layout_mode": "automatic"
         },
-        "shift-integer-w32": {
+        "rv32i-alu-shifter": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -303456,7 +302133,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:cfb0e61f41d7",
             "layout_mode": "automatic"
         },
-        "alu-control-integer": {
+        "rv32i-alu-control": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -303583,7 +302260,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:bdc40c36a950",
             "layout_mode": "automatic"
         },
-        "result-selector-integer-w32": {
+        "rv32i-alu-result-select": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -304437,109 +303114,6 @@
                 }
             ],
             "automatic_layout_revision": "automatic-stub-clearance-v1:cbc784de89a0",
-            "layout_mode": "automatic"
-        },
-        "alu-integer-prefix-w32": {
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.185,
-                "aspect_ratio": 1.185,
-                "children": {
-                    "LOGIC": {
-                        "rel_pos": [0.06276144144144145, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "CONTROL": {
-                        "rel_pos": [0.06276144144144145, 0.693915478769909],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "ARITHMETIC": {
-                        "rel_pos": [0.24610144144144147, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "SHIFT": {
-                        "rel_pos": [0.24610144144144147, 0.7144578439198691],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "COMPARE": {
-                        "rel_pos": [0.4294414414414414, 0.5132749458319078],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "RESULT_SELECT": {
-                        "rel_pos": [0.6127814414414414, 0.4653427604820009],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "FLAGS": {
-                        "rel_pos": [0.7961214414414414, 0.5201224008818944],
-                        "rel_width": 0.14111711711711708
-                    }
-                }
-            },
-            "children": {
-                "LOGIC": {
-                    "rel_pos": [0.0629329650092081, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "CONTROL": {
-                    "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                    "rel_width": 0.14423572744014732
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "SHIFT": {
-                    "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                    "rel_width": 0.14423572744014732
-                },
-                "COMPARE": {
-                    "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                    "rel_width": 0.14423572744014732
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                    "rel_width": 0.14423572744014732
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                    "rel_width": 0.14423572744014732
-                }
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"LOGIC":{"rel_pos":[0.0629329650092081, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "CONTROL": {
-                            "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "SHIFT": {
-                            "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "COMPARE": {
-                            "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                            "rel_width": 0.14423572744014732
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:26e8e301a5af",
             "layout_mode": "automatic"
         },
         "register32": {
@@ -306316,23 +304890,7 @@
             "pin_size_ratio": 0.04292906178489702,
             "boundary_area_ratio": 0.035
         },
-        "native-memory-container": {
-            "aspect_ratio": 1.4,
-            "min_aspect_ratio": 0.1,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.06,
-            "pin_size_ratio": 0.04292906178489702,
-            "boundary_area_ratio": 0.035
-        },
         "native-memory-device@93ce7ac0d9ebc03c": {
-            "aspect_ratio": 1.4,
-            "min_aspect_ratio": 0.1,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.06,
-            "pin_size_ratio": 0.04292906178489702,
-            "boundary_area_ratio": 0.035
-        },
-        "native-memory-container@93ce7ac0d9ebc03c": {
             "aspect_ratio": 1.4,
             "min_aspect_ratio": 0.1,
             "aspect_ratio_floor": 0.08,
@@ -402492,70 +401050,6 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:f5f1c090465d",
             "layout_mode": "automatic"
         },
-        "alu-extended-ripple-w16@763e0b8bac717d60": {
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"CONTROL":{"rel_pos":[0.06276144144144144, 0.47398915145511994],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "LOGIC": {
-                            "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "SHIFTER": {
-                            "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "COMPARE_SELECT": {
-                            "rel_pos": [0.4294414414414415, 0.507975472855054],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                            "rel_width": 0.1411171171171171
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7961214414414414, 0.507975472855054],
-                            "rel_width": 0.1411171171171171
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:5705b90615b1",
-            "layout_mode": "automatic"
-        },
         "rv32i-register-file@b3399052dc128d3a": {
             "min_aspect_ratio": 0.08,
             "aspect_ratio": 1.07,
@@ -404873,7 +403367,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:e462b9dad4b1",
             "layout_mode": "automatic"
         },
-        "adder-ripple-w8@2932ecf2f5068d68": {
+        "ripple-carry-adder-w8@d404a427614f0884": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "children": {
@@ -405094,73 +403588,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:9c0b3166141f",
             "layout_mode": "automatic"
         },
-        "alu-extended-ripple-w8@7331b01a3e3afa07": {
-            "min_aspect_ratio": 0.84,
-            "aspect_ratio": 0.84,
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "automatic_layout_history": [{"revision":null, "children":{"CONTROL":{"rel_pos":[0.06276144144144145, 0.47398915145512],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24610144144144147, 0.2748988255270978],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "LOGIC": {
-                            "rel_pos": [0.24610144144144147, 0.5334652139050045],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "SHIFTER": {
-                            "rel_pos": [0.24610144144144147, 0.7750384415829442],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "COMPARE_SELECT": {
-                            "rel_pos": [0.4294414414414414, 0.507975472855054],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6127814414414414, 0.456995990755153],
-                            "rel_width": 0.14111711711711708
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7961214414414414, 0.507975472855054],
-                            "rel_width": 0.14111711711711708
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:5705b90615b1",
-            "layout_mode": "automatic"
-        },
-        "result-selector-extended-w8@6e35985d45ade9c7": {
+        "alu-result-selector-w8@980aff15538fb6f1": {
             "children": {
                 "RESULT_OR_0_0_0": {
                     "rel_pos": [0.5420082467082468, 0.18355690636275745],
@@ -405708,7 +404136,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:c1717f909924",
             "layout_mode": "automatic"
         },
-        "alu-control-integer@d4bf42f386e8f815": {
+        "rv32i-alu-control@b8d5df55a6f49b98": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -405835,7 +404263,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:bdc40c36a950",
             "layout_mode": "automatic"
         },
-        "compare-integer-w32@8e171d0fdff09203": {
+        "rv32i-alu-compare@09c5a59769ae41ba": {
             "previous_default": {
                 "title_bar_ratio": 0.12,
                 "font_width_ratio": 0.1,
@@ -405981,7 +404409,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:edaa93fb0b2f",
             "layout_mode": "automatic"
         },
-        "result-selector-integer-w32@44fd3d711835bf3b": {
+        "rv32i-alu-result-select@0778fc648b1567cf": {
             "previous_default": {
                 "title_bar_ratio": 0.15,
                 "font_width_ratio": 0.1,
@@ -406837,81 +405265,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:cbc784de89a0",
             "layout_mode": "automatic"
         },
-        "flags-integer-w32@2550faf04c2a9a4f": {
-            "previous_default": {
-                "title_bar_ratio": 0.12,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.025,
-                "pin_size_ratio": 0.018,
-                "min_aspect_ratio": 0.08,
-                "aspect_ratio": 0.725,
-                "children": {
-                    "CARRY_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.22284358296936563],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "OVERFLOW_VALID": {
-                        "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "RESULT_ZERO": {
-                        "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                        "rel_width": 0.23846324180690875
-                    },
-                    "SIGN_BIT": {
-                        "rel_pos": [0.3807683790965456, 0.798773426285086],
-                        "rel_width": 0.23846324180690875
-                    }
-                },
-                "aspect_ratio_floor": 0.08
-            },
-            "aspect_ratio": 0.725,
-            "min_aspect_ratio": 0.08,
-            "aspect_ratio_floor": 0.08,
-            "title_bar_ratio": 0.12,
-            "pin_size_ratio": 0.018,
-            "boundary_area_ratio": 0.025,
-            "children": {
-                "CARRY_VALID": {
-                    "rel_pos": [0.399875, 0.2358887931034483],
-                    "rel_width": 0.20025
-                },
-                "OVERFLOW_VALID": {
-                    "rel_pos": [0.399875, 0.42156120689655174],
-                    "rel_width": 0.20025
-                },
-                "RESULT_ZERO": {
-                    "rel_pos": [0.399875, 0.6231155172413794],
-                    "rel_width": 0.20025
-                },
-                "SIGN_BIT": {
-                    "rel_pos": [0.399875, 0.8087879310344828],
-                    "rel_width": 0.20025
-                }
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"CARRY_VALID":{"rel_pos":[0.3807683790965456, 0.22284358296936563],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "OVERFLOW_VALID": {
-                            "rel_pos": [0.3807683790965456, 0.4085159967624691],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "RESULT_ZERO": {
-                            "rel_pos": [0.3807683790965456, 0.6131010124919826],
-                            "rel_width": 0.23846324180690875
-                        },
-                        "SIGN_BIT": {
-                            "rel_pos": [0.3807683790965456, 0.798773426285086],
-                            "rel_width": 0.23846324180690875
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:086b96914fdf",
-            "layout_mode": "automatic"
-        },
-        "adder-prefix-w32@322d573d080b862b": {
+        "parallel-prefix-adder-w32@24d102cdfc99a5d1": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "children": {
@@ -407065,7 +405419,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:c88415c27275",
             "layout_mode": "automatic"
         },
-        "addsub-integer-prefix-w32@155100ab74e3dd95": {
+        "rv32i-alu-add-sub@55baed4cb55da977": {
             "min_aspect_ratio": 0.08,
             "aspect_ratio": 0.61,
             "children": {
@@ -407928,7 +406282,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:b809f32ee212",
             "layout_mode": "automatic"
         },
-        "logic-integer-w32@ea91e7e6eeade145": {
+        "rv32i-alu-logic@26bf0fcf1cc69527": {
             "min_aspect_ratio": 0.61,
             "aspect_ratio": 0.61,
             "children": {
@@ -409435,7 +407789,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:a95f7637348e",
             "layout_mode": "automatic"
         },
-        "shift-integer-w32@1fe628ab383a5763": {
+        "rv32i-alu-shifter@fb68ed8b32647f92": {
             "min_aspect_ratio": 0.725,
             "aspect_ratio": 0.725,
             "children": {
@@ -412216,112 +410570,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:cfb0e61f41d7",
             "layout_mode": "automatic"
         },
-        "alu-integer-prefix-w32@c049124b74be3073": {
-            "min_aspect_ratio": 1.185,
-            "aspect_ratio": 1.185,
-            "children": {
-                "LOGIC": {
-                    "rel_pos": [0.0629329650092081, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "CONTROL": {
-                    "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                    "rel_width": 0.14423572744014732
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                    "rel_width": 0.14423572744014732
-                },
-                "SHIFT": {
-                    "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                    "rel_width": 0.14423572744014732
-                },
-                "COMPARE": {
-                    "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                    "rel_width": 0.14423572744014732
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                    "rel_width": 0.14423572744014732
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                    "rel_width": 0.14423572744014732
-                }
-            },
-            "previous_default": {
-                "title_bar_ratio": 0.15,
-                "font_width_ratio": 0.1,
-                "boundary_area_ratio": 0.055,
-                "pin_size_ratio": 0.1,
-                "min_aspect_ratio": 1.185,
-                "aspect_ratio": 1.185,
-                "children": {
-                    "LOGIC": {
-                        "rel_pos": [0.06276144144144145, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "CONTROL": {
-                        "rel_pos": [0.06276144144144145, 0.693915478769909],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "ARITHMETIC": {
-                        "rel_pos": [0.24610144144144147, 0.33263441289390655],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "SHIFT": {
-                        "rel_pos": [0.24610144144144147, 0.7144578439198691],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "COMPARE": {
-                        "rel_pos": [0.4294414414414414, 0.5132749458319078],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "RESULT_SELECT": {
-                        "rel_pos": [0.6127814414414414, 0.4653427604820009],
-                        "rel_width": 0.14111711711711708
-                    },
-                    "FLAGS": {
-                        "rel_pos": [0.7961214414414414, 0.5201224008818944],
-                        "rel_width": 0.14111711711711708
-                    }
-                }
-            },
-            "layout_revision": "rv32i-alu-auto-v6",
-            "automatic_layout_history": [{"revision":null, "children":{"LOGIC":{"rel_pos":[0.0629329650092081, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "CONTROL": {
-                            "rel_pos": [0.0629329650092081, 0.6925074985818743],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "ARITHMETIC": {
-                            "rel_pos": [0.24973462246777162, 0.33183173259979326],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "SHIFT": {
-                            "rel_pos": [0.24973462246777162, 0.7135038386522755],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "COMPARE": {
-                            "rel_pos": [0.4322092081031308, 0.5121696155908337],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "RESULT_SELECT": {
-                            "rel_pos": [0.6146837937384899, 0.4631781554265643],
-                            "rel_width": 0.14423572744014732
-                        },
-                        "FLAGS": {
-                            "rel_pos": [0.7971583793738489, 0.5191683956143008],
-                            "rel_width": 0.14423572744014732
-                        }
-                    }
-                }
-            ],
-            "automatic_layout_revision": "automatic-stub-clearance-v1:26e8e301a5af",
-            "layout_mode": "automatic"
-        },
-        "alu-integer-prefix-core-w32@c8de4a76f65e1783": {
+        "rv32i-alu@7cea21c01e018dae": {
             "children": {
                 "LOGIC": {
                     "rel_pos": [0.06472896336061035, 0.35256686332323117],
@@ -413986,7 +412235,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:577fc7b898c1",
             "layout_mode": "automatic"
         },
-        "rv32i-five-stage-core@7eb3e628b93137e0": {
+        "rv32i-five-stage-core@aa206b2ab46331f9": {
             "previous_default": {
                 "aspect_ratio": 0.52,
                 "title_bar_ratio": 0.045,
@@ -414305,7 +412554,7 @@
             "pin_size_ratio": 0.018,
             "boundary_area_ratio": 0.025
         },
-        "rv32i-baseline-memory@7eb3e628b93137e0": {
+        "rv32i-baseline-memory@aa206b2ab46331f9": {
             "children": {
                 "STORE_AUTHORIZED": {
                     "rel_pos": [0.23243589743589746, 0.9116484480431849],
@@ -414313,7 +412562,7 @@
                 }
             }
         },
-        "rv32i-baseline-core@7eb3e628b93137e0": {
+        "rv32i-baseline-core@aa206b2ab46331f9": {
             "previous_default": {
                 "aspect_ratio": 0.55,
                 "min_aspect_ratio": 0.08,
@@ -414484,7 +412733,7 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:a8812820e810",
             "layout_mode": "floorplan"
         },
-        "adder-prefix@ed03f70afe360dba": {
+        "parallel-prefix-adder-w16@ed03f70afe360dba": {
             "children": {
                 "PREFIX_ADDER": {
                     "rel_pos": [0.24412500000000004, 0.3670758196721312],
@@ -414493,7 +412742,7 @@
             },
             "layout_mode": "automatic"
         },
-        "adder-prefix": {
+        "parallel-prefix-adder-w16": {
             "children": {
                 "PREFIX_ADDER": {
                     "rel_pos": [0.24412500000000004, 0.3670758196721312],
@@ -414502,7 +412751,7 @@
             },
             "layout_mode": "automatic"
         },
-        "adder-prefix-w32": {
+        "parallel-prefix-adder-w32": {
             "children": {
                 "PREFIX_ADDER": {
                     "rel_pos": [0.24412500000000004, 0.3670758196721312],
@@ -414511,7 +412760,7 @@
             },
             "layout_mode": "automatic"
         },
-        "adder-ripple@ed03f70afe360dba": {
+        "ripple-carry-adder-w16@ed03f70afe360dba": {
             "children": {
                 "A_SPLIT": {
                     "rel_pos": [0.057155955955955955, 0.38752925056203746],
@@ -414592,7 +412841,7 @@
             },
             "layout_mode": "automatic"
         },
-        "adder-ripple": {
+        "ripple-carry-adder-w16": {
             "children": {
                 "A_SPLIT": {
                     "rel_pos": [0.057155955955955955, 0.38752925056203746],
@@ -414673,7 +412922,7 @@
             },
             "layout_mode": "automatic"
         },
-        "adder-ripple-w8": {
+        "ripple-carry-adder-w8": {
             "children": {
                 "A_SPLIT": {
                     "rel_pos": [0.058880720720720724, 0.38662959680992465],
@@ -414722,7 +412971,7 @@
             },
             "layout_mode": "automatic"
         },
-        "addsub-extended-ripple-w8@8242c56907b59251": {
+        "add-sub-w8@0154a95ee8ac2827": {
             "children": {
                 "A_SPLIT": {
                     "rel_pos": [0.06067268779309572, 0.3426926641402078],
@@ -414795,7 +413044,7 @@
             },
             "layout_mode": "automatic"
         },
-        "addsub-extended-ripple-w8": {
+        "add-sub-w8": {
             "children": {
                 "A_SPLIT": {
                     "rel_pos": [0.06067268779309572, 0.3426926641402078],
@@ -414934,7 +413183,7 @@
             },
             "layout_mode": "automatic"
         },
-        "alu-control-extended": {
+        "alu-control-decoder": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.05852792792792793, 0.27917263553305954],
@@ -415103,7 +413352,7 @@
             },
             "layout_mode": "automatic"
         },
-        "alu-control-extended@01e02c64780689d9": {
+        "alu-control-decoder@f460db03758b6b34": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.05852792792792793, 0.27917263553305954],
@@ -415272,73 +413521,7 @@
             },
             "layout_mode": "automatic"
         },
-        "alu-extended-ripple-w16": {
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "layout_mode": "automatic"
-        },
-        "alu-extended-ripple-w8": {
-            "children": {
-                "CONTROL": {
-                    "rel_pos": [0.06276144144144144, 0.47398915145511994],
-                    "rel_width": 0.1411171171171171
-                },
-                "ARITHMETIC": {
-                    "rel_pos": [0.24610144144144144, 0.27489882552709777],
-                    "rel_width": 0.1411171171171171
-                },
-                "LOGIC": {
-                    "rel_pos": [0.24610144144144144, 0.5334652139050045],
-                    "rel_width": 0.1411171171171171
-                },
-                "SHIFTER": {
-                    "rel_pos": [0.24610144144144144, 0.7750384415829442],
-                    "rel_width": 0.1411171171171171
-                },
-                "COMPARE_SELECT": {
-                    "rel_pos": [0.4294414414414415, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                },
-                "RESULT_SELECT": {
-                    "rel_pos": [0.6127814414414414, 0.45699599075515296],
-                    "rel_width": 0.1411171171171171
-                },
-                "FLAGS": {
-                    "rel_pos": [0.7961214414414414, 0.507975472855054],
-                    "rel_width": 0.1411171171171171
-                }
-            },
-            "layout_mode": "automatic"
-        },
-        "alu-integer-prefix-core-w32": {
+        "rv32i-alu": {
             "children": {
                 "LOGIC": {
                     "rel_pos": [0.06472896336061035, 0.35256686332323117],
@@ -415499,7 +413682,7 @@
             },
             "layout_mode": "automatic"
         },
-        "arithmetic-extended-ripple-w8": {
+        "arithmetic-unit-w8": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.06226000000000001, 0.3041568965517241],
@@ -415596,7 +413779,7 @@
             },
             "layout_mode": "automatic"
         },
-        "arithmetic-extended-ripple-w8@cbabd573e1618a41": {
+        "arithmetic-unit-w8@caf47888b718cb78": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.06226000000000001, 0.3041568965517241],
@@ -425063,7 +423246,7 @@
             },
             "layout_mode": "automatic"
         },
-        "compare-extended-w8@ed5c92399b8c7b78": {
+        "compare-select-w8@acd48ff7da7addd7": {
             "children": {
                 "ZERO": {
                     "rel_pos": [0.05948659709491548, 0.5623045512035422],
@@ -425260,7 +423443,7 @@
             },
             "layout_mode": "automatic"
         },
-        "compare-extended-w8": {
+        "compare-select-w8": {
             "children": {
                 "ZERO": {
                     "rel_pos": [0.05948659709491548, 0.5623045512035422],
@@ -434216,7 +432399,7 @@
             },
             "layout_mode": "automatic"
         },
-        "flags-extended-w8@f5f87d6e461bb120": {
+        "alu-flag-unit-w8@8a419dd1ff3fde93": {
             "children": {
                 "LOW": {
                     "rel_pos": [0.06952, 0.5260104712041884],
@@ -434253,7 +432436,7 @@
             },
             "layout_mode": "automatic"
         },
-        "flags-extended-w8": {
+        "alu-flag-unit-w8": {
             "children": {
                 "LOW": {
                     "rel_pos": [0.06952, 0.5260104712041884],
@@ -442088,7 +440271,7 @@
             },
             "layout_mode": "automatic"
         },
-        "logic-extended-w8": {
+        "logic-unit-w8": {
             "children": {
                 "ZERO": {
                     "rel_pos": [0.058712301374242985, 0.6019273543634526],
@@ -442365,7 +440548,7 @@
             },
             "layout_mode": "automatic"
         },
-        "logic-extended-w8@ed7391d73d22d3a1": {
+        "logic-unit-w8@20c0fc1bfc5b6e58": {
             "children": {
                 "ZERO": {
                     "rel_pos": [0.058712301374242985, 0.6019273543634526],
@@ -446386,7 +444569,7 @@
             },
             "layout_mode": "automatic"
         },
-        "result-selector-extended-w8": {
+        "alu-result-selector-w8": {
             "children": {
                 "RESULT_SOURCE_0": {
                     "rel_pos": [0.05798516978516979, 0.18902477003540835],
@@ -446812,7 +444995,7 @@
             },
             "layout_mode": "automatic"
         },
-        "shift-extended-w8": {
+        "barrel-shifter-w8": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.05777941810882495, 0.4137391362839689],
@@ -447093,7 +445276,7 @@
             },
             "layout_mode": "automatic"
         },
-        "shift-extended-w8@7e1a2443997abc17": {
+        "barrel-shifter-w8@94c81904d544e407": {
             "children": {
                 "HIGH": {
                     "rel_pos": [0.05777941810882495, 0.4137391362839689],
@@ -454957,6 +453140,98 @@
                 }
             },
             "layout_mode": "automatic"
+        },
+        "rv32-i-fetch-stage": {
+            "min_aspect_ratio": 1.185,
+            "aspect_ratio": 1.185,
+            "children": {
+                "PC_STATE": {
+                    "rel_pos": [0.4525814536340852, 0.5342797923077736],
+                    "rel_width": 0.09483709273182957
+                },
+                "ALIGNMENT_BITS": {
+                    "rel_pos": [0.11382847614905031, 0.9448803827751197],
+                    "rel_width": 0.055676381035232723
+                },
+                "ALIGNMENT": {
+                    "rel_pos": [0.577895739348371, 0.34914794898639],
+                    "rel_width": 0.09483709273182957
+                },
+                "PC_PLUS_4": {
+                    "rel_pos": [0.2019528822055138, 0.27976766811543624],
+                    "rel_width": 0.09483709273182957
+                },
+                "NEXT_PC_MUX": {
+                    "rel_pos": [0.3272671679197995, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "PC_OUTPUT_MUX": {
+                    "rel_pos": [0.577895739348371, 0.7332170352040438],
+                    "rel_width": 0.09483709273182957
+                },
+                "INSTRUCTION_OUTPUT_MUX": {
+                    "rel_pos": [0.2019528822055138, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "STATUS_OUTPUT_MUX": {
+                    "rel_pos": [0.8285243107769422, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "ZERO": {
+                    "rel_pos": [0.07663859649122809, 0.8395883564396223],
+                    "rel_width": 0.09483709273182957
+                },
+                "STATUS_PACK": {
+                    "rel_pos": [0.7032100250626567, 0.5158725928745914],
+                    "rel_width": 0.09483709273182957
+                }
+            }
+        },
+        "rv32-i-fetch-stage@d6de8e32d1e34b33": {
+            "min_aspect_ratio": 1.185,
+            "aspect_ratio": 1.185,
+            "children": {
+                "PC_STATE": {
+                    "rel_pos": [0.4525814536340852, 0.5342797923077736],
+                    "rel_width": 0.09483709273182957
+                },
+                "ALIGNMENT_BITS": {
+                    "rel_pos": [0.11382847614905031, 0.9448803827751197],
+                    "rel_width": 0.055676381035232723
+                },
+                "ALIGNMENT": {
+                    "rel_pos": [0.577895739348371, 0.34914794898639],
+                    "rel_width": 0.09483709273182957
+                },
+                "PC_PLUS_4": {
+                    "rel_pos": [0.2019528822055138, 0.27976766811543624],
+                    "rel_width": 0.09483709273182957
+                },
+                "NEXT_PC_MUX": {
+                    "rel_pos": [0.3272671679197995, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "PC_OUTPUT_MUX": {
+                    "rel_pos": [0.577895739348371, 0.7332170352040438],
+                    "rel_width": 0.09483709273182957
+                },
+                "INSTRUCTION_OUTPUT_MUX": {
+                    "rel_pos": [0.2019528822055138, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "STATUS_OUTPUT_MUX": {
+                    "rel_pos": [0.8285243107769422, 0.5388815921660691],
+                    "rel_width": 0.09483709273182957
+                },
+                "ZERO": {
+                    "rel_pos": [0.07663859649122809, 0.8395883564396223],
+                    "rel_width": 0.09483709273182957
+                },
+                "STATUS_PACK": {
+                    "rel_pos": [0.7032100250626567, 0.5158725928745914],
+                    "rel_width": 0.09483709273182957
+                }
+            }
         }
     }
 }

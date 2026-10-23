@@ -117,7 +117,6 @@ nav:
       - 2.4. Comparison and Selection: alu/2.4.md
       - 2.5. Flags: alu/2.5.md
       - 2.6. Complete ALU: alu/2.6.md
-      - 2.7. Integer Datapath: alu/2.7.md
   - Memories:
       - 3.1. Memory Architecture: memory/architecture.md
       - 3.2. Shared Building Blocks: memory/building-blocks.md
@@ -238,7 +237,7 @@ nav:
           - rv32i/4.3/index.md
           - 4.3.1. Register&lt;W&gt;: rv32i/4.3/register.md
           - 4.3.2. Register File: rv32i/4.3/register-file.md
-          - 4.3.3. ALU Configuration: rv32i/4.3/alu.md
+          - 4.3.3. RV32I ALU: rv32i/4.3/alu.md
           - 4.3.4. Instruction Decoder: rv32i/4.3/instruction-decoder.md
           - 4.3.5. Memory Access: rv32i/4.3/memory-access.md
           - 4.3.6. Execution Control and Status: rv32i/4.3/execution-status.md

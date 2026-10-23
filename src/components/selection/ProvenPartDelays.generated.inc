@@ -15912,6 +15912,58 @@
     };
     return t;
 }()},
+{"rv32i.alu.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.structural";
+    t.arcs = {
+        Arc{"A", "EQ", {11, 27}},
+        Arc{"A", "LT_SIGNED", {6, 22}},
+        Arc{"A", "LT_UNSIGNED", {16, 21}},
+        Arc{"A", "OUT", {6, 28}},
+        Arc{"B", "EQ", {13, 29}},
+        Arc{"B", "LT_SIGNED", {8, 24}},
+        Arc{"B", "LT_UNSIGNED", {18, 23}},
+        Arc{"B", "OUT", {3, 30}},
+        Arc{"OP", "EQ", {4, 33}},
+        Arc{"OP", "LT_SIGNED", {4, 28}},
+        Arc{"OP", "LT_UNSIGNED", {4, 27}},
+        Arc{"OP", "OUT", {5, 34}},
+    };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 29}}, {"A", "OUT", {6, 25}}, {"B", "OUT", {3, 27}}, };
+    t.arcs_by_control[1] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 31}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 25}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 27}}, };
+    t.arcs_by_control[2] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[3] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[4] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[5] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[6] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[7] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[8] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 34}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 28}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 30}}, };
+    t.arcs_by_control[9] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 33}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 27}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 29}}, };
+    t.arcs_by_control[10] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 6}}, };
+    t.arcs_by_control[11] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"B", "OUT", {3, 3}}, };
+    t.arcs_by_control[12] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[13] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[14] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[15] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[16] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[17] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[18] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[19] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[20] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[21] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[22] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[23] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[24] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[25] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[26] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[27] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[28] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[29] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[30] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[31] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    return t;
+}()},
 {"rv32i.baseline.control.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.baseline.control.structural";
@@ -26981,247 +27033,45 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"word.adder.32.prefix.behavioral", [] {
+{"word.add-sub.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.adder.32.prefix.structural";
+    t.evidence = "proven on word.add-sub.8.structural";
     t.arcs = {
-        Arc{"A", "Cout", {14, 19}},
-        Arc{"A", "Sum", {3, 19}},
-        Arc{"B", "Cout", {14, 19}},
-        Arc{"B", "Sum", {3, 19}},
-        Arc{"Cin", "Cout", {2, 2}},
-        Arc{"Cin", "Sum", {1, 3}},
+        Arc{"A", "C_OUT", {10, 13}},
+        Arc{"A", "OUT", {3, 13}},
+        Arc{"A", "OVERFLOW", {3, 16}},
+        Arc{"B", "C_OUT", {12, 15}},
+        Arc{"B", "OUT", {5, 15}},
+        Arc{"B", "OVERFLOW", {5, 18}},
+        Arc{"C_IN", "C_OUT", {2, 2}},
+        Arc{"C_IN", "OUT", {1, 3}},
+        Arc{"C_IN", "OVERFLOW", {6, 6}},
+        Arc{"SUB", "C_OUT", {11, 14}},
+        Arc{"SUB", "OUT", {4, 14}},
+        Arc{"SUB", "OVERFLOW", {4, 17}},
     };
     return t;
 }()},
-{"word.adder.8.ripple.behavioral", [] {
+{"word.alu-control-decoder.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.adder.8.ripple.structural";
+    t.evidence = "proven on word.alu-control-decoder.structural";
     t.arcs = {
-        Arc{"A", "Cout", {3, 18}},
-        Arc{"A", "Sum", {3, 17}},
-        Arc{"B", "Cout", {3, 18}},
-        Arc{"B", "Sum", {3, 17}},
-        Arc{"Cin", "Cout", {16, 16}},
-        Arc{"Cin", "Sum", {1, 15}},
-    };
-    return t;
-}()},
-{"word.addsub.32.integer.prefix.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.addsub.32.integer.prefix.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {14, 19}},
-        Arc{"A", "OUT", {3, 19}},
-        Arc{"A", "OVERFLOW", {15, 20}},
-        Arc{"B", "CARRY_OUT", {16, 21}},
-        Arc{"B", "OUT", {5, 21}},
-        Arc{"B", "OVERFLOW", {17, 22}},
-        Arc{"SUB", "CARRY_OUT", {2, 20}},
-        Arc{"SUB", "OUT", {1, 20}},
-        Arc{"SUB", "OVERFLOW", {3, 21}},
-    };
-    return t;
-}()},
-{"word.addsub.8.ripple.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.addsub.8.ripple.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {3, 18}},
-        Arc{"A", "OUT", {3, 17}},
-        Arc{"A", "OVERFLOW", {3, 20}},
-        Arc{"B", "CARRY_OUT", {5, 20}},
-        Arc{"B", "OUT", {5, 19}},
-        Arc{"B", "OVERFLOW", {5, 22}},
-        Arc{"C_IN", "CARRY_OUT", {16, 16}},
-        Arc{"C_IN", "OUT", {1, 15}},
-        Arc{"C_IN", "OVERFLOW", {18, 18}},
-        Arc{"SUB", "CARRY_OUT", {4, 19}},
-        Arc{"SUB", "OUT", {4, 18}},
-        Arc{"SUB", "OVERFLOW", {4, 21}},
-    };
-    return t;
-}()},
-{"word.alu.32.integer.prefix.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.32.integer.prefix.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {15, 20}},
-        Arc{"A", "EQ", {11, 27}},
-        Arc{"A", "LT_SIGNED", {6, 22}},
-        Arc{"A", "LT_UNSIGNED", {16, 21}},
-        Arc{"A", "NEGATIVE", {6, 25}},
-        Arc{"A", "OUT", {6, 28}},
-        Arc{"A", "OVERFLOW", {16, 21}},
-        Arc{"A", "ZERO", {13, 35}},
-        Arc{"B", "CARRY_OUT", {17, 22}},
-        Arc{"B", "EQ", {13, 29}},
-        Arc{"B", "LT_SIGNED", {8, 24}},
-        Arc{"B", "LT_UNSIGNED", {18, 23}},
-        Arc{"B", "NEGATIVE", {3, 27}},
-        Arc{"B", "OUT", {3, 30}},
-        Arc{"B", "OVERFLOW", {18, 23}},
-        Arc{"B", "ZERO", {10, 37}},
-        Arc{"OP", "CARRY_OUT", {4, 26}},
-        Arc{"OP", "EQ", {4, 33}},
-        Arc{"OP", "LT_SIGNED", {4, 28}},
-        Arc{"OP", "LT_UNSIGNED", {4, 27}},
-        Arc{"OP", "NEGATIVE", {5, 31}},
-        Arc{"OP", "OUT", {5, 34}},
-        Arc{"OP", "OVERFLOW", {4, 27}},
-        Arc{"OP", "ZERO", {12, 41}},
-    };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "CARRY_OUT", {4, 24}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 29}}, {"OP", "OUT", {5, 29}}, {"OP", "OVERFLOW", {4, 25}}, {"OP", "ZERO", {12, 36}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "NEGATIVE", {6, 25}}, {"A", "OUT", {6, 25}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 32}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "NEGATIVE", {3, 27}}, {"B", "OUT", {3, 27}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 34}}, };
-    t.arcs_by_control[1] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 31}}, {"OP", "OUT", {5, 31}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 38}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "NEGATIVE", {6, 25}}, {"A", "OUT", {6, 25}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 32}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "NEGATIVE", {3, 27}}, {"B", "OUT", {3, 27}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 34}}, };
-    t.arcs_by_control[2] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
-    t.arcs_by_control[3] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
-    t.arcs_by_control[4] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
-    t.arcs_by_control[5] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
-    t.arcs_by_control[6] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
-    t.arcs_by_control[7] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
-    t.arcs_by_control[8] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 34}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 41}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 28}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 35}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 30}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 37}}, };
-    t.arcs_by_control[9] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 33}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 40}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 27}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 34}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 29}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 36}}, };
-    t.arcs_by_control[10] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 6}}, {"A", "OUT", {6, 6}}, {"A", "ZERO", {13, 13}}, };
-    t.arcs_by_control[11] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"B", "NEGATIVE", {3, 3}}, {"B", "OUT", {3, 3}}, {"B", "ZERO", {10, 10}}, };
-    t.arcs_by_control[12] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, };
-    t.arcs_by_control[13] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, };
-    t.arcs_by_control[14] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, };
-    t.arcs_by_control[15] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, };
-    t.arcs_by_control[16] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[17] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[18] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[19] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[20] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[21] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[22] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[23] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[24] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[25] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[26] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[27] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[28] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[29] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[30] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    t.arcs_by_control[31] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
-    return t;
-}()},
-{"word.alu.32.integer.prefix.core.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.32.integer.prefix.core.structural";
-    t.arcs = {
-        Arc{"A", "EQ", {11, 27}},
-        Arc{"A", "LT_SIGNED", {6, 22}},
-        Arc{"A", "LT_UNSIGNED", {16, 21}},
-        Arc{"A", "OUT", {6, 28}},
-        Arc{"B", "EQ", {13, 29}},
-        Arc{"B", "LT_SIGNED", {8, 24}},
-        Arc{"B", "LT_UNSIGNED", {18, 23}},
-        Arc{"B", "OUT", {3, 30}},
-        Arc{"OP", "EQ", {4, 33}},
-        Arc{"OP", "LT_SIGNED", {4, 28}},
-        Arc{"OP", "LT_UNSIGNED", {4, 27}},
-        Arc{"OP", "OUT", {5, 34}},
-    };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 29}}, {"A", "OUT", {6, 25}}, {"B", "OUT", {3, 27}}, };
-    t.arcs_by_control[1] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 31}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 25}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 27}}, };
-    t.arcs_by_control[2] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
-    t.arcs_by_control[3] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
-    t.arcs_by_control[4] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
-    t.arcs_by_control[5] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
-    t.arcs_by_control[6] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
-    t.arcs_by_control[7] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
-    t.arcs_by_control[8] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 34}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 28}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 30}}, };
-    t.arcs_by_control[9] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 33}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 27}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 29}}, };
-    t.arcs_by_control[10] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 6}}, };
-    t.arcs_by_control[11] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"B", "OUT", {3, 3}}, };
-    t.arcs_by_control[12] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
-    t.arcs_by_control[13] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
-    t.arcs_by_control[14] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
-    t.arcs_by_control[15] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
-    t.arcs_by_control[16] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[17] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[18] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[19] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[20] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[21] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[22] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[23] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[24] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[25] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[26] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[27] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[28] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[29] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[30] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    t.arcs_by_control[31] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
-    return t;
-}()},
-{"word.alu.8.extended.ripple.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.8.extended.ripple.structural";
-    t.arcs = {
-        Arc{"A", "CARRY", {12, 30}},
-        Arc{"A", "NEGATIVE", {6, 47}},
-        Arc{"A", "OUT", {4, 45}},
-        Arc{"A", "OVERFLOW", {12, 31}},
-        Arc{"A", "ZERO", {9, 50}},
-        Arc{"B", "CARRY", {6, 30}},
-        Arc{"B", "NEGATIVE", {6, 47}},
-        Arc{"B", "OUT", {4, 45}},
-        Arc{"B", "OVERFLOW", {14, 31}},
-        Arc{"B", "ZERO", {9, 50}},
-        Arc{"C_IN", "CARRY", {9, 25}},
-        Arc{"C_IN", "NEGATIVE", {30, 42}},
-        Arc{"C_IN", "OUT", {14, 40}},
-        Arc{"C_IN", "OVERFLOW", {26, 26}},
-        Arc{"C_IN", "ZERO", {19, 45}},
-        Arc{"OP", "CARRY", {7, 46}},
+        Arc{"OP", "ARITHMETIC_ENABLE", {5, 12}},
+        Arc{"OP", "ARITH_OP", {3, 15}},
+        Arc{"OP", "COMPARE_ENABLE", {5, 12}},
+        Arc{"OP", "COMPARE_OP", {5, 8}},
         Arc{"OP", "INVALID_OP", {5, 8}},
-        Arc{"OP", "NEGATIVE", {9, 63}},
-        Arc{"OP", "OUT", {7, 61}},
-        Arc{"OP", "OVERFLOW", {6, 47}},
-        Arc{"OP", "ZERO", {12, 66}},
+        Arc{"OP", "LOCAL_OP", {1, 1}},
+        Arc{"OP", "LOGIC_ENABLE", {5, 12}},
+        Arc{"OP", "PASS_A_ENABLE", {4, 5}},
+        Arc{"OP", "PASS_B_ENABLE", {4, 5}},
+        Arc{"OP", "SHIFT_ENABLE", {5, 10}},
     };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "CARRY", {7, 40}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 27}}, {"A", "NEGATIVE", {6, 32}}, {"A", "OUT", {4, 30}}, {"A", "OVERFLOW", {12, 28}}, {"A", "ZERO", {9, 35}}, {"B", "CARRY", {6, 29}}, {"B", "NEGATIVE", {6, 34}}, {"B", "OUT", {4, 32}}, {"B", "OVERFLOW", {14, 30}}, {"B", "ZERO", {9, 37}}, };
-    t.arcs_by_control[1] = {{"OP", "CARRY", {7, 44}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 49}}, {"OP", "OUT", {7, 47}}, {"OP", "OVERFLOW", {6, 45}}, {"OP", "ZERO", {12, 52}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, {"C_IN", "CARRY", {9, 25}}, {"C_IN", "NEGATIVE", {30, 30}}, {"C_IN", "OUT", {14, 28}}, {"C_IN", "OVERFLOW", {26, 26}}, {"C_IN", "ZERO", {19, 33}}, };
-    t.arcs_by_control[2] = {{"OP", "CARRY", {7, 42}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 47}}, {"OP", "OUT", {7, 45}}, {"OP", "OVERFLOW", {6, 43}}, {"OP", "ZERO", {12, 50}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, };
-    t.arcs_by_control[3] = {{"OP", "CARRY", {7, 44}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 49}}, {"OP", "OUT", {7, 47}}, {"OP", "OVERFLOW", {6, 45}}, {"OP", "ZERO", {12, 52}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, {"C_IN", "CARRY", {9, 25}}, {"C_IN", "NEGATIVE", {30, 30}}, {"C_IN", "OUT", {14, 28}}, {"C_IN", "OVERFLOW", {26, 26}}, {"C_IN", "ZERO", {19, 33}}, };
-    t.arcs_by_control[4] = {{"OP", "CARRY", {7, 40}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, };
-    t.arcs_by_control[5] = {{"OP", "CARRY", {7, 43}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 48}}, {"OP", "OUT", {7, 46}}, {"OP", "OVERFLOW", {6, 44}}, {"OP", "ZERO", {12, 51}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, };
-    t.arcs_by_control[6] = {{"OP", "CARRY", {7, 41}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 46}}, {"OP", "OUT", {7, 44}}, {"OP", "OVERFLOW", {6, 42}}, {"OP", "ZERO", {12, 49}}, {"A", "CARRY", {12, 30}}, {"A", "NEGATIVE", {6, 35}}, {"A", "OUT", {4, 33}}, {"A", "OVERFLOW", {12, 31}}, {"A", "ZERO", {9, 38}}, };
-    t.arcs_by_control[7] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 8}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
-    t.arcs_by_control[8] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
-    t.arcs_by_control[9] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
-    t.arcs_by_control[10] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
-    t.arcs_by_control[11] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, };
-    t.arcs_by_control[12] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
-    t.arcs_by_control[13] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
-    t.arcs_by_control[14] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
-    t.arcs_by_control[15] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
-    t.arcs_by_control[16] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
-    t.arcs_by_control[17] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
-    t.arcs_by_control[18] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 20}}, {"A", "OUT", {4, 18}}, {"A", "ZERO", {9, 23}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
-    t.arcs_by_control[19] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 27}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 32}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
-    t.arcs_by_control[20] = {{"OP", "CARRY", {7, 17}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 25}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 30}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 20}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
-    t.arcs_by_control[21] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 60}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 65}}, {"A", "OUT", {4, 42}}, {"A", "ZERO", {9, 47}}, {"B", "OUT", {4, 44}}, {"B", "ZERO", {9, 49}}, };
-    t.arcs_by_control[22] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 53}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 58}}, {"A", "OUT", {4, 38}}, {"A", "ZERO", {9, 43}}, {"B", "OUT", {4, 40}}, {"B", "ZERO", {9, 45}}, };
-    t.arcs_by_control[23] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 21}}, {"OP", "OUT", {7, 57}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 62}}, {"A", "OUT", {4, 40}}, {"A", "ZERO", {9, 45}}, {"B", "OUT", {4, 42}}, {"B", "ZERO", {9, 47}}, };
-    t.arcs_by_control[24] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 56}}, {"OP", "OUT", {7, 54}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 59}}, {"A", "NEGATIVE", {6, 43}}, {"A", "OUT", {4, 41}}, {"A", "ZERO", {9, 46}}, {"B", "NEGATIVE", {6, 45}}, {"B", "OUT", {4, 43}}, {"B", "ZERO", {9, 48}}, };
-    t.arcs_by_control[25] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 58}}, {"OP", "OUT", {7, 56}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 61}}, {"A", "NEGATIVE", {6, 43}}, {"A", "OUT", {4, 41}}, {"A", "ZERO", {9, 46}}, {"B", "NEGATIVE", {6, 45}}, {"B", "OUT", {4, 43}}, {"B", "ZERO", {9, 48}}, };
-    t.arcs_by_control[26] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 56}}, {"OP", "OUT", {7, 54}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 59}}, {"A", "NEGATIVE", {6, 45}}, {"A", "OUT", {4, 43}}, {"A", "ZERO", {9, 48}}, {"B", "NEGATIVE", {6, 47}}, {"B", "OUT", {4, 45}}, {"B", "ZERO", {9, 50}}, };
-    t.arcs_by_control[27] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 58}}, {"OP", "OUT", {7, 56}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 61}}, {"A", "NEGATIVE", {6, 45}}, {"A", "OUT", {4, 43}}, {"A", "ZERO", {9, 48}}, {"B", "NEGATIVE", {6, 47}}, {"B", "OUT", {4, 45}}, {"B", "ZERO", {9, 50}}, };
-    t.arcs_by_control[28] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 6}}, {"A", "OUT", {4, 4}}, {"A", "ZERO", {9, 9}}, };
-    t.arcs_by_control[29] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, {"B", "NEGATIVE", {6, 6}}, {"B", "OUT", {4, 4}}, {"B", "ZERO", {9, 9}}, };
-    t.arcs_by_control[30] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, };
-    t.arcs_by_control[31] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
     return t;
 }()},
-{"word.aluflagunit.8.behavioral", [] {
+{"word.alu-flag-unit.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.aluflagunit.8.structural";
+    t.evidence = "proven on word.alu-flag-unit.8.structural";
     t.arcs = {
         Arc{"ARITHMETIC", "CARRY", {2, 2}},
         Arc{"ARITHMETIC", "OVERFLOW", {1, 1}},
@@ -27234,9 +27084,9 @@
     };
     return t;
 }()},
-{"word.aluresultselector.8.behavioral", [] {
+{"word.alu-result-selector.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.aluresultselector.8.structural";
+    t.evidence = "proven on word.alu-result-selector.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {4, 4}},
         Arc{"ARITHMETIC_ENABLE", "OUT", {4, 4}},
@@ -27253,40 +27103,90 @@
     };
     return t;
 }()},
-{"word.arithmeticunit.8.ripple.behavioral", [] {
+{"word.alu.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.arithmeticunit.8.ripple.structural";
+    t.evidence = "proven on word.alu.8.structural";
     t.arcs = {
-        Arc{"A", "CARRY", {11, 28}},
-        Arc{"A", "OUT", {12, 28}},
-        Arc{"A", "OVERFLOW", {11, 30}},
-        Arc{"B", "CARRY", {13, 28}},
-        Arc{"B", "OUT", {14, 28}},
-        Arc{"B", "OVERFLOW", {13, 30}},
-        Arc{"C_IN", "CARRY", {23, 23}},
-        Arc{"C_IN", "OUT", {9, 23}},
-        Arc{"C_IN", "OVERFLOW", {25, 25}},
-        Arc{"OP", "CARRY", {5, 29}},
+        Arc{"A", "CARRY", {12, 25}},
+        Arc{"A", "NEGATIVE", {6, 43}},
+        Arc{"A", "OUT", {4, 41}},
+        Arc{"A", "OVERFLOW", {12, 27}},
+        Arc{"A", "ZERO", {9, 46}},
+        Arc{"B", "CARRY", {6, 25}},
+        Arc{"B", "NEGATIVE", {6, 43}},
+        Arc{"B", "OUT", {4, 41}},
+        Arc{"B", "OVERFLOW", {14, 27}},
+        Arc{"B", "ZERO", {9, 46}},
+        Arc{"C_IN", "CARRY", {9, 11}},
+        Arc{"C_IN", "NEGATIVE", {18, 30}},
+        Arc{"C_IN", "OUT", {14, 28}},
+        Arc{"C_IN", "OVERFLOW", {14, 14}},
+        Arc{"C_IN", "ZERO", {19, 33}},
+        Arc{"OP", "CARRY", {7, 41}},
+        Arc{"OP", "INVALID_OP", {5, 8}},
+        Arc{"OP", "NEGATIVE", {9, 59}},
+        Arc{"OP", "OUT", {7, 57}},
+        Arc{"OP", "OVERFLOW", {6, 43}},
+        Arc{"OP", "ZERO", {12, 62}},
+    };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "CARRY", {7, 36}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 42}}, {"OP", "OUT", {7, 40}}, {"OP", "OVERFLOW", {6, 38}}, {"OP", "ZERO", {12, 45}}, {"A", "CARRY", {12, 23}}, {"A", "NEGATIVE", {6, 29}}, {"A", "OUT", {4, 27}}, {"A", "OVERFLOW", {12, 25}}, {"A", "ZERO", {9, 32}}, {"B", "CARRY", {6, 25}}, {"B", "NEGATIVE", {6, 31}}, {"B", "OUT", {4, 29}}, {"B", "OVERFLOW", {14, 27}}, {"B", "ZERO", {9, 34}}, };
+    t.arcs_by_control[1] = {{"OP", "CARRY", {7, 39}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 23}}, {"A", "NEGATIVE", {6, 29}}, {"A", "OUT", {4, 27}}, {"A", "OVERFLOW", {12, 25}}, {"A", "ZERO", {9, 32}}, {"B", "CARRY", {6, 25}}, {"B", "NEGATIVE", {6, 31}}, {"B", "OUT", {4, 29}}, {"B", "OVERFLOW", {14, 27}}, {"B", "ZERO", {9, 34}}, {"C_IN", "CARRY", {9, 11}}, {"C_IN", "NEGATIVE", {18, 18}}, {"C_IN", "OUT", {14, 16}}, {"C_IN", "OVERFLOW", {14, 14}}, {"C_IN", "ZERO", {19, 21}}, };
+    t.arcs_by_control[2] = {{"OP", "CARRY", {7, 37}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 43}}, {"OP", "OUT", {7, 41}}, {"OP", "OVERFLOW", {6, 39}}, {"OP", "ZERO", {12, 46}}, {"A", "CARRY", {12, 23}}, {"A", "NEGATIVE", {6, 29}}, {"A", "OUT", {4, 27}}, {"A", "OVERFLOW", {12, 25}}, {"A", "ZERO", {9, 32}}, {"B", "CARRY", {6, 25}}, {"B", "NEGATIVE", {6, 31}}, {"B", "OUT", {4, 29}}, {"B", "OVERFLOW", {14, 27}}, {"B", "ZERO", {9, 34}}, };
+    t.arcs_by_control[3] = {{"OP", "CARRY", {7, 39}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 23}}, {"A", "NEGATIVE", {6, 29}}, {"A", "OUT", {4, 27}}, {"A", "OVERFLOW", {12, 25}}, {"A", "ZERO", {9, 32}}, {"B", "CARRY", {6, 25}}, {"B", "NEGATIVE", {6, 31}}, {"B", "OUT", {4, 29}}, {"B", "OVERFLOW", {14, 27}}, {"B", "ZERO", {9, 34}}, {"C_IN", "CARRY", {9, 11}}, {"C_IN", "NEGATIVE", {18, 18}}, {"C_IN", "OUT", {14, 16}}, {"C_IN", "OVERFLOW", {14, 14}}, {"C_IN", "ZERO", {19, 21}}, };
+    t.arcs_by_control[4] = {{"OP", "CARRY", {7, 35}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 41}}, {"OP", "OUT", {7, 39}}, {"OP", "OVERFLOW", {6, 37}}, {"OP", "ZERO", {12, 44}}, {"A", "CARRY", {12, 21}}, {"A", "NEGATIVE", {6, 28}}, {"A", "OUT", {4, 26}}, {"A", "OVERFLOW", {12, 24}}, {"A", "ZERO", {9, 31}}, };
+    t.arcs_by_control[5] = {{"OP", "CARRY", {7, 38}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 43}}, {"OP", "OUT", {7, 41}}, {"OP", "OVERFLOW", {6, 39}}, {"OP", "ZERO", {12, 46}}, {"A", "CARRY", {12, 22}}, {"A", "NEGATIVE", {6, 29}}, {"A", "OUT", {4, 27}}, {"A", "OVERFLOW", {12, 25}}, {"A", "ZERO", {9, 32}}, };
+    t.arcs_by_control[6] = {{"OP", "CARRY", {7, 35}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 41}}, {"OP", "OUT", {7, 39}}, {"OP", "OVERFLOW", {6, 37}}, {"OP", "ZERO", {12, 44}}, {"A", "CARRY", {12, 23}}, {"A", "NEGATIVE", {6, 30}}, {"A", "OUT", {4, 28}}, {"A", "OVERFLOW", {12, 26}}, {"A", "ZERO", {9, 33}}, };
+    t.arcs_by_control[7] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 8}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
+    t.arcs_by_control[8] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[9] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[10] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[11] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, };
+    t.arcs_by_control[12] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[13] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[14] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[15] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
+    t.arcs_by_control[16] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[17] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[18] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 20}}, {"A", "OUT", {4, 18}}, {"A", "ZERO", {9, 23}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[19] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 27}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 32}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[20] = {{"OP", "CARRY", {7, 17}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 25}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 30}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 20}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[21] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 56}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 61}}, {"A", "OUT", {4, 38}}, {"A", "ZERO", {9, 43}}, {"B", "OUT", {4, 40}}, {"B", "ZERO", {9, 45}}, };
+    t.arcs_by_control[22] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 48}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 53}}, {"A", "OUT", {4, 33}}, {"A", "ZERO", {9, 38}}, {"B", "OUT", {4, 35}}, {"B", "ZERO", {9, 40}}, };
+    t.arcs_by_control[23] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 21}}, {"OP", "OUT", {7, 53}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 58}}, {"A", "OUT", {4, 36}}, {"A", "ZERO", {9, 41}}, {"B", "OUT", {4, 38}}, {"B", "ZERO", {9, 43}}, };
+    t.arcs_by_control[24] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 51}}, {"OP", "OUT", {7, 49}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 54}}, {"A", "NEGATIVE", {6, 38}}, {"A", "OUT", {4, 36}}, {"A", "ZERO", {9, 41}}, {"B", "NEGATIVE", {6, 40}}, {"B", "OUT", {4, 38}}, {"B", "ZERO", {9, 43}}, };
+    t.arcs_by_control[25] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 53}}, {"OP", "OUT", {7, 51}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 56}}, {"A", "NEGATIVE", {6, 38}}, {"A", "OUT", {4, 36}}, {"A", "ZERO", {9, 41}}, {"B", "NEGATIVE", {6, 40}}, {"B", "OUT", {4, 38}}, {"B", "ZERO", {9, 43}}, };
+    t.arcs_by_control[26] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 52}}, {"OP", "OUT", {7, 50}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 55}}, {"A", "NEGATIVE", {6, 41}}, {"A", "OUT", {4, 39}}, {"A", "ZERO", {9, 44}}, {"B", "NEGATIVE", {6, 43}}, {"B", "OUT", {4, 41}}, {"B", "ZERO", {9, 46}}, };
+    t.arcs_by_control[27] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 54}}, {"OP", "OUT", {7, 52}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 57}}, {"A", "NEGATIVE", {6, 41}}, {"A", "OUT", {4, 39}}, {"A", "ZERO", {9, 44}}, {"B", "NEGATIVE", {6, 43}}, {"B", "OUT", {4, 41}}, {"B", "ZERO", {9, 46}}, };
+    t.arcs_by_control[28] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 6}}, {"A", "OUT", {4, 4}}, {"A", "ZERO", {9, 9}}, };
+    t.arcs_by_control[29] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, {"B", "NEGATIVE", {6, 6}}, {"B", "OUT", {4, 4}}, {"B", "ZERO", {9, 9}}, };
+    t.arcs_by_control[30] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, };
+    t.arcs_by_control[31] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
+    return t;
+}()},
+{"word.arithmetic-unit.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.arithmetic-unit.8.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {18, 23}},
+        Arc{"A", "OUT", {12, 24}},
+        Arc{"A", "OVERFLOW", {11, 26}},
+        Arc{"B", "CARRY", {20, 23}},
+        Arc{"B", "OUT", {14, 24}},
+        Arc{"B", "OVERFLOW", {13, 26}},
+        Arc{"C_IN", "CARRY", {9, 9}},
+        Arc{"C_IN", "OUT", {9, 11}},
+        Arc{"C_IN", "OVERFLOW", {13, 13}},
+        Arc{"OP", "CARRY", {5, 24}},
         Arc{"OP", "INVALID_OP", {3, 7}},
-        Arc{"OP", "OUT", {5, 29}},
-        Arc{"OP", "OVERFLOW", {5, 31}},
+        Arc{"OP", "OUT", {5, 25}},
+        Arc{"OP", "OVERFLOW", {5, 27}},
     };
     return t;
 }()},
-{"word.barrelshifter.32.integer.behavioral", [] {
+{"word.barrel-shifter.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.barrelshifter.32.integer.structural";
-    t.arcs = {
-        Arc{"A", "OUT", {7, 15}},
-        Arc{"ARITHMETIC", "OUT", {6, 14}},
-        Arc{"B", "OUT", {5, 14}},
-        Arc{"LEFT", "OUT", {2, 15}},
-    };
-    return t;
-}()},
-{"word.barrelshifter.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.barrelshifter.8.structural";
+    t.evidence = "proven on word.barrel-shifter.8.structural";
     t.arcs = {
         Arc{"A", "CARRY", {10, 10}},
         Arc{"A", "OUT", {9, 14}},
@@ -27298,9 +27198,9 @@
     };
     return t;
 }()},
-{"word.compareselect.8.behavioral", [] {
+{"word.compare-select.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.compareselect.8.structural";
+    t.evidence = "proven on word.compare-select.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {9, 9}},
         Arc{"B", "OUT", {9, 9}},
@@ -27311,39 +27211,9 @@
     };
     return t;
 }()},
-{"word.control.extended.behavioral", [] {
+{"word.logic-unit.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.control.extended.structural";
-    t.arcs = {
-        Arc{"OP", "ARITHMETIC_ENABLE", {5, 12}},
-        Arc{"OP", "ARITH_OP", {3, 15}},
-        Arc{"OP", "COMPARE_ENABLE", {5, 12}},
-        Arc{"OP", "COMPARE_OP", {5, 8}},
-        Arc{"OP", "INVALID_OP", {5, 8}},
-        Arc{"OP", "LOCAL_OP", {1, 1}},
-        Arc{"OP", "LOGIC_ENABLE", {5, 12}},
-        Arc{"OP", "PASS_A_ENABLE", {4, 5}},
-        Arc{"OP", "PASS_B_ENABLE", {4, 5}},
-        Arc{"OP", "SHIFT_ENABLE", {5, 10}},
-    };
-    return t;
-}()},
-{"word.logicunit.32.integer.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.logicunit.32.integer.structural";
-    t.arcs = {
-        Arc{"A", "AND_OUT", {2, 2}},
-        Arc{"A", "OR_OUT", {2, 2}},
-        Arc{"A", "XOR_OUT", {2, 2}},
-        Arc{"B", "AND_OUT", {2, 2}},
-        Arc{"B", "OR_OUT", {2, 2}},
-        Arc{"B", "XOR_OUT", {2, 2}},
-    };
-    return t;
-}()},
-{"word.logicunit.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.logicunit.8.structural";
+    t.evidence = "proven on word.logic-unit.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {8, 9}},
         Arc{"B", "OUT", {8, 9}},
@@ -27351,17 +27221,104 @@
     };
     return t;
 }()},
-{"word.zerodetect.32.behavioral", [] {
+{"word.parallel-prefix-adder.16.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.zerodetect.32.structural";
+    t.evidence = "proven on word.parallel-prefix-adder.16.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {12, 16}},
+        Arc{"A", "C_SIGN", {12, 15}},
+        Arc{"A", "OUT", {3, 16}},
+        Arc{"B", "C_OUT", {12, 16}},
+        Arc{"B", "C_SIGN", {12, 15}},
+        Arc{"B", "OUT", {3, 16}},
+        Arc{"C_IN", "C_OUT", {2, 2}},
+        Arc{"C_IN", "C_SIGN", {2, 2}},
+        Arc{"C_IN", "OUT", {1, 3}},
+    };
+    return t;
+}()},
+{"word.parallel-prefix-adder.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.parallel-prefix-adder.32.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {14, 19}},
+        Arc{"A", "C_SIGN", {14, 18}},
+        Arc{"A", "OUT", {3, 19}},
+        Arc{"B", "C_OUT", {14, 19}},
+        Arc{"B", "C_SIGN", {14, 18}},
+        Arc{"B", "OUT", {3, 19}},
+        Arc{"C_IN", "C_OUT", {2, 2}},
+        Arc{"C_IN", "C_SIGN", {2, 2}},
+        Arc{"C_IN", "OUT", {1, 3}},
+    };
+    return t;
+}()},
+{"word.parallel-prefix-adder.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.parallel-prefix-adder.8.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {10, 13}},
+        Arc{"A", "C_SIGN", {10, 12}},
+        Arc{"A", "OUT", {3, 13}},
+        Arc{"B", "C_OUT", {10, 13}},
+        Arc{"B", "C_SIGN", {10, 12}},
+        Arc{"B", "OUT", {3, 13}},
+        Arc{"C_IN", "C_OUT", {2, 2}},
+        Arc{"C_IN", "C_SIGN", {2, 2}},
+        Arc{"C_IN", "OUT", {1, 3}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.16.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {3, 34}},
+        Arc{"A", "OUT", {3, 33}},
+        Arc{"B", "C_OUT", {3, 34}},
+        Arc{"B", "OUT", {3, 33}},
+        Arc{"C_IN", "C_OUT", {32, 32}},
+        Arc{"C_IN", "OUT", {1, 31}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.32.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {3, 66}},
+        Arc{"A", "OUT", {3, 65}},
+        Arc{"B", "C_OUT", {3, 66}},
+        Arc{"B", "OUT", {3, 65}},
+        Arc{"C_IN", "C_OUT", {64, 64}},
+        Arc{"C_IN", "OUT", {1, 63}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.8.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {3, 18}},
+        Arc{"A", "OUT", {3, 17}},
+        Arc{"B", "C_OUT", {3, 18}},
+        Arc{"B", "OUT", {3, 17}},
+        Arc{"C_IN", "C_OUT", {16, 16}},
+        Arc{"C_IN", "OUT", {1, 15}},
+    };
+    return t;
+}()},
+{"word.zero-detect.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.zero-detect.32.structural";
     t.arcs = {
         Arc{"A", "ZERO", {7, 7}},
     };
     return t;
 }()},
-{"word.zerodetect.8.behavioral", [] {
+{"word.zero-detect.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.zerodetect.8.structural";
+    t.evidence = "proven on word.zero-detect.8.structural";
     t.arcs = {
         Arc{"A", "ZERO", {5, 5}},
     };

@@ -100,10 +100,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as directory:
         layout_path = Path(directory) / "layout.json"
         shutil.copy2(SOURCE_LAYOUT, layout_path)
-        compare_topology("AdderRippleWidth8Test", "adder-ripple-w8", layout_path)
-        compare_topology("ALUExtendedWidth8Test", "alu-extended-ripple-w8", layout_path)
-        compare_topology("AddSubExtendedWidth8Test", "addsub-extended-ripple-w8", layout_path)
-        compare_topology("ArithmeticExtendedWidth8Test", "arithmetic-extended-ripple-w8", layout_path)
+        compare_topology("RippleCarryAdderWidth8Test", "ripple-carry-adder-w8", layout_path)
+        compare_topology("ALUWidth8ScenarioTest", "alu-width8", layout_path)
+        compare_topology("AddSubWidth8Test", "add-sub-w8", layout_path)
+        compare_topology("ArithmeticUnitWidth8Test", "arithmetic-unit-w8", layout_path)
         compare_topology("SRLatchTest", "sr-latch", layout_path)
         compare_topology("GatedDLatchTest", "gated-d-latch", layout_path)
         compare_topology("DFlipFlopTest", "dff", layout_path)

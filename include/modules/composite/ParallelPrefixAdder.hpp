@@ -1,9 +1,6 @@
 #pragma once
 
-#include "components/StructuralNetBuilder.hpp"
-#include "modules/composite/HalfAdder.hpp"
-#include "modules/utility/BitAdapter.hpp"
-#include <array>
+#include "modules/composite/WordComponent.hpp"
 
 namespace circuit::arithmetic_detail {
 // Composition of two carry transformations c' = G | (P & c).
@@ -17,24 +14,24 @@ public:
 
 class CarryPrefixLevel : public IOComponent {
 public:
-    CarryPrefixLevel(std::string name, size_t distance,size_t width=32);
+    CarryPrefixLevel(std::string name, size_t distance, size_t width = 32);
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& b) override;
 private:
-    size_t distance_,width_;
+    size_t distance_, width_;
     std::string type_;
 };
 }
 
-namespace circuit::word {
-class PrefixWord : public IOComponent {
-    size_t width_;std::string type_;
-public:PrefixWord(std::string,size_t width);
-    const char* getTypeName()const override{return type_.c_str();}
-    void buildInternals(ComponentBuilder&)override;
+// A, B, C_IN -> OUT, C_OUT, C_SIGN (the carry into bit W-1).
+// log2(W) carry-combination levels instead of a W-stage chain.
+template<size_t W> class ParallelPrefixAdder : public circuit::word::WordComponent {
+    static_assert(circuit::word::supportedWidth<W>, "ParallelPrefixAdder supports 8, 16 and 32 bits");
+public:
+    explicit ParallelPrefixAdder(std::string name)
+        : WordComponent(std::move(name), circuit::word::Unit::PrefixAdder, W) {}
 };
+
+namespace circuit::families {
+const ComponentFamily& parallelPrefixAdder(size_t width);
 }
-template<size_t W>class ParallelPrefixAdder : public circuit::word::PrefixWord {
-    static_assert(W==8 || W==16 || W==32);
-public:explicit ParallelPrefixAdder(std::string n):PrefixWord(std::move(n),W){}
-};

@@ -1,6 +1,7 @@
 #include "modules/storage/RegisterFile.hpp"
 #include "modules/device/DeviceBus.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/WordRecipes.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 
 #include "components/BasicComponent.hpp"
@@ -865,6 +866,7 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     logic::registerDecoders(*catalog);
     word::registerMuxes(*catalog);
     word::registerComponents(*catalog);
+    rv32i::registerALU(*catalog);
     device::registerWordBusComponents(*catalog);
     device::registerWordPixelSelectors(*catalog);
     catalog->freeze();

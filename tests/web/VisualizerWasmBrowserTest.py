@@ -15,12 +15,12 @@ def check_component_documentation_pattern(page, components: tuple[tuple[str, boo
     # Recorded circuits retain concrete type identities; the reference headings
     # describe the reusable family and state the recording's width separately.
     word_names = {
-        "Adder<8,ripple>": "Adder<W>", "AddSub<8,ripple>": "AddSub<W>", "ArithmeticUnit<8,ripple>": "ArithmeticUnit<W>",
+        "RippleCarryAdder<8>": "RippleCarryAdder<W>", "ParallelPrefixAdder<16>": "ParallelPrefixAdder<W>", "AddSub<8>": "AddSub<W>", "ArithmeticUnit<8>": "ArithmeticUnit<W>",
         "LogicUnit<8>": "LogicUnit<W>", "BarrelShifter<8>": "BarrelShifter<W>",
         "ZeroDetect<8>": "ZeroDetect<W>", "CompareSelect<8>": "CompareSelect<W>",
-        "ALUFlagUnit<8>": "ALUFlagUnit<W>", "ALUControlDecoder<extended>": "ALUControlDecoder",
-        "ALUResultSelector<8>": "ALUResultSelector<W>", "ALU<8,extended,ripple>": "ALU<W>",
-        "ALU<16,extended,prefix>": "ALU<W>",
+        "ALUFlagUnit<8>": "ALUFlagUnit<W>", "ALUControlDecoder": "ALUControlDecoder",
+        "ALUResultSelector<8>": "ALUResultSelector<W>", "ALU<8>": "ALU<W>",
+        "ALU<16>": "ALU<W>",
     }
     component_count = len(components)
     overview = page.locator("article table").first
@@ -41,7 +41,9 @@ def check_component_documentation_pattern(page, components: tuple[tuple[str, boo
                           ("Structural implementation", "Implementation"), ("Behavioral implementation", "Implementation"),
                           ("Embedded simulation", "Examples")):
         matches = [item for item in subheadings if item[0] == title]
-        count = sum(behavioral for _, behavioral in components) if title == "Behavioral implementation" else component_count
+        # The ALU page records structural ALU<16> and also describes compact ALU<8>.
+        count = sum(behavioral or name.startswith("ALU<") for name, behavioral in components) \
+            if title == "Behavioral implementation" else component_count
         assert matches == [[title, parent]] * count, matches
     assert not any(title in {"Binary behavioral reference", "Simulator variants", "Structural circuit"}
                    for title, _ in subheadings), subheadings
@@ -222,8 +224,8 @@ def check_alu_assembly(page, scenario: str) -> dict:
       return {type: root.type, names: units.map(c => c.name).sort(),
         widths: units.map(c => c.rect.w / root.rect.w)};
     }""")
-    names = ["CONTROL", "ARITHMETIC", "LOGIC", "RESULT_SELECT", "FLAGS"]
-    names += ["SHIFTER", "COMPARE_SELECT"] if scenario == "alu-extended-ripple-w8" else ["SHIFT", "COMPARE"]
+    names = ["CONTROL", "ARITHMETIC", "LOGIC", "RESULT_SELECT"]
+    names += ["SHIFTER", "COMPARE_SELECT", "FLAGS"] if scenario == "alu-width8" else ["SHIFT", "COMPARE"]
     assert result["names"] == sorted(names), result
     assert all(width > 0.10 for width in result["widths"]), result
     page.screenshot(path=f"/tmp/circuitsim-{scenario}-assembly.png")
@@ -285,7 +287,7 @@ def check_example_table(page, embed, scenario: str, *, behavioral=True) -> int:
     page.keyboard.press("ArrowDown")
     page.wait_for_function("selector => document.querySelector(selector).scrollTop > 0",
                            arg=f'.example-table-block[data-scenario="{scenario}"] .example-table-scroll')
-    if scenario == "flags-extended-w8":
+    if scenario == "alu-flag-unit-w8":
         page.screenshot(path="/tmp/circuitsim-example-table-desktop.png")
         original = page.viewport_size
         for width in (640, 360):
@@ -408,7 +410,7 @@ def main() -> None:
         page.on("pageerror", lambda error: page_errors.append(str(error)))
         started = perf_counter()
         page.goto(
-            f"{sys.argv[1]}?scenario=adder-ripple-w8",
+            f"{sys.argv[1]}?scenario=ripple-carry-adder-w8",
             wait_until="domcontentloaded",
             timeout=30_000,
         )
@@ -431,7 +433,7 @@ def main() -> None:
         )
         assert visible["status"] == "ready"
         assert visible["runtime"] == "wasm"
-        assert visible["selected"] == "adder-ripple-w8"
+        assert visible["selected"] == "ripple-carry-adder-w8"
         assert visible["scenarios"] > 0
         assert visible["loadingHidden"]
         assert visible["canvasWidth"] > 0
@@ -453,12 +455,13 @@ def main() -> None:
         camera_checks.append(assert_camera_framed(page, page.evaluate("app.rootId")))
         page.locator("#toggle-explorer").click()
         page.locator(".explorer-row").first.click()
-        page.locator("#scenario-select").select_option("arithmetic-extended-ripple-w8")
-        page.wait_for_function("app.scenario === 'arithmetic-extended-ripple-w8' && !app.geometryDirty")
+        page.locator("#scenario-select").select_option("arithmetic-unit-w8")
+        page.wait_for_function("app.scenario === 'arithmetic-unit-w8' && !app.geometryDirty")
         camera_checks.append(assert_camera_framed(page, page.evaluate("app.rootId")))
-        camera_checks.extend(check_focus_camera(page))
-        page.locator("#scenario-select").select_option("adder-ripple-w8")
-        page.wait_for_function("app.scenario === 'adder-ripple-w8' && !app.geometryDirty")
+        camera_checks.extend(check_focus_camera(page,
+            ("AddSub<8>", "ParallelPrefixAdder<8>", "CarryCombine", "XORGate")))
+        page.locator("#scenario-select").select_option("ripple-carry-adder-w8")
+        page.wait_for_function("app.scenario === 'ripple-carry-adder-w8' && !app.geometryDirty")
         camera_checks.append(assert_camera_framed(page, page.evaluate("app.rootId")))
 
         contracts_started = perf_counter()
@@ -477,17 +480,17 @@ def main() -> None:
                 return { ok: response.ok, status: response.status, body };
               }
 
-              const adder = await request('api/circuit?scenario=adder-ripple-w8');
+              const adder = await request('api/circuit?scenario=ripple-carry-adder-w8');
               const originalLayout = adder.body.layout;
               const changedLayout = JSON.parse(JSON.stringify(originalLayout));
               changedLayout.default_settings.wasm_browser_test_marker = 'persisted';
               // Simulate a saved layout from before the ALU<8> replacement.
-              for (const type of ['ALU<8,extended,ripple>', 'AddSub<8,ripple>', 'ArithmeticUnit<8,ripple>', 'LogicUnit<8>',
+              for (const type of ['ALU<8>', 'AddSub<8>', 'ArithmeticUnit<8>', 'LogicUnit<8>',
                 'BarrelShifter<8>', 'CompareSelect<8>', 'ALUFlagUnit<8>']) {
                 delete changedLayout.type_layouts[type];
               }
               for (const key of Object.keys(changedLayout.root_layouts || {})) {
-                if (key.startsWith('alu-extended-ripple-w8')) delete changedLayout.root_layouts[key];
+                if (key.startsWith('alu-width8')) delete changedLayout.root_layouts[key];
               }
               // A pre-regrouping saved ALU layout must not keep the old tiny
               // functional blocks or restore raw gates at the new top level.
@@ -495,9 +498,9 @@ def main() -> None:
                 OPERATION_DECODER: {rel_pos: [0.1, 0.1], rel_width: 0.01},
                 ARITHMETIC: {rel_pos: [0.5, 0.1], rel_width: 0.01},
               };
-              changedLayout.type_layouts['ALU<8,extended,ripple>'] = {children: legacyAluChildren};
+              changedLayout.type_layouts['ALU<8>'] = {children: legacyAluChildren};
               for (const key of Object.keys(originalLayout.root_layouts || {})) {
-                if (key.startsWith('alu-extended-ripple-w8@')) {
+                if (key.startsWith('alu-width8@')) {
                   changedLayout.root_layouts[key] = {...originalLayout.root_layouts[key], children: legacyAluChildren};
                 }
               }
@@ -510,7 +513,7 @@ def main() -> None:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  scenario: 'adder-ripple-w8',
+                  scenario: 'ripple-carry-adder-w8',
                   parentId: adder.body.rootId,
                   layout: changedLayout,
                 }),
@@ -589,7 +592,7 @@ def main() -> None:
                 );
                 return { ok: response.ok, body: JSON.parse(await response.text()) };
               }
-              const adder = await request('api/circuit?scenario=adder-ripple-w8');
+              const adder = await request('api/circuit?scenario=ripple-carry-adder-w8');
               const memory = await request('api/circuit?scenario=flip-flop-cell');
               const defaultLayout = await (await fetch(
                 new URL('layout.json', document.baseURI),
@@ -604,7 +607,7 @@ def main() -> None:
                 profilePersisted: memory.body.profile.revision === expectedProfileRevision
                   && memory.body.components[0].fidelity === 'behavioral',
                 restored: restored.ok,
-                newDefaultsMerged: Boolean(adder.body.layout.type_layouts['ArithmeticUnit<8,ripple>']),
+                newDefaultsMerged: Boolean(adder.body.layout.type_layouts['ArithmeticUnit<8>']),
               };
             }""",
             contracts["profileRevisionApplied"],
@@ -644,13 +647,14 @@ def main() -> None:
         )
         assert "Arithmetic Components" in embed_page.locator("h1").inner_text()
         check_component_documentation_pattern(embed_page, (
-            ("HalfAdder", False), ("FullAdder", False), ("Adder<8,ripple>", True),
-            ("AddSub<8,ripple>", True), ("ArithmeticUnit<8,ripple>", True), ("ParallelPrefixAdder<W>", False)))
+            ("HalfAdder", False), ("FullAdder", False), ("RippleCarryAdder<8>", True),
+            ("ParallelPrefixAdder<16>", True), ("AddSub<8>", True), ("ArithmeticUnit<8>", True)))
         assert embed_page.locator(".simulator-embed iframe").count() == 6
         chapter_embeds = {}
         example_row_count = 0
         for scenario, component_count in (("half-adder", 3), ("full-adder", 8),
-                                           ("adder-ripple-w8", 68), ("addsub-extended-ripple-w8", 85), ("arithmetic-extended-ripple-w8", 826)):
+                                           ("ripple-carry-adder-w8", 68), ("parallel-prefix-adder-w16", 320),
+                                           ("add-sub-w8", 156), ("arithmetic-unit-w8", 897)):
             # Each iframe is lazy-loaded below its own component tables.
             selector = (f".simulator-embed iframe[src$='scenario={scenario}'], "
                         f".simulator-embed iframe[src*='scenario={scenario}&']")
@@ -666,7 +670,7 @@ def main() -> None:
             except Exception:
                 embed_page.screenshot(path="/tmp/circuitsim-embed-failure.png")
                 raise
-            if scenario == "adder-ripple-w8":
+            if scenario == "ripple-carry-adder-w8":
                 embed_page.screenshot(path="/tmp/circuitsim-embed-compact.png")
             chapter_embeds[scenario] = stats
             example_row_count += check_example_table(embed_page, chapter_embed, scenario,
@@ -677,15 +681,15 @@ def main() -> None:
         # Each new reference page must retain the five-section component
         # pattern and expose its own recorded component scenario.
         reference_pages = (
-            ("2.2", "Logic Operations", (("logic-extended-w8", "LogicUnit<8>", 32),)),
-            ("2.3", "Shifts and Rotations", (("shift-extended-w8", "BarrelShifter<8>", 96),)),
+            ("2.2", "Logic Operations", (("logic-unit-w8", "LogicUnit<8>", 32),)),
+            ("2.3", "Shifts and Rotations", (("barrel-shifter-w8", "BarrelShifter<8>", 96),)),
             ("2.4", "Comparison and Selection", (
-                ("zero-detect-w8", "ZeroDetect<8>", 11), ("compare-extended-w8", "CompareSelect<8>", 40))),
-            ("2.5", "Flags", (("flags-extended-w8", "ALUFlagUnit<8>", 128),)),
+                ("zero-detect-w8", "ZeroDetect<8>", 11), ("compare-select-w8", "CompareSelect<8>", 40))),
+            ("2.5", "Flags", (("alu-flag-unit-w8", "ALUFlagUnit<8>", 128),)),
             ("2.6", "Complete ALU", (
-                ("alu-control-extended", "ALUControlDecoder<extended>", 32),
-                ("result-selector-extended-w8", "ALUResultSelector<8>", 66),
-                ("alu", "ALU<16,extended,prefix>", 64))),
+                ("alu-control-decoder", "ALUControlDecoder", 32),
+                ("alu-result-selector-w8", "ALUResultSelector<8>", 66),
+                ("alu", "ALU<16>", 64))),
         )
         for section, title, scenarios in reference_pages:
             embed_page.goto(urljoin(sys.argv[1], f"../alu/{section}/"),
@@ -694,7 +698,8 @@ def main() -> None:
             check_component_documentation_pattern(embed_page, tuple((kind, not kind.startswith("ALU<")) for _, kind, _ in scenarios))
             assert embed_page.locator(".simulator-embed iframe").count() == len(scenarios)
             for scenario, component_type, rows in scenarios:
-                selector = f".simulator-embed iframe[src$='scenario={scenario}']"
+                selector = (f".simulator-embed iframe[src$='scenario={scenario}'], "
+                            f".simulator-embed iframe[src*='scenario={scenario}&']")
                 embed_page.locator(selector).scroll_into_view_if_needed()
                 chapter_embed = embed_page.frame_locator(selector)
                 chapter_embed.locator("body[data-circuitsim-status='ready']").wait_for(timeout=30_000)
@@ -708,8 +713,9 @@ def main() -> None:
                 check_compact_panels(chapter_embed)
                 assert embed_page.locator(f"a.md-button[href$='scenario={scenario}']").count() == 1
                 chapter_embeds[scenario] = model
-                example_row_count += check_example_table(embed_page, chapter_embed, scenario)
-        assert example_row_count == 723  # Includes 16 half-adder and 64 full-adder four-state rows.
+                example_row_count += check_example_table(embed_page, chapter_embed, scenario,
+                    behavioral=not component_type.startswith("ALU<"))
+        assert example_row_count == 731  # All six arithmetic embeds and the remaining Chapter 2 rows.
         static_context = browser.new_context(java_script_enabled=False)
         static_page = static_context.new_page()
         static_page.goto(urljoin(sys.argv[1], "../alu/2.6/"), wait_until="domcontentloaded")
@@ -719,18 +725,19 @@ def main() -> None:
         assert page.evaluate("localStorage.getItem('circuitsim.explorer.open')") == "true"
 
         page.bring_to_front()
-        page.goto(f"{sys.argv[1]}?scenario=alu-extended-ripple-w8", wait_until="domcontentloaded", timeout=30_000)
+        page.goto(f"{sys.argv[1]}?scenario=alu-width8", wait_until="domcontentloaded", timeout=30_000)
         try:
             page.wait_for_function("['ready', 'error'].includes(document.body.dataset.circuitsimStatus)", timeout=60_000)
             assert page.locator("body").get_attribute("data-circuitsim-status") == "ready", page.locator("#loading").inner_text()
         except Exception:
             print(json.dumps({"pageErrors": page_errors, "loading": page.locator("#loading").inner_text()}))
             raise
-        assert page.locator("#scenario-select").input_value() == "alu-extended-ripple-w8"
+        assert page.locator("#scenario-select").input_value() == "alu-width8"
         # Exercise the live UI before the API-only probe replaces its worker
         # session; deferred pin requests belong to the currently rendered one.
-        camera_checks.extend(check_focus_camera(page))
-        extended_assembly = check_alu_assembly(page, "alu-extended-ripple-w8")
+        camera_checks.extend(check_focus_camera(page,
+            ("AddSub<8>", "ParallelPrefixAdder<8>", "CarryCombine", "XORGate")))
+        extended_assembly = check_alu_assembly(page, "alu-width8")
         structural_count = page.evaluate("app.components.size")
         # Real explorer interaction: collapse, persist across reload, expand.
         # Keep the default profile restored before checking the documentation.
@@ -749,34 +756,38 @@ def main() -> None:
         alu_contract = page.evaluate(
             """async () => {
               const response = await window.visualizerRequest(
-                new URL('api/circuit?scenario=alu-extended-ripple-w8', document.baseURI).toString(),
+                new URL('api/circuit?scenario=alu-width8', document.baseURI).toString(),
               );
               const payload = await response.json();
               const pins = payload.pins.filter(pin => pin.componentId === payload.rootId);
+              // Explicit fidelity overrides get a new profile fingerprint;
+              // the UI seeds its exact key from the scenario-wide root layout.
+              const rootLayout = payload.layout.root_layouts[payload.layoutKey]
+                || payload.layout.root_layouts[payload.scenario];
               return {
-                loaded: response.ok && payload.rootType === 'ALU<8,extended,ripple>',
+                loaded: response.ok && payload.rootType === 'ALU<8>',
                 opcode: pins.some(pin => pin.name === 'OP' && pin.width === 5),
                 carryInput: pins.some(pin => pin.name === 'C_IN' && pin.width === 1),
                 invalidFlag: pins.some(pin => pin.name === 'INVALID_OP' && pin.width === 1),
-                sharedAdder: payload.components.filter(component => component.type === 'Adder<8,ripple>').length === 1,
-                fullAdders: payload.components.filter(component => component.type === 'FullAdder').length === 8,
+                sharedAdder: payload.components.filter(component => component.type === 'ParallelPrefixAdder<8>').length === 1,
+                fullAdders: payload.components.filter(component => component.type === 'FullAdder').length === 0,
                 sevenBlocks: payload.components.filter(component => component.parentIndex ===
                   payload.components.findIndex(parent => parent.id === payload.rootId)).length === 7,
-                reflowedLayout: Object.keys(payload.layout.root_layouts[payload.layoutKey].children).length === 7
-                  && Object.values(payload.layout.root_layouts[payload.layoutKey].children)
+                reflowedLayout: Boolean(rootLayout) && Object.keys(rootLayout.children).length === 7
+                  && Object.values(rootLayout.children)
                     .every(child => child.rel_width > 0.06),
                 checkpoints: payload.checkpoints.length,
               };
             }"""
         )
         assert all(alu_contract.values()), alu_contract
-        page.goto(f"{sys.argv[1]}?scenario=alu-integer-prefix-w32", wait_until="domcontentloaded", timeout=30_000)
+        page.goto(f"{sys.argv[1]}?scenario=rv32i-alu", wait_until="domcontentloaded", timeout=30_000)
         page.wait_for_function("document.body.dataset.circuitsimStatus === 'ready'", timeout=60_000)
-        # ALU<32>'s optimized carry path is a prefix tree, not a ripple chain.
+        # RV32IALU's carry path is a prefix tree.
         # Keep testing nested arithmetic and gates against actual DOM bounds.
         camera_checks.extend(check_focus_camera(page,
-            ("AddSub<32,integer,prefix>", "ParallelPrefixAdder<32>", "CarryCombine", "XORGate")))
-        integer_assembly = check_alu_assembly(page, "alu-integer-prefix-w32")
+            ("RV32IALUAddSub", "ParallelPrefixAdder<32>", "CarryCombine", "XORGate")))
+        integer_assembly = check_alu_assembly(page, "rv32i-alu")
         assert not page_errors, page_errors
         assert not embed_errors, embed_errors
 
@@ -794,7 +805,7 @@ def main() -> None:
             "maxFitError": max(abs(check["fill"] - 1) for check in camera_checks),
         }
         visible["cameraControls"] = camera_controls
-        visible["alu-extended-ripple-w8"] = alu_contract
+        visible["alu-width8"] = alu_contract
         visible["aluAssemblies"] = [extended_assembly, integer_assembly]
         print(json.dumps(visible, sort_keys=True))
         browser.close()

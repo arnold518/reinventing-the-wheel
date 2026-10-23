@@ -6,7 +6,8 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <limits>
@@ -230,7 +231,7 @@ void RV32IBaselineExecuteStage::buildInternals(ComponentBuilder& b) {
     auto fields=codec(b,"CONTROL_FIELDS","CONTROL",controls,false);
     auto alu=b.add(circuit::families::RV32ISingleCycleExecuteStage,"DATAPATH");
     auto next=b.add(circuit::families::RV32ISingleCycleNextPCStage,"NEXT_PC");
-    auto pc4=b.addNewComponent<Adder<32>>("PC_PLUS_4_ADD");
+    auto pc4=b.add(circuit::families::parallelPrefixAdder(32),"PC_PLUS_4_ADD");
     auto four=b.addNewComponent<ConstantValue<32>>("FOUR",4);
     auto status=codec(b,"EXECUTION_STATUS_PACK","STATUS",{{"TARGET_BAD",1,0}},true);
     pass(w,*this,{"VALID","PC","INSTRUCTION","CONTROL","REGISTER_ADDRESSES","FETCH_STATUS"});
@@ -240,11 +241,11 @@ void RV32IBaselineExecuteStage::buildInternals(ComponentBuilder& b) {
     for(auto p:{"ALU_OP","ALU_A_SEL","ALU_B_SEL","BRANCH_TYPE","JUMP_TYPE"})
         w.connect(fields->getOutputPinDynamic(p),alu->getInputPinDynamic(p));
     input(w,*this,pc4,"IN_PC","A");w.connect(four->getOutputPin<32>("OUT"),pc4->getInputPin<32>("B"));
-    w.connect(w.constant("LOW",false),pc4->getInputPin("Cin"));
-    w.connect(pc4->getOutputPin<32>("Sum"),next->getInputPin<32>("PC_PLUS_4"));
+    w.connect(w.constant("LOW",false),pc4->getInputPin("C_IN"));
+    w.connect(pc4->getOutputPin<32>("OUT"),next->getInputPin<32>("PC_PLUS_4"));
     for(auto p:{"CONTROL_TARGET","BRANCH_TAKEN"}) w.connect(alu->getOutputPinDynamic(p),next->getInputPinDynamic(p));
     w.connect(fields->getOutputPin<2>("JUMP_TYPE"),next->getInputPin<2>("JUMP_TYPE"));
-    output(w,*this,pc4,"Sum","OUT_PC_PLUS_4");output(w,*this,alu,"ALU_RESULT","OUT_ALU_RESULT");
+    output(w,*this,pc4,"OUT","OUT_PC_PLUS_4");output(w,*this,alu,"ALU_RESULT","OUT_ALU_RESULT");
     output(w,*this,next,"NEXT_PC","OUT_NEXT_PC");
     // Store data is the captured pre-instruction RS2 value, never an ALU result.
     w.connect(getInputPin<32>("IN_RS2_VALUE"),getOutputPin<32>("OUT_STORE_DATA"));

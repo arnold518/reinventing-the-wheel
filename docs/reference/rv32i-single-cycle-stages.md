@@ -65,7 +65,7 @@ For branches it compares operands while a separate adder calculates PC+IMM.
 For JAL the target is the ALU result; for JALR it is that result with bit zero
 cleared. There is no duplicated RS1+IMM adder. Jump selection 3 produces target
 zero; branch selections 0 and 7 produce false. Comparison flags are meaningful
-for SUB/SLT/SLTU, exactly as in ALU<32,integer,prefix>; the decoder selects SUB for branches.
+for SUB/SLT/SLTU, exactly as in `RV32IALU`; the decoder selects SUB for branches.
 
 ### Memory
 

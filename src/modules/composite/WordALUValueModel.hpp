@@ -1,12 +1,15 @@
 #pragma once
 
 #include "basic/LogicValue.hpp"
-#include "modules/composite/WordDatapath.hpp"
 #include <array>
+#include <bit>
+#include <cstdint>
 
 namespace circuit::word {
-template<size_t W, AdderTopology Topology = AdderTopology::Ripple>
-struct ExtendedALUValueModel {
+// Carry network of the adder whose settled values are modeled.
+enum class Carry { Ripple, Prefix };
+template<size_t W, Carry Topology = Carry::Prefix>
+struct ALUValueModel {
 static_assert(W == 8 || W == 16 || W == 32);
 // Settled-value abstraction of the existing Chapter 2 gate networks. Keep
 // their Boolean factoring: algebraically equivalent binary expressions can
@@ -61,7 +64,7 @@ struct Arithmetic { Word out; Bit carry, overflow = L, invalid = L, carry_into_s
 static Arithmetic add(const Word& a, const Word& b, Bit carry) {
     Word sum;
     Bit carry_into_sign = L;
-    if constexpr (Topology == AdderTopology::ParallelPrefix) {
+    if constexpr (Topology == Carry::Prefix) {
         Word propagate, generate;
         for (size_t i = 0; i < W; ++i) {
             propagate[i] = lxor(a[i], b[i]);

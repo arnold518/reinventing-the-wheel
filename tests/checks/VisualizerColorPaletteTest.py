@@ -38,10 +38,10 @@ def main() -> None:
         color_for_layout_type("Mux<8,1>"),
     ) < 0.08
     for width in (8, 16, 32):
-        for topology in ("ripple", "prefix"):
+        for adder in ("RippleCarryAdder", "ParallelPrefixAdder"):
             assert circular_hue_distance(
                 color_for_layout_type("HalfAdder"),
-                color_for_layout_type(f"Adder<{width},{topology}>"),
+                color_for_layout_type(f"{adder}<{width}>"),
             ) < 0.08
     assert circular_hue_distance(
         color_for_layout_type("SRLatch"),

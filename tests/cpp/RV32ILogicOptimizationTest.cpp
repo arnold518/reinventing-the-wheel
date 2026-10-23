@@ -1,4 +1,4 @@
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "../../src/modules/composite/WordSliceBuilder.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -18,11 +18,11 @@ Bits bits(uint32_t value,unsigned width=32) {
 
 // Retain the former circuit, rather than deriving expectations from the new
 // minterms. In particular, a gate mux does NOT resolve mux(1,1,X) to 1.
-class SelectorReference : public ALUResultSelector<32> {
+class SelectorReference : public RV32IALUResultSelect {
 public:
-    using ALUResultSelector<32>::ALUResultSelector<32>;
+    using RV32IALUResultSelect::RV32IALUResultSelect;
     void buildInternals(ComponentBuilder& b) override {
-        circuit::detail::StructuralBuilder n(*this,b);
+        circuit::detail::WordSliceBuilder n(*this,b);
         auto low=n.add<Mux<8,32>>("LOW"),high=n.add<Mux<8,32>>("HIGH");
         auto half=n.add<Mux<2,32>>("HALF"),range=n.add<Mux<2,32>>("RANGE");
         auto zero=n.constant<32>("ZERO",0);
@@ -102,7 +102,7 @@ struct Comparison {
     }
 };
 void selector() {
-    Comparison c(Component::create<ALUResultSelector<32>>("FAST",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple,true}),Component::create<SelectorReference>("REFERENCE"));
+    Comparison c(Component::create<RV32IALUResultSelect>("FAST"),Component::create<SelectorReference>("REFERENCE"));
     std::mt19937 random(0x20260924);
     for(unsigned controls=0;controls<1024;++controls) for(unsigned pattern=0;pattern<4;++pattern) {
         Values in;

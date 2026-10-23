@@ -142,14 +142,13 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/WordBehavioral.cpp
     src/modules/composite/WordDatapath.cpp
     src/modules/composite/WordExtended.cpp
-    src/modules/composite/WordIntegerALU.cpp
-    src/modules/composite/WordIntegerAdder.cpp
-    src/modules/composite/WordIntegerAddSub.cpp
-    src/modules/composite/WordIntegerLogic.cpp
-    src/modules/composite/WordIntegerShift.cpp
-    src/modules/composite/WordIntegerCompare.cpp
-    src/modules/composite/WordIntegerFlags.cpp
-    src/modules/composite/WordIntegerResult.cpp
+    src/modules/composite/RippleCarryAdder.cpp
+    src/modules/rv32i/RV32IALU.cpp
+    src/modules/rv32i/RV32IALUAddSub.cpp
+    src/modules/rv32i/RV32IALULogic.cpp
+    src/modules/rv32i/RV32IALUShifter.cpp
+    src/modules/rv32i/RV32IALUCompare.cpp
+    src/modules/rv32i/RV32IALUResultSelect.cpp
     src/modules/utility/Rewire.cpp
     src/modules/utility/BitAdapter.cpp
     src/modules/utility/Constant.cpp
@@ -187,10 +186,10 @@ set(CORE_LOGIC_SOURCES
     src/tests/ComponentSelectionTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
-    src/tests/ExtendedALUTests.cpp
+    src/tests/ALUUnitTests.cpp
     src/tests/WordFidelityTests.cpp
     src/tests/ALUIntegrationTests.cpp
-    src/tests/IntegerALUTests.cpp
+    src/tests/RV32IALUTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
     src/tests/RV32IMemoryAccessTests.cpp
     src/tests/RV32IDecoderTests.cpp

@@ -18,11 +18,11 @@ Width variants use the corresponding catalog suffix; bus widths below show the r
 
 ## Behavior
 
-`HI + (BIT ? A : 0)` produces a width-limited `SUM` and one-bit `CARRY`. Inputs are combinational. The 4-bit form is the representative exhaustive slice; the 32-bit form uses the existing Adder<32,prefix> family.
+`HI + (BIT ? A : 0)` produces a width-limited `SUM` and one-bit `CARRY`. Inputs are combinational. The 4-bit form is the representative exhaustive slice; the 32-bit form uses the existing ParallelPrefixAdder<32> family.
 
 ## Internal structure
 
-Masked AND gates feed full-adder cells (4-bit) or Adder<32,prefix> (32-bit). No multiplication instruction or host multiplication executes in the component.
+Masked AND gates feed full-adder cells (4-bit) or ParallelPrefixAdder<32> (32-bit). No multiplication instruction or host multiplication executes in the component.
 
 ## Edge cases and integration
 

@@ -1,9 +1,9 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/composite/WordBuilder.hpp"
 namespace circuit::word {
-void buildALU(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
-    auto control = n.add(controlFamily(config.operations), "CONTROL");
+void buildALU(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
+    auto control = n.add(controlFamily(), "CONTROL");
     auto arith = n.addWord(Unit::Arithmetic, "ARITHMETIC");
     auto logical = n.addWord(Unit::Logic, "LOGIC");
     auto shifter = n.addWord(Unit::Shift, "SHIFTER");
@@ -44,8 +44,8 @@ void buildALU(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig
     n.finish();
 }
 
-void buildArithmetic(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildArithmetic(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto lo = n.constant<1>("LOW", 0), hi = n.constant<1>("HIGH", 1);
     auto zero = n.constantWord("ZERO"+std::to_string(width), 0), one = n.constantWord("ONE"+std::to_string(width), 1);
     auto a = n.input("A"), b = n.input("B"), op = n.input("OP"), cin = n.input("C_IN");
@@ -58,13 +58,13 @@ void buildArithmetic(IOComponent& self,ComponentBuilder& builder,size_t width,AL
     auto valid = n.invert("VALID", invalid);
     n.connect(invalid, n.output("INVALID_OP"));
     n.connect(n.maskBus("RESULT_MASK", core->getOutputPinDynamic("OUT"), valid), n.output("OUT"));
-    n.connect(n.binary<ANDGate>("CARRY_MASK", core->getOutputPin("CARRY_OUT"), valid), n.output("CARRY"));
+    n.connect(n.binary<ANDGate>("CARRY_MASK", core->getOutputPin("C_OUT"), valid), n.output("CARRY"));
     n.connect(n.binary<ANDGate>("OVERFLOW_MASK", core->getOutputPin("OVERFLOW"), valid), n.output("OVERFLOW"));
     n.finish();
 }
 
-void buildLogic(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildLogic(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto a = n.splitWord("A_SPLIT", n.input("A")), b = n.splitWord("B_SPLIT", n.input("B"));
     auto zero = n.constant<1>("ZERO", 0);
     WordBuilder::Bits result(width);
@@ -82,8 +82,8 @@ void buildLogic(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConf
     n.finish();
 }
 
-void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto a = n.splitWord("A_SPLIT", n.input("A")), b = n.splitWord("B_SPLIT", n.input("B"));
     auto lo = n.constant<1>("LOW", 0), hi = n.constant<1>("HIGH", 1), op = n.input("OP");
     auto left = n.selectBit<8>("LEFT_SELECT", {hi,lo,lo,hi,lo,lo,lo,lo}, op);
@@ -116,8 +116,8 @@ void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConf
     n.finish();
 }
 
-void buildCompare(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildCompare(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto diff = n.splitWord("DIFF_SPLIT", n.input("DIFF"));
     auto zero = n.addWord(Unit::Zero, "EQUAL");
     n.connect(n.input("DIFF"), zero->getInputPinDynamic("A"));
@@ -139,8 +139,8 @@ void buildCompare(IOComponent& self,ComponentBuilder& builder,size_t width,ALUCo
     n.finish();
 }
 
-void buildFlags(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildFlags(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto zero = n.addWord(Unit::Zero, "ZERO_DETECT");
     n.connect(n.input("RESULT"), zero->getInputPinDynamic("A"));
     n.connect(zero->getOutputPin("ZERO"), n.output("ZERO"));
@@ -154,9 +154,9 @@ void buildFlags(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConf
     n.finish();
 }
 
-void buildResult(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
+void buildResult(IOComponent& self,ComponentBuilder& builder,size_t width) {
     using Net = WordBuilder;
-    Net n(self, builder, width, config);
+    Net n(self, builder, width);
     std::array<Net::Signal, 6> enables{n.input("ARITHMETIC_ENABLE"), n.input("LOGIC_ENABLE"), n.input("SHIFT_ENABLE"), n.input("COMPARE_ENABLE"), n.input("PASS_A_ENABLE"), n.input("PASS_B_ENABLE")};
     std::array<Net::Signal, 6> sources{n.input("ARITHMETIC_RESULT"), n.input("LOGIC_RESULT"), n.input("SHIFT_RESULT"), n.input("COMPARE_RESULT"), n.input("A"), n.input("B")};
     std::array<Net::Bits, 6> words;
@@ -173,23 +173,23 @@ void buildResult(IOComponent& self,ComponentBuilder& builder,size_t width,ALUCon
     n.finish();
 }
 
-void buildAddSub(IOComponent& self,ComponentBuilder& builder,size_t width,ALUConfig config) {
-    WordBuilder n(self, builder, width, config);
+void buildAddSub(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    WordBuilder n(self, builder, width);
     auto a = n.splitWord("A_SPLIT", n.input("A"));
     auto b = n.splitWord("B_SPLIT", n.input("B"));
     for (size_t i = 0; i < width; ++i)
         b[i] = n.binary<XORGate>("B_XOR_SUB_" + std::to_string(i), b[i], n.input("SUB"));
-    auto adder = n.addWord(Unit::Adder, "ADD");
+    auto adder = n.addWord(Unit::PrefixAdder, "ADD");
     n.connect(n.input("A"), adder->getInputPinDynamic("A"));
     n.connect(n.joinWord("B_JOIN", b), adder->getInputPinDynamic("B"));
-    n.connect(n.input("C_IN"), adder->getInputPin("Cin"));
-    auto result = adder->getOutputPinDynamic("Sum");
+    n.connect(n.input("C_IN"), adder->getInputPin("C_IN"));
+    auto result = adder->getOutputPinDynamic("OUT");
     auto r = n.splitWord("RESULT_SPLIT", result);
     auto same_sign = n.invert("SAME_SIGN", n.binary<XORGate>("INPUT_SIGNS", a[width-1], b[width-1]));
     auto sign_changed = n.binary<XORGate>("RESULT_SIGN_CHANGED", a[width-1], r[width-1]);
     n.connect(n.binary<ANDGate>("OVERFLOW_AND", same_sign, sign_changed), n.output("OVERFLOW"));
     n.connect(result, n.output("OUT"));
-    n.connect(adder->getOutputPin("Cout"), n.output("CARRY_OUT"));
+    n.connect(adder->getOutputPin("C_OUT"), n.output("C_OUT"));
     n.finish();
 }
 }

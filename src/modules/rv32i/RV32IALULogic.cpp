@@ -1,12 +1,14 @@
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordBuilder.hpp"
-#include "modules/composite/ParallelPrefixAdder.hpp"
-#include "modules/composite/WordDatapath.hpp"
-#include "modules/composite/FullAdder.hpp"
-#include "modules/utility/Rewire.hpp"
-namespace circuit::word {
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/WordSliceBuilder.hpp"
+#include "modules/composite/ZeroDetect.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/Mux.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
+namespace rv32i::alu_detail {
 using OneBitPin=std::shared_ptr<Pin<>>;using SinkList=std::vector<OneBitPin>;
-template<size_t W>void integerLogic(IOComponent& root,ComponentBuilder& builder,ALUConfig config) {
+template<size_t W>void integerLogic(IOComponent& root,ComponentBuilder& builder) {
     circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<W>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<W>>("B_SPLIT");
@@ -53,7 +55,5 @@ template<size_t W>void integerLogic(IOComponent& root,ComponentBuilder& builder,
         {root.getOutputPin<W>("XOR_OUT")});
     w.finish();
 }
-void buildIntegerLogic(IOComponent& root,ComponentBuilder& b,size_t w,ALUConfig c){
-    if(w==8)integerLogic<8>(root,b,c);else if(w==16)integerLogic<16>(root,b,c);else integerLogic<32>(root,b,c);
 }
-}
+void RV32IALULogic::buildInternals(ComponentBuilder& b) { rv32i::alu_detail::integerLogic<32>(*this,b); }

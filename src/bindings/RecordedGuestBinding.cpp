@@ -1,5 +1,4 @@
 #include "components/capabilities/RegisterStateView.hpp"
-#include "modules/composite/WordDatapath.hpp"
 #include "Bindings.hpp"
 #include "visualizer/DeviceInspector.hpp"
 #include "components/Component.hpp"
@@ -24,19 +23,6 @@ void bindRecordedGuest(py::module_& m) {
         return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({id,name,parameters,{},{},{}},
             circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,selected)).root);
     },py::arg("contract"),py::arg("name"),py::arg("parameters")=circuit::ParameterMap{},py::arg("fidelity")="structural");
-    m.def("create_alu",[](const std::string& name,size_t width,const std::string& operations,
-                          const std::string& adder,bool full_flags,const std::string& fidelity){
-        using namespace circuit::word;
-        if(operations!="extended"&&operations!="integer")throw std::invalid_argument("Invalid ALU operation contract");
-        if(adder!="ripple"&&adder!="prefix")throw std::invalid_argument("Invalid ALU adder topology");
-        if(fidelity!="structural"&&fidelity!="behavioral")throw std::invalid_argument("Invalid ALU fidelity");
-        const auto& f=circuit::families::alu(width,{operations=="extended"?Operations::Extended:Operations::IntegerDatapath,
-            adder=="ripple"?AdderTopology::Ripple:AdderTopology::ParallelPrefix,full_flags});
-        const auto selected=fidelity=="structural"?circuit::Fidelity::Structural:circuit::Fidelity::Behavioral;
-        if(!f.supports(selected))throw std::invalid_argument("This ALU configuration has no requested fidelity");
-        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(f.request(name),
-            circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,selected)).root);
-    },py::arg("name"),py::arg("width"),py::arg("operations")="extended",py::arg("adder")="prefix",py::arg("full_flags")=true,py::arg("fidelity")="structural");
     m.def("supports_register_view",[](const std::shared_ptr<Component>& p){return bool(std::dynamic_pointer_cast<RegisterStateView>(p));});
     m.def("device_view_kind", &circuit::visualizer::deviceViewKind);
     m.def("component_layout_variant", &circuit::visualizer::componentLayoutVariant);

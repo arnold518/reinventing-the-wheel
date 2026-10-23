@@ -11,7 +11,7 @@ family is the configured `ALU<W>`, whether its selected implementation is:
 A parent asks for the family, not for an implementation class:
 
 ```cpp
-builder.add(circuit::families::alu(32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}), "ALU");
+builder.add(circuit::families::rv32iALU(), "ALU");
 ```
 
 One immutable `BuildProfile` is handed to the root. The same profile travels

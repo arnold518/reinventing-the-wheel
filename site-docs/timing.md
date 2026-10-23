@@ -82,7 +82,7 @@ take internally. The tables are generated for every profile by
 `part_delay_tables` and checked against the gates. The full table of the
 8-bit adder, for example:
 
-<!-- timing-table: word.adder.8.ripple.behavioral -->
+<!-- timing-table: word.ripple-carry-adder.8.behavioral -->
 
 **Delay twin.** Most compact parts also carry a flat list of their own
 gates. When their inputs change they walk that list once with the current

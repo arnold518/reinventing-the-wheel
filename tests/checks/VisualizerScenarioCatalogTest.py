@@ -17,7 +17,7 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
         descriptors = backend.get_registered_test_descriptors()
         visible = set(server.visualizable_test_names())
         for name in ('SimulatorAdvanceAndRecordTest', 'SimulatorUnwiredOutputPinHistoryTest',
-                     'IntegerALUSliceTest', 'ALUWidthContractTest', 'WidthComponentsTest'):
+                     'RV32IALUSliceTest', 'ALUWidthContractTest', 'WidthComponentsTest'):
             self.assertIn(name, backend.get_registered_test_names())
             self.assertNotIn(name, visible)
         for name in ('Memory64Kx32Test', 'MemoryBusAdapter32Test', 'Memory4x32Test',
@@ -132,7 +132,7 @@ process.stdout.write(JSON.stringify(options));
             for alias in (option['key'], option['className']):
                 self.assertEqual(catalog.registered_scenario(descriptors, alias), option['className'])
                 self.assertEqual(server.normalize_scenario(alias), option['key'])
-        for name in ('Memory64Kx32Test', 'IntegerALUSliceTest', 'unknown'):
+        for name in ('Memory64Kx32Test', 'RV32IALUSliceTest', 'unknown'):
             with self.assertRaises(ValueError):
                 catalog.registered_scenario(descriptors, name)
 

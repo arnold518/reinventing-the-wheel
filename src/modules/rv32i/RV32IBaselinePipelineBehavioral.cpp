@@ -1,9 +1,9 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "RV32IBaselinePipelineInternal.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
@@ -90,8 +90,8 @@ Values executePacket(const Values& in) {
     const auto word=get(in,"IN_CONTROL"),as=bits(word,27,3),bs=bits(word,29,3),op=bits(word,22,31);
     const auto a=as==0?get(in,"IN_RS1_VALUE"):as==1?get(in,"IN_PC"):0;
     const auto b=bs==0?get(in,"IN_RS2_VALUE"):bs==1?get(in,"IN_IMMEDIATE"):0;
-    const auto result=circuit::word::integer_value::result<32>(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
-    const bool cmp=op==circuit::word::IntegerOp::SUB||op==circuit::word::IntegerOp::SLT||op==circuit::word::IntegerOp::SLTU;
+    const auto result=::rv32i::alu_value::result<32>(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
+    const bool cmp=op==::rv32i::ALUOp::SUB||op==::rv32i::ALUOp::SLT||op==::rv32i::ALUOp::SLTU;
     const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
     const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
     const bool taken=jump||conditions[branch];

@@ -5,7 +5,7 @@
 #include "tests/RV32IMRecordedTests.hpp"
 
 #include "tests/ArithmeticLogicTests.hpp"
-#include "tests/ExtendedALUTests.hpp"
+#include "tests/ALUUnitTests.hpp"
 #include "tests/ALUIntegrationTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/ComponentSelectionTests.hpp"
@@ -16,7 +16,7 @@
 #include "tests/MemoryDeviceTests.hpp"
 #include "tests/MemoryEndpointTests.hpp"
 #include "tests/CacheTests.hpp"
-#include "tests/IntegerALUTests.hpp"
+#include "tests/RV32IALUTests.hpp"
 #include "tests/RV32IBlockStandaloneTests.hpp"
 #include "tests/RV32IMemoryAccessTests.hpp"
 #include "tests/RV32IControlTests.hpp"
@@ -175,7 +175,7 @@ void attachNonComponentMetadata(
     classify(
         entries,
         {
-            "IntegerALUSliceTest",
+            "RV32IALUSliceTest",
             "RewireValidationTest",
             "RV32IDecoderTest",
             "RV32IControlTest",
@@ -213,7 +213,7 @@ void markVisualizable(
     };
     static const std::set<std::string> headless{
         "RegisterWidthsTest", "ClockedStateBitTest", "DecoderWidth5ZeroDisabledTest",
-        "ALUWidthContractTest", "WidthComponentsTest",
+        "ALUWidthContractTest", "WidthComponentsTest", "ALUFidelityContractTest",
         "CacheReadTest", "CacheControllerLockstepTest", "TwoPortMemoryArbiterTest",
     };
     for (auto& entry : entries) {
@@ -386,34 +386,31 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Mux32Width32Test>("Mux32Width32Test"),
         entry<DecoderWidth5Test>("DecoderWidth5Test"),
         entry<DecoderWidth5ZeroDisabledTest>("DecoderWidth5ZeroDisabledTest"),
-        entry<AdderRippleWidth8Test>("AdderRippleWidth8Test"),
+        entry<RippleCarryAdderWidth8Test>("RippleCarryAdderWidth8Test"),
         entry<ZeroDetectWidth8Test>("ZeroDetectWidth8Test"),
-        entry<ALUExtendedWidth8Test>("ALUExtendedWidth8Test"),
-        entry<AddSubExtendedWidth8Test>("AddSubExtendedWidth8Test"),
-        entry<ArithmeticExtendedWidth8Test>("ArithmeticExtendedWidth8Test"),
-        entry<LogicExtendedWidth8Test>("LogicExtendedWidth8Test"),
-        entry<ShiftExtendedWidth8Test>("ShiftExtendedWidth8Test"),
-        entry<CompareExtendedWidth8Test>("CompareExtendedWidth8Test"),
-        entry<FlagsExtendedWidth8Test>("FlagsExtendedWidth8Test"),
-        entry<ExtendedALUContractTest>("ExtendedALUContractTest"),
-        entry<ExtendedALUFidelityContractTest>("ExtendedALUFidelityContractTest"),
-        entry<ALUControlExtendedTest>("ALUControlExtendedTest"),
-        entry<ResultSelectorExtendedWidth8Test>("ResultSelectorExtendedWidth8Test"),
-        entry<ALUControlIntegerTest>("ALUControlIntegerTest"),
-        entry<CompareIntegerWidth32Test>("CompareIntegerWidth32Test"),
-        entry<ResultSelectorIntegerWidth32Test>("ResultSelectorIntegerWidth32Test"),
-        entry<FlagsIntegerWidth32Test>("FlagsIntegerWidth32Test"),
+        entry<AddSubWidth8Test>("AddSubWidth8Test"),
+        entry<ArithmeticUnitWidth8Test>("ArithmeticUnitWidth8Test"),
+        entry<LogicUnitWidth8Test>("LogicUnitWidth8Test"),
+        entry<BarrelShifterWidth8Test>("BarrelShifterWidth8Test"),
+        entry<CompareSelectWidth8Test>("CompareSelectWidth8Test"),
+        entry<ALUFlagUnitWidth8Test>("ALUFlagUnitWidth8Test"),
+        entry<ALUContractTest>("ALUContractTest"),
+        entry<ALUFidelityContractTest>("ALUFidelityContractTest"),
+        entry<ALUControlDecoderTest>("ALUControlDecoderTest"),
+        entry<ALUResultSelectorWidth8Test>("ALUResultSelectorWidth8Test"),
         entry<ALUHierarchyTest>("ALUHierarchyTest"),
-        entry<AdderPrefixWidth32Test>("AdderPrefixWidth32Test"),
-        entry<AddSubIntegerWidth32Test>("AddSubIntegerWidth32Test"),
+        entry<ParallelPrefixAdderWidth32Test>("ParallelPrefixAdderWidth32Test"),
+        entry<ZeroDetectWidth32Test>("ZeroDetectWidth32Test"),
         entry<RV32IMemoryLanesTest>("RV32IMemoryLanesTest"),
         entry<RV32IMemoryRequestTest>("RV32IMemoryRequestTest"),
-        entry<LogicIntegerWidth32Test>("LogicIntegerWidth32Test"),
-        entry<ZeroDetectWidth32Test>("ZeroDetectWidth32Test"),
-        entry<ShiftIntegerWidth32Test>("ShiftIntegerWidth32Test"),
-        entry<ALUIntegerWidth32Test>("ALUIntegerWidth32Test"),
-        entry<ALUIntegerCoreWidth32Test>("ALUIntegerCoreWidth32Test"),
-        entry<IntegerALUSliceTest>("IntegerALUSliceTest"),
+        entry<RV32IALUControlTest>("RV32IALUControlTest"),
+        entry<RV32IALUAddSubTest>("RV32IALUAddSubTest"),
+        entry<RV32IALULogicTest>("RV32IALULogicTest"),
+        entry<RV32IALUShifterTest>("RV32IALUShifterTest"),
+        entry<RV32IALUCompareTest>("RV32IALUCompareTest"),
+        entry<RV32IALUResultSelectTest>("RV32IALUResultSelectTest"),
+        entry<RV32IALUTest>("RV32IALUTest"),
+        entry<RV32IALUSliceTest>("RV32IALUSliceTest"),
         entry<RV32IDecodeControlUnitTest>("RV32IDecodeControlUnitTest"),
         entry<RV32IExecutionControlStatusUnitTest>(
             "RV32IExecutionControlStatusUnitTest"),

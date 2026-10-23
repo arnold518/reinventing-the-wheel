@@ -127,7 +127,7 @@ class MemoryDeviceLayoutTest(unittest.TestCase):
                 if key.split("@")[0] == scenario:
                     for child in entry.get("children", {}).values():
                         self.assertLess(child["rel_pos"][1], 1, (key, child))
-        for kind in ("FFWord<8>", "SRAMRow<16>", "ALU<8,extended,ripple>", "Rewire"):
+        for kind in ("FFWord<8>", "SRAMRow<16>", "ALU<8>", "Rewire"):
             self.assertEqual(geometry.defaults(kind), {})
 
     def test_first_encounter_bank_layout(self):

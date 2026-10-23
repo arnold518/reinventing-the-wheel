@@ -1,10 +1,10 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "modules/storage/RegisterFileBehavioral.hpp"

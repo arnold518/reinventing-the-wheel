@@ -8,7 +8,9 @@ numbers are the ones the simulator uses.
 from pathlib import Path
 import re
 import sys
+from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -16,6 +18,29 @@ import mkdocs_timing  # noqa: E402
 
 
 class TimingTables(unittest.TestCase):
+    def test_preview_rebuild_reads_replaced_tables(self):
+        with TemporaryDirectory() as directory, patch.object(mkdocs_timing, "TABLES", Path(directory)):
+            (Path(directory) / "NoGateList.generated.inc").write_text("", encoding="utf-8")
+
+            def write_tables(key):
+                for _, filename, _ in mkdocs_timing.PROFILES:
+                    (Path(directory) / filename).write_text(
+                        '{"' + key + '", [] {\n'
+                        '    Arc{"A", "OUT", {1, 2}},\n'
+                        '}()}\n', encoding="utf-8")
+
+            try:
+                write_tables("preview.old")
+                mkdocs_timing.on_pre_build({})
+                self.assertIn("<table", mkdocs_timing.render("preview.old"))
+                write_tables("preview.new")
+                mkdocs_timing.on_pre_build({})
+                self.assertIn("<table", mkdocs_timing.render("preview.new"))
+                with self.assertRaises(ValueError):
+                    mkdocs_timing.render("preview.old")
+            finally:
+                mkdocs_timing.on_pre_build({})
+
     def test_every_stored_table_renders_in_every_profile(self):
         tables = mkdocs_timing.profiles()
         names = set(tables["unit"][0])
@@ -27,9 +52,9 @@ class TimingTables(unittest.TestCase):
                 self.assertIn("<table", mkdocs_timing.render(key))
 
     def test_known_values(self):
-        # The 8-bit adder: A -> Cout, as stored for each profile.
-        html = mkdocs_timing.render("word.adder.8.ripple.behavioral")
-        row = re.search(r"A → Cout</th>(.*?)</tr>", html).group(1)
+        # The 8-bit ripple adder: A -> C_OUT, as stored for each profile.
+        html = mkdocs_timing.render("word.ripple-carry-adder.8.behavioral")
+        row = re.search(r"A → C_OUT</th>(.*?)</tr>", html).group(1)
         self.assertEqual(re.findall(r"<td>(.*?)</td>", row), ["3–18", "102–936", "71–652"])
         # A clocked part shows clock-to-output, setup and its internal period.
         html = mkdocs_timing.render("storage.register.32.behavioral.word")
@@ -48,10 +73,10 @@ class TimingTables(unittest.TestCase):
 
     def test_selected_rows(self):
         # One chosen path: its latest change in each profile.
-        html = mkdocs_timing.render_rows("Carry | word.adder.8.ripple.behavioral | A → Cout")
+        html = mkdocs_timing.render_rows("Carry | word.ripple-carry-adder.8.behavioral | A → C_OUT")
         self.assertEqual(re.findall(r"<td>(.*?)</td>", html), ["18", "936", "652"])
         with self.assertRaises(ValueError):
-            mkdocs_timing.render_rows("Carry | word.adder.8.ripple.behavioral | A → Nothing")
+            mkdocs_timing.render_rows("Carry | word.ripple-carry-adder.8.behavioral | A → Nothing")
         with self.assertRaises(ValueError):
             mkdocs_timing.render_rows("missing separators")
         for page in sorted((ROOT / "site-docs").rglob("*.md")):
@@ -73,7 +98,7 @@ class TimingTables(unittest.TestCase):
                 paragraphs += 1
                 with self.subTest(page=str(page.relative_to(ROOT))):
                     self.assertIsNone(timing_pages.search(block), block[:80])
-        self.assertEqual(paragraphs, 17)
+        self.assertEqual(paragraphs, 16)
 
 
 if __name__ == "__main__":

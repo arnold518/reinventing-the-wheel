@@ -1,12 +1,14 @@
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordBuilder.hpp"
-#include "modules/composite/ParallelPrefixAdder.hpp"
-#include "modules/composite/WordDatapath.hpp"
-#include "modules/composite/FullAdder.hpp"
-#include "modules/utility/Rewire.hpp"
-namespace circuit::word {
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/WordSliceBuilder.hpp"
+#include "modules/composite/ZeroDetect.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/Mux.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
+namespace rv32i::alu_detail {
 using OneBitPin=std::shared_ptr<Pin<>>;using SinkList=std::vector<OneBitPin>;
-template<size_t W>void integerCompare(IOComponent& root,ComponentBuilder& builder,ALUConfig config) {
+template<size_t W>void integerCompare(IOComponent& root,ComponentBuilder& builder) {
     circuit::detail::WordSliceBuilder n(root, builder);
     std::shared_ptr<IOComponent> zero = builder.addNewComponent<ZeroDetect<W>>("ARITHMETIC_ZERO");
     n.connect(n.input("DIFF"), zero->template getInputPin<W>("A"));
@@ -28,7 +30,5 @@ template<size_t W>void integerCompare(IOComponent& root,ComponentBuilder& builde
     n.connect(n.join<W>("SLTU_JOIN", unsigned_word), n.output("SLTU_RESULT"));
     n.finish();
 }
-void buildIntegerCompare(IOComponent& root,ComponentBuilder& b,size_t w,ALUConfig c){
-    if(w==8)integerCompare<8>(root,b,c);else if(w==16)integerCompare<16>(root,b,c);else integerCompare<32>(root,b,c);
 }
-}
+void RV32IALUCompare::buildInternals(ComponentBuilder& b) { rv32i::alu_detail::integerCompare<32>(*this,b); }

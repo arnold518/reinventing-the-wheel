@@ -15912,6 +15912,58 @@
     };
     return t;
 }()},
+{"rv32i.alu.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.structural";
+    t.arcs = {
+        Arc{"A", "EQ", {391, 760}},
+        Arc{"A", "LT_SIGNED", {287, 678}},
+        Arc{"A", "LT_UNSIGNED", {307, 531}},
+        Arc{"A", "OUT", {179, 857}},
+        Arc{"B", "EQ", {475, 844}},
+        Arc{"B", "LT_SIGNED", {371, 762}},
+        Arc{"B", "LT_UNSIGNED", {391, 615}},
+        Arc{"B", "OUT", {71, 941}},
+        Arc{"OP", "EQ", {106, 970}},
+        Arc{"OP", "LT_SIGNED", {106, 888}},
+        Arc{"OP", "LT_UNSIGNED", {106, 741}},
+        Arc{"OP", "OUT", {127, 1067}},
+    };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 858}}, {"A", "OUT", {179, 703}}, {"B", "OUT", {71, 787}}, };
+    t.arcs_by_control[1] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 913}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 703}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 787}}, };
+    t.arcs_by_control[2] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 214}}, {"B", "OUT", {71, 214}}, };
+    t.arcs_by_control[3] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 215}}, {"B", "OUT", {71, 215}}, };
+    t.arcs_by_control[4] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 263}}, {"B", "OUT", {71, 263}}, };
+    t.arcs_by_control[5] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
+    t.arcs_by_control[6] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
+    t.arcs_by_control[7] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
+    t.arcs_by_control[8] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 1067}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 857}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 941}}, };
+    t.arcs_by_control[9] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 920}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 710}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 794}}, };
+    t.arcs_by_control[10] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 179}}, };
+    t.arcs_by_control[11] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"B", "OUT", {71, 71}}, };
+    t.arcs_by_control[12] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 356}}, };
+    t.arcs_by_control[13] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 377}}, };
+    t.arcs_by_control[14] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 377}}, };
+    t.arcs_by_control[15] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 377}}, };
+    t.arcs_by_control[16] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[17] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[18] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[19] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[20] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[21] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[22] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[23] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[24] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[25] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[26] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[27] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[28] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[29] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[30] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    t.arcs_by_control[31] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
+    return t;
+}()},
 {"rv32i.baseline.control.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.baseline.control.structural";
@@ -26981,247 +27033,45 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"word.adder.32.prefix.behavioral", [] {
+{"word.add-sub.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.adder.32.prefix.structural";
+    t.evidence = "proven on word.add-sub.8.structural";
     t.arcs = {
-        Arc{"A", "Cout", {251, 475}},
-        Arc{"A", "Sum", {155, 524}},
-        Arc{"B", "Cout", {251, 475}},
-        Arc{"B", "Sum", {155, 524}},
-        Arc{"Cin", "Cout", {71, 71}},
-        Arc{"Cin", "Sum", {84, 155}},
+        Arc{"A", "C_OUT", {179, 333}},
+        Arc{"A", "OUT", {155, 382}},
+        Arc{"A", "OVERFLOW", {119, 501}},
+        Arc{"B", "C_OUT", {263, 417}},
+        Arc{"B", "OUT", {239, 466}},
+        Arc{"B", "OVERFLOW", {224, 585}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+        Arc{"C_IN", "OVERFLOW", {274, 274}},
+        Arc{"SUB", "C_OUT", {263, 417}},
+        Arc{"SUB", "OUT", {239, 466}},
+        Arc{"SUB", "OVERFLOW", {224, 585}},
     };
     return t;
 }()},
-{"word.adder.8.ripple.behavioral", [] {
+{"word.alu-control-decoder.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.adder.8.ripple.structural";
+    t.evidence = "proven on word.alu-control-decoder.structural";
     t.arcs = {
-        Arc{"A", "Cout", {71, 652}},
-        Arc{"A", "Sum", {155, 665}},
-        Arc{"B", "Cout", {71, 652}},
-        Arc{"B", "Sum", {155, 665}},
-        Arc{"Cin", "Cout", {568, 568}},
-        Arc{"Cin", "Sum", {84, 581}},
-    };
-    return t;
-}()},
-{"word.addsub.32.integer.prefix.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.addsub.32.integer.prefix.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {251, 475}},
-        Arc{"A", "OUT", {155, 524}},
-        Arc{"A", "OVERFLOW", {335, 559}},
-        Arc{"B", "CARRY_OUT", {335, 559}},
-        Arc{"B", "OUT", {239, 608}},
-        Arc{"B", "OVERFLOW", {419, 643}},
-        Arc{"SUB", "CARRY_OUT", {71, 559}},
-        Arc{"SUB", "OUT", {84, 608}},
-        Arc{"SUB", "OVERFLOW", {155, 643}},
-    };
-    return t;
-}()},
-{"word.addsub.8.ripple.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.addsub.8.ripple.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {71, 652}},
-        Arc{"A", "OUT", {155, 665}},
-        Arc{"A", "OVERFLOW", {119, 784}},
-        Arc{"B", "CARRY_OUT", {155, 736}},
-        Arc{"B", "OUT", {239, 749}},
-        Arc{"B", "OVERFLOW", {224, 868}},
-        Arc{"C_IN", "CARRY_OUT", {568, 568}},
-        Arc{"C_IN", "OUT", {84, 581}},
-        Arc{"C_IN", "OVERFLOW", {700, 700}},
-        Arc{"SUB", "CARRY_OUT", {155, 736}},
-        Arc{"SUB", "OUT", {239, 749}},
-        Arc{"SUB", "OVERFLOW", {224, 868}},
-    };
-    return t;
-}()},
-{"word.alu.32.integer.prefix.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.32.integer.prefix.structural";
-    t.arcs = {
-        Arc{"A", "CARRY_OUT", {286, 510}},
-        Arc{"A", "EQ", {391, 760}},
-        Arc{"A", "LT_SIGNED", {287, 678}},
-        Arc{"A", "LT_UNSIGNED", {307, 531}},
-        Arc{"A", "NEGATIVE", {179, 703}},
-        Arc{"A", "OUT", {179, 857}},
-        Arc{"A", "OVERFLOW", {370, 594}},
-        Arc{"A", "ZERO", {380, 1058}},
-        Arc{"B", "CARRY_OUT", {370, 594}},
-        Arc{"B", "EQ", {475, 844}},
-        Arc{"B", "LT_SIGNED", {371, 762}},
-        Arc{"B", "LT_UNSIGNED", {391, 615}},
-        Arc{"B", "NEGATIVE", {71, 787}},
-        Arc{"B", "OUT", {71, 941}},
-        Arc{"B", "OVERFLOW", {454, 678}},
-        Arc{"B", "ZERO", {272, 1142}},
-        Arc{"OP", "CARRY_OUT", {91, 720}},
-        Arc{"OP", "EQ", {106, 970}},
-        Arc{"OP", "LT_SIGNED", {106, 888}},
-        Arc{"OP", "LT_UNSIGNED", {106, 741}},
-        Arc{"OP", "NEGATIVE", {127, 913}},
-        Arc{"OP", "OUT", {127, 1067}},
-        Arc{"OP", "OVERFLOW", {91, 804}},
-        Arc{"OP", "ZERO", {328, 1268}},
-    };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "CARRY_OUT", {91, 665}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 858}}, {"OP", "OUT", {127, 858}}, {"OP", "OVERFLOW", {91, 749}}, {"OP", "ZERO", {328, 1059}}, {"A", "CARRY_OUT", {286, 510}}, {"A", "NEGATIVE", {179, 703}}, {"A", "OUT", {179, 703}}, {"A", "OVERFLOW", {370, 594}}, {"A", "ZERO", {380, 904}}, {"B", "CARRY_OUT", {370, 594}}, {"B", "NEGATIVE", {71, 787}}, {"B", "OUT", {71, 787}}, {"B", "OVERFLOW", {454, 678}}, {"B", "ZERO", {272, 988}}, };
-    t.arcs_by_control[1] = {{"OP", "CARRY_OUT", {91, 720}}, {"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "NEGATIVE", {127, 913}}, {"OP", "OUT", {127, 913}}, {"OP", "OVERFLOW", {91, 804}}, {"OP", "ZERO", {328, 1114}}, {"A", "CARRY_OUT", {286, 510}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "NEGATIVE", {179, 703}}, {"A", "OUT", {179, 703}}, {"A", "OVERFLOW", {370, 594}}, {"A", "ZERO", {380, 904}}, {"B", "CARRY_OUT", {370, 594}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "NEGATIVE", {71, 787}}, {"B", "OUT", {71, 787}}, {"B", "OVERFLOW", {454, 678}}, {"B", "ZERO", {272, 988}}, };
-    t.arcs_by_control[2] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 557}}, {"A", "NEGATIVE", {179, 214}}, {"A", "OUT", {179, 214}}, {"A", "ZERO", {380, 415}}, {"B", "NEGATIVE", {71, 214}}, {"B", "OUT", {71, 214}}, {"B", "ZERO", {272, 415}}, };
-    t.arcs_by_control[3] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 557}}, {"A", "NEGATIVE", {179, 215}}, {"A", "OUT", {179, 215}}, {"A", "ZERO", {380, 416}}, {"B", "NEGATIVE", {71, 215}}, {"B", "OUT", {71, 215}}, {"B", "ZERO", {272, 416}}, };
-    t.arcs_by_control[4] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 557}}, {"A", "NEGATIVE", {179, 263}}, {"A", "OUT", {179, 263}}, {"A", "ZERO", {380, 464}}, {"B", "NEGATIVE", {71, 263}}, {"B", "OUT", {71, 263}}, {"B", "ZERO", {272, 464}}, };
-    t.arcs_by_control[5] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 718}}, {"OP", "OUT", {127, 718}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 919}}, {"A", "NEGATIVE", {179, 676}}, {"A", "OUT", {179, 676}}, {"A", "ZERO", {380, 877}}, {"B", "NEGATIVE", {71, 626}}, {"B", "OUT", {71, 626}}, {"B", "ZERO", {272, 827}}, };
-    t.arcs_by_control[6] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 718}}, {"OP", "OUT", {127, 718}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 919}}, {"A", "NEGATIVE", {179, 676}}, {"A", "OUT", {179, 676}}, {"A", "ZERO", {380, 877}}, {"B", "NEGATIVE", {71, 626}}, {"B", "OUT", {71, 626}}, {"B", "ZERO", {272, 827}}, };
-    t.arcs_by_control[7] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 718}}, {"OP", "OUT", {127, 718}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 919}}, {"A", "NEGATIVE", {179, 676}}, {"A", "OUT", {179, 676}}, {"A", "ZERO", {380, 877}}, {"B", "NEGATIVE", {71, 626}}, {"B", "OUT", {71, 626}}, {"B", "ZERO", {272, 827}}, };
-    t.arcs_by_control[8] = {{"OP", "CARRY_OUT", {91, 720}}, {"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 1067}}, {"OP", "OVERFLOW", {91, 804}}, {"OP", "ZERO", {328, 1268}}, {"A", "CARRY_OUT", {286, 510}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 857}}, {"A", "OVERFLOW", {370, 594}}, {"A", "ZERO", {380, 1058}}, {"B", "CARRY_OUT", {370, 594}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 941}}, {"B", "OVERFLOW", {454, 678}}, {"B", "ZERO", {272, 1142}}, };
-    t.arcs_by_control[9] = {{"OP", "CARRY_OUT", {91, 720}}, {"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 920}}, {"OP", "OVERFLOW", {91, 804}}, {"OP", "ZERO", {328, 1121}}, {"A", "CARRY_OUT", {286, 510}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 710}}, {"A", "OVERFLOW", {370, 594}}, {"A", "ZERO", {380, 911}}, {"B", "CARRY_OUT", {370, 594}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 794}}, {"B", "OVERFLOW", {454, 678}}, {"B", "ZERO", {272, 995}}, };
-    t.arcs_by_control[10] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 557}}, {"A", "NEGATIVE", {179, 179}}, {"A", "OUT", {179, 179}}, {"A", "ZERO", {380, 380}}, };
-    t.arcs_by_control[11] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 557}}, {"B", "NEGATIVE", {71, 71}}, {"B", "OUT", {71, 71}}, {"B", "ZERO", {272, 272}}, };
-    t.arcs_by_control[12] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 356}}, {"OP", "OUT", {127, 356}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 557}}, };
-    t.arcs_by_control[13] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 377}}, {"OP", "OUT", {127, 377}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 578}}, };
-    t.arcs_by_control[14] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 377}}, {"OP", "OUT", {127, 377}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 578}}, };
-    t.arcs_by_control[15] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 377}}, {"OP", "OUT", {127, 377}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 578}}, };
-    t.arcs_by_control[16] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[17] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[18] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[19] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[20] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[21] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[22] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[23] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[24] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[25] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[26] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[27] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[28] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[29] = {{"OP", "CARRY_OUT", {91, 126}}, {"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 126}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[30] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    t.arcs_by_control[31] = {{"OP", "CARRY_OUT", {91, 91}}, {"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "NEGATIVE", {127, 307}}, {"OP", "OUT", {127, 307}}, {"OP", "OVERFLOW", {91, 91}}, {"OP", "ZERO", {328, 508}}, };
-    return t;
-}()},
-{"word.alu.32.integer.prefix.core.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.32.integer.prefix.core.structural";
-    t.arcs = {
-        Arc{"A", "EQ", {391, 760}},
-        Arc{"A", "LT_SIGNED", {287, 678}},
-        Arc{"A", "LT_UNSIGNED", {307, 531}},
-        Arc{"A", "OUT", {179, 857}},
-        Arc{"B", "EQ", {475, 844}},
-        Arc{"B", "LT_SIGNED", {371, 762}},
-        Arc{"B", "LT_UNSIGNED", {391, 615}},
-        Arc{"B", "OUT", {71, 941}},
-        Arc{"OP", "EQ", {106, 970}},
-        Arc{"OP", "LT_SIGNED", {106, 888}},
-        Arc{"OP", "LT_UNSIGNED", {106, 741}},
-        Arc{"OP", "OUT", {127, 1067}},
-    };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 858}}, {"A", "OUT", {179, 703}}, {"B", "OUT", {71, 787}}, };
-    t.arcs_by_control[1] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 913}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 703}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 787}}, };
-    t.arcs_by_control[2] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 214}}, {"B", "OUT", {71, 214}}, };
-    t.arcs_by_control[3] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 215}}, {"B", "OUT", {71, 215}}, };
-    t.arcs_by_control[4] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 263}}, {"B", "OUT", {71, 263}}, };
-    t.arcs_by_control[5] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
-    t.arcs_by_control[6] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
-    t.arcs_by_control[7] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 718}}, {"A", "OUT", {179, 676}}, {"B", "OUT", {71, 626}}, };
-    t.arcs_by_control[8] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 1067}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 857}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 941}}, };
-    t.arcs_by_control[9] = {{"OP", "EQ", {106, 970}}, {"OP", "LT_SIGNED", {106, 888}}, {"OP", "LT_UNSIGNED", {106, 741}}, {"OP", "OUT", {127, 920}}, {"A", "EQ", {391, 760}}, {"A", "LT_SIGNED", {287, 678}}, {"A", "LT_UNSIGNED", {307, 531}}, {"A", "OUT", {179, 710}}, {"B", "EQ", {475, 844}}, {"B", "LT_SIGNED", {371, 762}}, {"B", "LT_UNSIGNED", {391, 615}}, {"B", "OUT", {71, 794}}, };
-    t.arcs_by_control[10] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"A", "OUT", {179, 179}}, };
-    t.arcs_by_control[11] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 356}}, {"B", "OUT", {71, 71}}, };
-    t.arcs_by_control[12] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 356}}, };
-    t.arcs_by_control[13] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 377}}, };
-    t.arcs_by_control[14] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 377}}, };
-    t.arcs_by_control[15] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 377}}, };
-    t.arcs_by_control[16] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[17] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[18] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[19] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[20] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[21] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[22] = {{"OP", "EQ", {106, 106}}, {"OP", "LT_SIGNED", {106, 106}}, {"OP", "LT_UNSIGNED", {106, 106}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[23] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[24] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[25] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[26] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[27] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[28] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[29] = {{"OP", "EQ", {106, 161}}, {"OP", "LT_SIGNED", {106, 161}}, {"OP", "LT_UNSIGNED", {106, 161}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[30] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    t.arcs_by_control[31] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
-    return t;
-}()},
-{"word.alu.8.extended.ripple.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.alu.8.extended.ripple.structural";
-    t.arcs = {
-        Arc{"A", "CARRY", {390, 1055}},
-        Arc{"A", "NEGATIVE", {143, 1684}},
-        Arc{"A", "OUT", {107, 1648}},
-        Arc{"A", "OVERFLOW", {402, 1151}},
-        Arc{"A", "ZERO", {236, 1777}},
-        Arc{"B", "CARRY", {177, 1055}},
-        Arc{"B", "NEGATIVE", {143, 1684}},
-        Arc{"B", "OUT", {107, 1648}},
-        Arc{"B", "OVERFLOW", {507, 1151}},
-        Arc{"B", "ZERO", {236, 1777}},
-        Arc{"C_IN", "CARRY", {319, 887}},
-        Arc{"C_IN", "NEGATIVE", {1008, 1516}},
-        Arc{"C_IN", "OUT", {475, 1480}},
-        Arc{"C_IN", "OVERFLOW", {983, 983}},
-        Arc{"C_IN", "ZERO", {604, 1609}},
-        Arc{"OP", "CARRY", {177, 1545}},
+        Arc{"OP", "ARITHMETIC_ENABLE", {141, 377}},
+        Arc{"OP", "ARITH_OP", {71, 469}},
+        Arc{"OP", "COMPARE_ENABLE", {141, 377}},
+        Arc{"OP", "COMPARE_OP", {141, 233}},
         Arc{"OP", "INVALID_OP", {141, 233}},
-        Arc{"OP", "NEGATIVE", {248, 2174}},
-        Arc{"OP", "OUT", {212, 2138}},
-        Arc{"OP", "OVERFLOW", {176, 1641}},
-        Arc{"OP", "ZERO", {341, 2267}},
+        Arc{"OP", "LOCAL_OP", {0, 0}},
+        Arc{"OP", "LOGIC_ENABLE", {141, 377}},
+        Arc{"OP", "PASS_A_ENABLE", {105, 140}},
+        Arc{"OP", "PASS_B_ENABLE", {105, 140}},
+        Arc{"OP", "SHIFT_ENABLE", {141, 305}},
     };
-    t.control = "OP";
-    t.arcs_by_control[0] = {{"OP", "CARRY", {177, 1326}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1447}}, {"OP", "OUT", {212, 1411}}, {"OP", "OVERFLOW", {176, 1422}}, {"OP", "ZERO", {341, 1540}}, {"A", "CARRY", {390, 900}}, {"A", "NEGATIVE", {143, 1021}}, {"A", "OUT", {107, 985}}, {"A", "OVERFLOW", {402, 996}}, {"A", "ZERO", {236, 1114}}, {"B", "CARRY", {177, 984}}, {"B", "NEGATIVE", {143, 1105}}, {"B", "OUT", {107, 1069}}, {"B", "OVERFLOW", {507, 1080}}, {"B", "ZERO", {236, 1198}}, };
-    t.arcs_by_control[1] = {{"OP", "CARRY", {177, 1489}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1610}}, {"OP", "OUT", {212, 1574}}, {"OP", "OVERFLOW", {176, 1585}}, {"OP", "ZERO", {341, 1703}}, {"A", "CARRY", {390, 971}}, {"A", "NEGATIVE", {143, 1092}}, {"A", "OUT", {107, 1056}}, {"A", "OVERFLOW", {402, 1067}}, {"A", "ZERO", {236, 1185}}, {"B", "CARRY", {177, 1055}}, {"B", "NEGATIVE", {143, 1176}}, {"B", "OUT", {107, 1140}}, {"B", "OVERFLOW", {507, 1151}}, {"B", "ZERO", {236, 1269}}, {"C_IN", "CARRY", {319, 887}}, {"C_IN", "NEGATIVE", {1008, 1008}}, {"C_IN", "OUT", {475, 972}}, {"C_IN", "OVERFLOW", {983, 983}}, {"C_IN", "ZERO", {604, 1101}}, };
-    t.arcs_by_control[2] = {{"OP", "CARRY", {177, 1418}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1539}}, {"OP", "OUT", {212, 1503}}, {"OP", "OVERFLOW", {176, 1514}}, {"OP", "ZERO", {341, 1632}}, {"A", "CARRY", {390, 971}}, {"A", "NEGATIVE", {143, 1092}}, {"A", "OUT", {107, 1056}}, {"A", "OVERFLOW", {402, 1067}}, {"A", "ZERO", {236, 1185}}, {"B", "CARRY", {177, 1055}}, {"B", "NEGATIVE", {143, 1176}}, {"B", "OUT", {107, 1140}}, {"B", "OVERFLOW", {507, 1151}}, {"B", "ZERO", {236, 1269}}, };
-    t.arcs_by_control[3] = {{"OP", "CARRY", {177, 1489}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 1610}}, {"OP", "OUT", {212, 1574}}, {"OP", "OVERFLOW", {176, 1585}}, {"OP", "ZERO", {341, 1703}}, {"A", "CARRY", {390, 971}}, {"A", "NEGATIVE", {143, 1092}}, {"A", "OUT", {107, 1056}}, {"A", "OVERFLOW", {402, 1067}}, {"A", "ZERO", {236, 1185}}, {"B", "CARRY", {177, 1055}}, {"B", "NEGATIVE", {143, 1176}}, {"B", "OUT", {107, 1140}}, {"B", "OVERFLOW", {507, 1151}}, {"B", "ZERO", {236, 1269}}, {"C_IN", "CARRY", {319, 887}}, {"C_IN", "NEGATIVE", {1008, 1008}}, {"C_IN", "OUT", {475, 972}}, {"C_IN", "OVERFLOW", {983, 983}}, {"C_IN", "ZERO", {604, 1101}}, };
-    t.arcs_by_control[4] = {{"OP", "CARRY", {177, 1376}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1497}}, {"OP", "OUT", {212, 1461}}, {"OP", "OVERFLOW", {176, 1472}}, {"OP", "ZERO", {341, 1590}}, {"A", "CARRY", {390, 971}}, {"A", "NEGATIVE", {143, 1092}}, {"A", "OUT", {107, 1056}}, {"A", "OVERFLOW", {402, 1067}}, {"A", "ZERO", {236, 1185}}, };
-    t.arcs_by_control[5] = {{"OP", "CARRY", {177, 1468}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1589}}, {"OP", "OUT", {212, 1553}}, {"OP", "OVERFLOW", {176, 1564}}, {"OP", "ZERO", {341, 1682}}, {"A", "CARRY", {390, 971}}, {"A", "NEGATIVE", {143, 1092}}, {"A", "OUT", {107, 1056}}, {"A", "OVERFLOW", {402, 1067}}, {"A", "ZERO", {236, 1185}}, };
-    t.arcs_by_control[6] = {{"OP", "CARRY", {177, 1397}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1518}}, {"OP", "OUT", {212, 1482}}, {"OP", "OVERFLOW", {176, 1493}}, {"OP", "ZERO", {341, 1611}}, {"A", "CARRY", {390, 1055}}, {"A", "NEGATIVE", {143, 1176}}, {"A", "OUT", {107, 1140}}, {"A", "OVERFLOW", {402, 1151}}, {"A", "ZERO", {236, 1269}}, };
-    t.arcs_by_control[7] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 233}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
-    t.arcs_by_control[8] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 427}}, {"A", "OUT", {107, 391}}, {"A", "ZERO", {236, 520}}, {"B", "NEGATIVE", {143, 427}}, {"B", "OUT", {107, 391}}, {"B", "ZERO", {236, 520}}, };
-    t.arcs_by_control[9] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 428}}, {"A", "OUT", {107, 392}}, {"A", "ZERO", {236, 521}}, {"B", "NEGATIVE", {143, 428}}, {"B", "OUT", {107, 392}}, {"B", "ZERO", {236, 521}}, };
-    t.arcs_by_control[10] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 476}}, {"A", "OUT", {107, 440}}, {"A", "ZERO", {236, 569}}, {"B", "NEGATIVE", {143, 476}}, {"B", "OUT", {107, 440}}, {"B", "ZERO", {236, 569}}, };
-    t.arcs_by_control[11] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 413}}, {"A", "OUT", {107, 377}}, {"A", "ZERO", {236, 506}}, };
-    t.arcs_by_control[12] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 448}}, {"A", "OUT", {107, 412}}, {"A", "ZERO", {236, 541}}, {"B", "NEGATIVE", {143, 448}}, {"B", "OUT", {107, 412}}, {"B", "ZERO", {236, 541}}, };
-    t.arcs_by_control[13] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 449}}, {"A", "OUT", {107, 413}}, {"A", "ZERO", {236, 542}}, {"B", "NEGATIVE", {143, 449}}, {"B", "OUT", {107, 413}}, {"B", "ZERO", {236, 542}}, };
-    t.arcs_by_control[14] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 497}}, {"A", "OUT", {107, 461}}, {"A", "ZERO", {236, 590}}, {"B", "NEGATIVE", {143, 497}}, {"B", "OUT", {107, 461}}, {"B", "ZERO", {236, 590}}, };
-    t.arcs_by_control[15] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
-    t.arcs_by_control[16] = {{"OP", "CARRY", {177, 645}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 824}}, {"OP", "OUT", {212, 788}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 917}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 533}}, {"A", "ZERO", {236, 662}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
-    t.arcs_by_control[17] = {{"OP", "CARRY", {177, 645}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 824}}, {"OP", "OUT", {212, 788}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 917}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 533}}, {"A", "ZERO", {236, 662}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
-    t.arcs_by_control[18] = {{"OP", "CARRY", {177, 624}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 838}}, {"OP", "OUT", {212, 802}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 931}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 604}}, {"A", "OUT", {107, 568}}, {"A", "ZERO", {236, 697}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
-    t.arcs_by_control[19] = {{"OP", "CARRY", {177, 624}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 803}}, {"OP", "OUT", {212, 838}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 967}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 604}}, {"A", "ZERO", {236, 733}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 554}}, {"B", "ZERO", {236, 683}}, {"C_IN", "CARRY", {319, 319}}, };
-    t.arcs_by_control[20] = {{"OP", "CARRY", {177, 503}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 803}}, {"OP", "OUT", {212, 767}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 896}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 640}}, {"A", "OUT", {107, 604}}, {"A", "ZERO", {236, 733}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 590}}, {"B", "OUT", {107, 554}}, {"B", "ZERO", {236, 683}}, {"C_IN", "CARRY", {319, 319}}, };
-    t.arcs_by_control[21] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 1972}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 2101}}, {"A", "OUT", {107, 1398}}, {"A", "ZERO", {236, 1527}}, {"B", "OUT", {107, 1482}}, {"B", "ZERO", {236, 1611}}, };
-    t.arcs_by_control[22] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 1759}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1888}}, {"A", "OUT", {107, 1277}}, {"A", "ZERO", {236, 1406}}, {"B", "OUT", {107, 1361}}, {"B", "ZERO", {236, 1490}}, };
-    t.arcs_by_control[23] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 590}}, {"OP", "OUT", {212, 2010}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 2139}}, {"A", "OUT", {107, 1472}}, {"A", "ZERO", {236, 1601}}, {"B", "OUT", {107, 1556}}, {"B", "ZERO", {236, 1685}}, };
-    t.arcs_by_control[24] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1815}}, {"OP", "OUT", {212, 1779}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1908}}, {"A", "NEGATIVE", {143, 1405}}, {"A", "OUT", {107, 1369}}, {"A", "ZERO", {236, 1498}}, {"B", "NEGATIVE", {143, 1489}}, {"B", "OUT", {107, 1453}}, {"B", "ZERO", {236, 1582}}, };
-    t.arcs_by_control[25] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1871}}, {"OP", "OUT", {212, 1835}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1964}}, {"A", "NEGATIVE", {143, 1405}}, {"A", "OUT", {107, 1369}}, {"A", "ZERO", {236, 1498}}, {"B", "NEGATIVE", {143, 1489}}, {"B", "OUT", {107, 1453}}, {"B", "ZERO", {236, 1582}}, };
-    t.arcs_by_control[26] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1938}}, {"OP", "OUT", {212, 1902}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 2031}}, {"A", "NEGATIVE", {143, 1600}}, {"A", "OUT", {107, 1564}}, {"A", "ZERO", {236, 1693}}, {"B", "NEGATIVE", {143, 1684}}, {"B", "OUT", {107, 1648}}, {"B", "ZERO", {236, 1777}}, };
-    t.arcs_by_control[27] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 1994}}, {"OP", "OUT", {212, 1958}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 2087}}, {"A", "NEGATIVE", {143, 1600}}, {"A", "OUT", {107, 1564}}, {"A", "ZERO", {236, 1693}}, {"B", "NEGATIVE", {143, 1684}}, {"B", "OUT", {107, 1648}}, {"B", "ZERO", {236, 1777}}, };
-    t.arcs_by_control[28] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 143}}, {"A", "OUT", {107, 107}}, {"A", "ZERO", {236, 236}}, };
-    t.arcs_by_control[29] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 649}}, {"B", "NEGATIVE", {143, 143}}, {"B", "OUT", {107, 107}}, {"B", "ZERO", {236, 236}}, };
-    t.arcs_by_control[30] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 649}}, };
-    t.arcs_by_control[31] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 176}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
     return t;
 }()},
-{"word.aluflagunit.8.behavioral", [] {
+{"word.alu-flag-unit.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.aluflagunit.8.structural";
+    t.evidence = "proven on word.alu-flag-unit.8.structural";
     t.arcs = {
         Arc{"ARITHMETIC", "CARRY", {71, 71}},
         Arc{"ARITHMETIC", "OVERFLOW", {35, 35}},
@@ -27234,9 +27084,9 @@
     };
     return t;
 }()},
-{"word.aluresultselector.8.behavioral", [] {
+{"word.alu-result-selector.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.aluresultselector.8.structural";
+    t.evidence = "proven on word.alu-result-selector.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {107, 107}},
         Arc{"ARITHMETIC_ENABLE", "OUT", {143, 143}},
@@ -27253,40 +27103,90 @@
     };
     return t;
 }()},
-{"word.arithmeticunit.8.ripple.behavioral", [] {
+{"word.alu.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.arithmeticunit.8.ripple.structural";
+    t.evidence = "proven on word.alu.8.structural";
     t.arcs = {
-        Arc{"A", "CARRY", {319, 984}},
-        Arc{"A", "OUT", {403, 997}},
-        Arc{"A", "OVERFLOW", {367, 1116}},
-        Arc{"B", "CARRY", {403, 984}},
-        Arc{"B", "OUT", {487, 997}},
-        Arc{"B", "OVERFLOW", {472, 1116}},
-        Arc{"C_IN", "CARRY", {816, 816}},
-        Arc{"C_IN", "OUT", {332, 829}},
-        Arc{"C_IN", "OVERFLOW", {948, 948}},
-        Arc{"OP", "CARRY", {127, 1005}},
+        Arc{"A", "CARRY", {390, 736}},
+        Arc{"A", "NEGATIVE", {143, 1401}},
+        Arc{"A", "OUT", {107, 1365}},
+        Arc{"A", "OVERFLOW", {402, 868}},
+        Arc{"A", "ZERO", {236, 1494}},
+        Arc{"B", "CARRY", {177, 736}},
+        Arc{"B", "NEGATIVE", {143, 1401}},
+        Arc{"B", "OUT", {107, 1365}},
+        Arc{"B", "OVERFLOW", {507, 868}},
+        Arc{"B", "ZERO", {236, 1494}},
+        Arc{"C_IN", "CARRY", {319, 390}},
+        Arc{"C_IN", "NEGATIVE", {582, 1090}},
+        Arc{"C_IN", "OUT", {475, 1054}},
+        Arc{"C_IN", "OVERFLOW", {557, 557}},
+        Arc{"C_IN", "ZERO", {604, 1183}},
+        Arc{"OP", "CARRY", {177, 1226}},
+        Arc{"OP", "INVALID_OP", {141, 233}},
+        Arc{"OP", "NEGATIVE", {248, 1891}},
+        Arc{"OP", "OUT", {212, 1855}},
+        Arc{"OP", "OVERFLOW", {176, 1358}},
+        Arc{"OP", "ZERO", {341, 1984}},
+    };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "CARRY", {177, 1078}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1235}}, {"OP", "OUT", {212, 1199}}, {"OP", "OVERFLOW", {176, 1210}}, {"OP", "ZERO", {341, 1328}}, {"A", "CARRY", {390, 652}}, {"A", "NEGATIVE", {143, 809}}, {"A", "OUT", {107, 773}}, {"A", "OVERFLOW", {402, 784}}, {"A", "ZERO", {236, 902}}, {"B", "CARRY", {177, 736}}, {"B", "NEGATIVE", {143, 893}}, {"B", "OUT", {107, 857}}, {"B", "OVERFLOW", {507, 868}}, {"B", "ZERO", {236, 986}}, };
+    t.arcs_by_control[1] = {{"OP", "CARRY", {177, 1170}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1327}}, {"OP", "OUT", {212, 1291}}, {"OP", "OVERFLOW", {176, 1302}}, {"OP", "ZERO", {341, 1420}}, {"A", "CARRY", {390, 652}}, {"A", "NEGATIVE", {143, 809}}, {"A", "OUT", {107, 773}}, {"A", "OVERFLOW", {402, 784}}, {"A", "ZERO", {236, 902}}, {"B", "CARRY", {177, 736}}, {"B", "NEGATIVE", {143, 893}}, {"B", "OUT", {107, 857}}, {"B", "OVERFLOW", {507, 868}}, {"B", "ZERO", {236, 986}}, {"C_IN", "CARRY", {319, 390}}, {"C_IN", "NEGATIVE", {582, 582}}, {"C_IN", "OUT", {475, 546}}, {"C_IN", "OVERFLOW", {557, 557}}, {"C_IN", "ZERO", {604, 675}}, };
+    t.arcs_by_control[2] = {{"OP", "CARRY", {177, 1099}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1256}}, {"OP", "OUT", {212, 1220}}, {"OP", "OVERFLOW", {176, 1231}}, {"OP", "ZERO", {341, 1349}}, {"A", "CARRY", {390, 652}}, {"A", "NEGATIVE", {143, 809}}, {"A", "OUT", {107, 773}}, {"A", "OVERFLOW", {402, 784}}, {"A", "ZERO", {236, 902}}, {"B", "CARRY", {177, 736}}, {"B", "NEGATIVE", {143, 893}}, {"B", "OUT", {107, 857}}, {"B", "OVERFLOW", {507, 868}}, {"B", "ZERO", {236, 986}}, };
+    t.arcs_by_control[3] = {{"OP", "CARRY", {177, 1170}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 1327}}, {"OP", "OUT", {212, 1291}}, {"OP", "OVERFLOW", {176, 1302}}, {"OP", "ZERO", {341, 1420}}, {"A", "CARRY", {390, 652}}, {"A", "NEGATIVE", {143, 809}}, {"A", "OUT", {107, 773}}, {"A", "OVERFLOW", {402, 784}}, {"A", "ZERO", {236, 902}}, {"B", "CARRY", {177, 736}}, {"B", "NEGATIVE", {143, 893}}, {"B", "OUT", {107, 857}}, {"B", "OVERFLOW", {507, 868}}, {"B", "ZERO", {236, 986}}, {"C_IN", "CARRY", {319, 390}}, {"C_IN", "NEGATIVE", {582, 582}}, {"C_IN", "OUT", {475, 546}}, {"C_IN", "OVERFLOW", {557, 557}}, {"C_IN", "ZERO", {604, 675}}, };
+    t.arcs_by_control[4] = {{"OP", "CARRY", {177, 1008}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1176}}, {"OP", "OUT", {212, 1140}}, {"OP", "OVERFLOW", {176, 1151}}, {"OP", "ZERO", {341, 1269}}, {"A", "CARRY", {390, 579}}, {"A", "NEGATIVE", {143, 771}}, {"A", "OUT", {107, 735}}, {"A", "OVERFLOW", {402, 746}}, {"A", "ZERO", {236, 864}}, };
+    t.arcs_by_control[5] = {{"OP", "CARRY", {177, 1114}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1306}}, {"OP", "OUT", {212, 1270}}, {"OP", "OVERFLOW", {176, 1281}}, {"OP", "ZERO", {341, 1399}}, {"A", "CARRY", {390, 617}}, {"A", "NEGATIVE", {143, 809}}, {"A", "OUT", {107, 773}}, {"A", "OVERFLOW", {402, 784}}, {"A", "ZERO", {236, 902}}, };
+    t.arcs_by_control[6] = {{"OP", "CARRY", {177, 1005}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1197}}, {"OP", "OUT", {212, 1161}}, {"OP", "OVERFLOW", {176, 1172}}, {"OP", "ZERO", {341, 1290}}, {"A", "CARRY", {390, 663}}, {"A", "NEGATIVE", {143, 855}}, {"A", "OUT", {107, 819}}, {"A", "OVERFLOW", {402, 830}}, {"A", "ZERO", {236, 948}}, };
+    t.arcs_by_control[7] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 233}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
+    t.arcs_by_control[8] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 427}}, {"A", "OUT", {107, 391}}, {"A", "ZERO", {236, 520}}, {"B", "NEGATIVE", {143, 427}}, {"B", "OUT", {107, 391}}, {"B", "ZERO", {236, 520}}, };
+    t.arcs_by_control[9] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 428}}, {"A", "OUT", {107, 392}}, {"A", "ZERO", {236, 521}}, {"B", "NEGATIVE", {143, 428}}, {"B", "OUT", {107, 392}}, {"B", "ZERO", {236, 521}}, };
+    t.arcs_by_control[10] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 476}}, {"A", "OUT", {107, 440}}, {"A", "ZERO", {236, 569}}, {"B", "NEGATIVE", {143, 476}}, {"B", "OUT", {107, 440}}, {"B", "ZERO", {236, 569}}, };
+    t.arcs_by_control[11] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 413}}, {"A", "OUT", {107, 377}}, {"A", "ZERO", {236, 506}}, };
+    t.arcs_by_control[12] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 448}}, {"A", "OUT", {107, 412}}, {"A", "ZERO", {236, 541}}, {"B", "NEGATIVE", {143, 448}}, {"B", "OUT", {107, 412}}, {"B", "ZERO", {236, 541}}, };
+    t.arcs_by_control[13] = {{"OP", "CARRY", {177, 448}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 556}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 412}}, {"OP", "ZERO", {341, 649}}, {"A", "NEGATIVE", {143, 449}}, {"A", "OUT", {107, 413}}, {"A", "ZERO", {236, 542}}, {"B", "NEGATIVE", {143, 449}}, {"B", "OUT", {107, 413}}, {"B", "ZERO", {236, 542}}, };
+    t.arcs_by_control[14] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 497}}, {"A", "OUT", {107, 461}}, {"A", "ZERO", {236, 590}}, {"B", "NEGATIVE", {143, 497}}, {"B", "OUT", {107, 461}}, {"B", "ZERO", {236, 590}}, };
+    t.arcs_by_control[15] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 212}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
+    t.arcs_by_control[16] = {{"OP", "CARRY", {177, 645}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 824}}, {"OP", "OUT", {212, 788}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 917}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 533}}, {"A", "ZERO", {236, 662}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
+    t.arcs_by_control[17] = {{"OP", "CARRY", {177, 645}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 824}}, {"OP", "OUT", {212, 788}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 917}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 533}}, {"A", "ZERO", {236, 662}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
+    t.arcs_by_control[18] = {{"OP", "CARRY", {177, 624}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 838}}, {"OP", "OUT", {212, 802}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 931}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 604}}, {"A", "OUT", {107, 568}}, {"A", "ZERO", {236, 697}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 483}}, {"B", "ZERO", {236, 612}}, {"C_IN", "CARRY", {319, 319}}, };
+    t.arcs_by_control[19] = {{"OP", "CARRY", {177, 624}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 803}}, {"OP", "OUT", {212, 838}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 967}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 569}}, {"A", "OUT", {107, 604}}, {"A", "ZERO", {236, 733}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 519}}, {"B", "OUT", {107, 554}}, {"B", "ZERO", {236, 683}}, {"C_IN", "CARRY", {319, 319}}, };
+    t.arcs_by_control[20] = {{"OP", "CARRY", {177, 503}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 803}}, {"OP", "OUT", {212, 767}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 896}}, {"A", "CARRY", {390, 390}}, {"A", "NEGATIVE", {143, 640}}, {"A", "OUT", {107, 604}}, {"A", "ZERO", {236, 733}}, {"B", "CARRY", {177, 340}}, {"B", "NEGATIVE", {143, 590}}, {"B", "OUT", {107, 554}}, {"B", "ZERO", {236, 683}}, {"C_IN", "CARRY", {319, 319}}, };
+    t.arcs_by_control[21] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 1689}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1818}}, {"A", "OUT", {107, 1115}}, {"A", "ZERO", {236, 1244}}, {"B", "OUT", {107, 1199}}, {"B", "ZERO", {236, 1328}}, };
+    t.arcs_by_control[22] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 1440}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1569}}, {"A", "OUT", {107, 958}}, {"A", "ZERO", {236, 1087}}, {"B", "OUT", {107, 1042}}, {"B", "ZERO", {236, 1171}}, };
+    t.arcs_by_control[23] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 590}}, {"OP", "OUT", {212, 1727}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1856}}, {"A", "OUT", {107, 1189}}, {"A", "ZERO", {236, 1318}}, {"B", "OUT", {107, 1273}}, {"B", "ZERO", {236, 1402}}, };
+    t.arcs_by_control[24] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1496}}, {"OP", "OUT", {212, 1460}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1589}}, {"A", "NEGATIVE", {143, 1086}}, {"A", "OUT", {107, 1050}}, {"A", "ZERO", {236, 1179}}, {"B", "NEGATIVE", {143, 1170}}, {"B", "OUT", {107, 1134}}, {"B", "ZERO", {236, 1263}}, };
+    t.arcs_by_control[25] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1552}}, {"OP", "OUT", {212, 1516}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1645}}, {"A", "NEGATIVE", {143, 1086}}, {"A", "OUT", {107, 1050}}, {"A", "ZERO", {236, 1179}}, {"B", "NEGATIVE", {143, 1170}}, {"B", "OUT", {107, 1134}}, {"B", "ZERO", {236, 1263}}, };
+    t.arcs_by_control[26] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 1655}}, {"OP", "OUT", {212, 1619}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1748}}, {"A", "NEGATIVE", {143, 1317}}, {"A", "OUT", {107, 1281}}, {"A", "ZERO", {236, 1410}}, {"B", "NEGATIVE", {143, 1401}}, {"B", "OUT", {107, 1365}}, {"B", "ZERO", {236, 1494}}, };
+    t.arcs_by_control[27] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 198}}, {"OP", "NEGATIVE", {248, 1711}}, {"OP", "OUT", {212, 1675}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 1804}}, {"A", "NEGATIVE", {143, 1317}}, {"A", "OUT", {107, 1281}}, {"A", "ZERO", {236, 1410}}, {"B", "NEGATIVE", {143, 1401}}, {"B", "OUT", {107, 1365}}, {"B", "ZERO", {236, 1494}}, };
+    t.arcs_by_control[28] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, {"A", "NEGATIVE", {143, 143}}, {"A", "OUT", {107, 107}}, {"A", "ZERO", {236, 236}}, };
+    t.arcs_by_control[29] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 649}}, {"B", "NEGATIVE", {143, 143}}, {"B", "OUT", {107, 107}}, {"B", "ZERO", {236, 236}}, };
+    t.arcs_by_control[30] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 177}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 520}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 649}}, };
+    t.arcs_by_control[31] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 176}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
+    return t;
+}()},
+{"word.arithmetic-unit.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.arithmetic-unit.8.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {427, 665}},
+        Arc{"A", "OUT", {403, 714}},
+        Arc{"A", "OVERFLOW", {367, 833}},
+        Arc{"B", "CARRY", {511, 665}},
+        Arc{"B", "OUT", {487, 714}},
+        Arc{"B", "OVERFLOW", {472, 833}},
+        Arc{"C_IN", "CARRY", {319, 319}},
+        Arc{"C_IN", "OUT", {332, 403}},
+        Arc{"C_IN", "OVERFLOW", {522, 522}},
+        Arc{"OP", "CARRY", {127, 686}},
         Arc{"OP", "INVALID_OP", {71, 213}},
-        Arc{"OP", "OUT", {127, 1018}},
-        Arc{"OP", "OVERFLOW", {127, 1137}},
+        Arc{"OP", "OUT", {127, 735}},
+        Arc{"OP", "OVERFLOW", {127, 854}},
     };
     return t;
 }()},
-{"word.barrelshifter.32.integer.behavioral", [] {
+{"word.barrel-shifter.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.barrelshifter.32.integer.structural";
-    t.arcs = {
-        Arc{"A", "OUT", {212, 497}},
-        Arc{"ARITHMETIC", "OUT", {212, 496}},
-        Arc{"B", "OUT", {142, 447}},
-        Arc{"LEFT", "OUT", {71, 518}},
-    };
-    return t;
-}()},
-{"word.barrelshifter.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.barrelshifter.8.structural";
+    t.evidence = "proven on word.barrel-shifter.8.structural";
     t.arcs = {
         Arc{"A", "CARRY", {319, 319}},
         Arc{"A", "OUT", {283, 461}},
@@ -27298,9 +27198,9 @@
     };
     return t;
 }()},
-{"word.compareselect.8.behavioral", [] {
+{"word.compare-select.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.compareselect.8.structural";
+    t.evidence = "proven on word.compare-select.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {284, 284}},
         Arc{"B", "OUT", {284, 284}},
@@ -27311,39 +27211,9 @@
     };
     return t;
 }()},
-{"word.control.extended.behavioral", [] {
+{"word.logic-unit.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.control.extended.structural";
-    t.arcs = {
-        Arc{"OP", "ARITHMETIC_ENABLE", {141, 377}},
-        Arc{"OP", "ARITH_OP", {71, 469}},
-        Arc{"OP", "COMPARE_ENABLE", {141, 377}},
-        Arc{"OP", "COMPARE_OP", {141, 233}},
-        Arc{"OP", "INVALID_OP", {141, 233}},
-        Arc{"OP", "LOCAL_OP", {0, 0}},
-        Arc{"OP", "LOGIC_ENABLE", {141, 377}},
-        Arc{"OP", "PASS_A_ENABLE", {105, 140}},
-        Arc{"OP", "PASS_B_ENABLE", {105, 140}},
-        Arc{"OP", "SHIFT_ENABLE", {141, 305}},
-    };
-    return t;
-}()},
-{"word.logicunit.32.integer.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.logicunit.32.integer.structural";
-    t.arcs = {
-        Arc{"A", "AND_OUT", {35, 35}},
-        Arc{"A", "OR_OUT", {36, 36}},
-        Arc{"A", "XOR_OUT", {84, 84}},
-        Arc{"B", "AND_OUT", {35, 35}},
-        Arc{"B", "OR_OUT", {36, 36}},
-        Arc{"B", "XOR_OUT", {84, 84}},
-    };
-    return t;
-}()},
-{"word.logicunit.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on word.logicunit.8.structural";
+    t.evidence = "proven on word.logic-unit.8.structural";
     t.arcs = {
         Arc{"A", "OUT", {234, 318}},
         Arc{"B", "OUT", {248, 318}},
@@ -27351,17 +27221,104 @@
     };
     return t;
 }()},
-{"word.zerodetect.32.behavioral", [] {
+{"word.parallel-prefix-adder.16.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.zerodetect.32.structural";
+    t.evidence = "proven on word.parallel-prefix-adder.16.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {215, 404}},
+        Arc{"A", "C_SIGN", {215, 369}},
+        Arc{"A", "OUT", {155, 453}},
+        Arc{"B", "C_OUT", {215, 404}},
+        Arc{"B", "C_SIGN", {215, 369}},
+        Arc{"B", "OUT", {155, 453}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "C_SIGN", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+    };
+    return t;
+}()},
+{"word.parallel-prefix-adder.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.parallel-prefix-adder.32.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {251, 475}},
+        Arc{"A", "C_SIGN", {251, 440}},
+        Arc{"A", "OUT", {155, 524}},
+        Arc{"B", "C_OUT", {251, 475}},
+        Arc{"B", "C_SIGN", {251, 440}},
+        Arc{"B", "OUT", {155, 524}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "C_SIGN", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+    };
+    return t;
+}()},
+{"word.parallel-prefix-adder.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.parallel-prefix-adder.8.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {179, 333}},
+        Arc{"A", "C_SIGN", {179, 298}},
+        Arc{"A", "OUT", {155, 382}},
+        Arc{"B", "C_OUT", {179, 333}},
+        Arc{"B", "C_SIGN", {179, 298}},
+        Arc{"B", "OUT", {155, 382}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "C_SIGN", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.16.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {71, 1220}},
+        Arc{"A", "OUT", {155, 1233}},
+        Arc{"B", "C_OUT", {71, 1220}},
+        Arc{"B", "OUT", {155, 1233}},
+        Arc{"C_IN", "C_OUT", {1136, 1136}},
+        Arc{"C_IN", "OUT", {84, 1149}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.32.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {71, 2356}},
+        Arc{"A", "OUT", {155, 2369}},
+        Arc{"B", "C_OUT", {71, 2356}},
+        Arc{"B", "OUT", {155, 2369}},
+        Arc{"C_IN", "C_OUT", {2272, 2272}},
+        Arc{"C_IN", "OUT", {84, 2285}},
+    };
+    return t;
+}()},
+{"word.ripple-carry-adder.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.ripple-carry-adder.8.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {71, 652}},
+        Arc{"A", "OUT", {155, 665}},
+        Arc{"B", "C_OUT", {71, 652}},
+        Arc{"B", "OUT", {155, 665}},
+        Arc{"C_IN", "C_OUT", {568, 568}},
+        Arc{"C_IN", "OUT", {84, 581}},
+    };
+    return t;
+}()},
+{"word.zero-detect.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.zero-detect.32.structural";
     t.arcs = {
         Arc{"A", "ZERO", {201, 201}},
     };
     return t;
 }()},
-{"word.zerodetect.8.behavioral", [] {
+{"word.zero-detect.8.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on word.zerodetect.8.structural";
+    t.evidence = "proven on word.zero-detect.8.structural";
     t.arcs = {
         Arc{"A", "ZERO", {129, 129}},
     };

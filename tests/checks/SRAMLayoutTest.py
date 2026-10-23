@@ -72,7 +72,7 @@ class SRAMLayoutTest(unittest.TestCase):
         row = data["type_layouts"]["SRAMRow<16>"]["children"]
         self.assertEqual(len({v["rel_pos"][1] for v in row.values()}), 1)
         self.assertEqual(sorted(row, key=lambda n: row[n]["rel_pos"][0]), [f"CELL_{i}" for i in range(16)])
-        for kind in ("FFWord<8>", "ALU<8,extended,ripple>", "Rewire", "SRAM8"):
+        for kind in ("FFWord<8>", "ALU<8>", "Rewire", "SRAM8"):
             self.assertEqual(sram_layout.defaults(kind), {})
 
 

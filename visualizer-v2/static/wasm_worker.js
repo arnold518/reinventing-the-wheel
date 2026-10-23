@@ -292,7 +292,7 @@ async function initialize() {
 }
 
 function normalizeScenario(value) {
-  const key = String(value || "adder-ripple-w8").trim().toLowerCase().replaceAll("_", "-");
+  const key = String(value || "ripple-carry-adder-w8").trim().toLowerCase().replaceAll("_", "-");
   const descriptor = scenariosByAlias.get(key);
   if (!descriptor) throw new Error(`Unknown scenario '${value}'`);
   return descriptor;
@@ -401,7 +401,7 @@ async function handleRequest(message) {
   if (message.method === "GET" && path === "/api/scenarios") {
     const fallback = scenarioOptions[0] ? scenarioOptions[0].key : "";
     return JSON.stringify({
-      default: scenariosByAlias.has("adder-ripple-w8") ? "adder-ripple-w8" : fallback,
+      default: scenariosByAlias.has("ripple-carry-adder-w8") ? "ripple-carry-adder-w8" : fallback,
       scenarios: scenarioOptions,
       groups: scenarioCatalog.groups,
       catalog: scenarioCatalog,
@@ -409,7 +409,7 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
-    return JSON.stringify(await loadScenario(query.get("scenario") || "adder-ripple-w8", null, null, query.get("core_fidelity"), query.get("timing")));
+    return JSON.stringify(await loadScenario(query.get("scenario") || "ripple-carry-adder-w8", null, null, query.get("core_fidelity"), query.get("timing")));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {

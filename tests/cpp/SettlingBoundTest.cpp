@@ -4,7 +4,8 @@
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/basic/Gate.hpp"
@@ -510,7 +511,7 @@ void aluEquality() {
     const auto& catalog = circuit::builtinComponentCatalog();
     const auto build = [&] {
         return std::dynamic_pointer_cast<IOComponent>(
-            catalog.createRoot({"word.alu.32.integer.prefix", "DUT", {}}, circuit::maximallyStructural()).root);
+            catalog.createRoot({"rv32i.alu", "DUT", {}}, circuit::maximallyStructural()).root);
     };
     SettlingOptions options;
     options.binary_sources = true;
@@ -518,7 +519,7 @@ void aluEquality() {
     Bench bench(build());
     const auto report = valid(CircuitTimingAnalyzer::settling(bench.dut, options));
     const auto& eq = endpoint(report, "EQ");
-    std::cout << "word.alu.32.integer.prefix EQ: paths " << eq.structural << ", proven " << eq.bound
+    std::cout << "rv32i.alu EQ: paths " << eq.structural << ", proven " << eq.bound
               << (eq.tight ? " (attained)" : "") << " after " << eq.evaluations << " evaluations\n";
     check(eq.structural == 33 && eq.bound == 30 && eq.tight, "The ALU EQ false path must be removed: 33 -> 30");
 
@@ -542,12 +543,12 @@ void aluEquality() {
         const auto before = round % 2 ? vector(static_cast<uint32_t>(random()), static_cast<uint32_t>(random()), random() % 32)
                                       : vector(~a, a, random() % 32);
         for (const auto& [name, tick] : bench.change(before, vector(a, near, random() % 32), 60, 50)) {
-            check(tick <= endpoint(report, name).bound, "word.alu.32.integer.prefix." + name + ": changed at tick "
+            check(tick <= endpoint(report, name).bound, "rv32i.alu." + name + ": changed at tick "
                 + std::to_string(tick) + ", after the proven bound " + std::to_string(endpoint(report, name).bound));
             if (name == "EQ") worst = std::max(worst, tick);
         }
     }
-    std::cout << "word.alu.32.integer.prefix EQ: latest change seen on equal and near-equal operands: tick " << worst << '\n';
+    std::cout << "rv32i.alu EQ: latest change seen on equal and near-equal operands: tick " << worst << '\n';
     confirm(bench, report, false, 60, random);
 }
 // A compact part that carries the delay table proven on its gate-level form.
@@ -560,18 +561,18 @@ std::shared_ptr<IOComponent> twoAdders(bool compact, const circuit::PartDelays* 
         ->child("PAIR", std::nullopt);
     auto root = Component::createWithContext<IOComponent>(context, "PAIR", [](IOComponent* c) {
         for (auto name : {"A", "B", "C"}) c->addPin<32>(name, PinType::INPUT);
-        c->addPin("Cin", PinType::INPUT);
+        c->addPin("C_IN", PinType::INPUT);
         c->addPin<32>("OUT", PinType::OUTPUT);
     });
     ComponentBuilder b(root, context);
-    auto first = b.add(circuit::word::family(circuit::word::Unit::Adder,32,{circuit::word::Operations::Extended,circuit::word::AdderTopology::ParallelPrefix,true}), "FIRST"), second = b.add(circuit::word::family(circuit::word::Unit::Adder,32,{circuit::word::Operations::Extended,circuit::word::AdderTopology::ParallelPrefix,true}), "SECOND");
+    auto first = b.add(circuit::families::parallelPrefixAdder(32), "FIRST"), second = b.add(circuit::families::parallelPrefixAdder(32), "SECOND");
     b.addNewWire<32>("a", root->getInputPin<32>("A"), {first->getInputPin<32>("A")});
     b.addNewWire<32>("b", root->getInputPin<32>("B"), {first->getInputPin<32>("B")});
     b.addNewWire<32>("c", root->getInputPin<32>("C"), {second->getInputPin<32>("B")});
-    b.addNewWire("cin", root->getInputPin("Cin"), {first->getInputPin("Cin")});
-    b.addNewWire<32>("sum", first->getOutputPin<32>("Sum"), {second->getInputPin<32>("A")});
-    b.addNewWire("carry", first->getOutputPin("Cout"), {second->getInputPin("Cin")});
-    b.addNewWire<32>("out", second->getOutputPin<32>("Sum"), {root->getOutputPin<32>("OUT")});
+    b.addNewWire("cin", root->getInputPin("C_IN"), {first->getInputPin("C_IN")});
+    b.addNewWire<32>("sum", first->getOutputPin<32>("OUT"), {second->getInputPin<32>("A")});
+    b.addNewWire("carry", first->getOutputPin("C_OUT"), {second->getInputPin("C_IN")});
+    b.addNewWire<32>("out", second->getOutputPin<32>("OUT"), {root->getOutputPin<32>("OUT")});
     if (table) for (const auto& adder : {first, second}) {
         const auto leaf = std::dynamic_pointer_cast<BasicComponent>(adder);
         check(leaf != nullptr, "The compact adder must be one evaluated part");
@@ -583,7 +584,7 @@ std::shared_ptr<IOComponent> twoAdders(bool compact, const circuit::PartDelays* 
 void compactAdder() {
     const auto& catalog = circuit::builtinComponentCatalog();
     const auto build = [&](const circuit::BuildProfile& profile) {
-        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({"word.adder.32.prefix", "DUT", {}}, profile).root);
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({"word.parallel-prefix-adder.32", "DUT", {}}, profile).root);
     };
     SettlingOptions options;
     options.binary_sources = true;
@@ -593,11 +594,11 @@ void compactAdder() {
     for (const auto& problem : problems) std::cerr << problem << '\n';
     std::map<std::pair<std::string, std::string>, circuit::DelayRange> arcs;
     for (const auto& arc : table.arcs) arcs[{arc.input, arc.output}] = arc.delay;
-    check(arcs.size() == 6 && table.clock.empty() && table.launches.empty(), "The adder has six input-output pairs");
-    check(arcs[{"A", "Sum"}].maximum == 19 && arcs[{"Cin", "Sum"}].maximum == 3 && arcs[{"Cin", "Cout"}].maximum == 2,
+    check(arcs.size() == 9 && table.clock.empty() && table.launches.empty(), "The adder has nine input-output pairs");
+    check(arcs[{"A", "OUT"}].maximum == 19 && arcs[{"C_IN", "OUT"}].maximum == 3 && arcs[{"C_IN", "C_OUT"}].maximum == 2,
           "Proven adder pairs");
     for (const auto& [pair, delay] : arcs) check(delay.minimum >= 1 && delay.minimum <= delay.maximum, "Earliest before latest");
-    std::cout << "Adder<32> pairs (earliest..latest):";
+    std::cout << "ParallelPrefixAdder<32> pairs (earliest..latest):";
     for (const auto& [pair, delay] : arcs) std::cout << ' ' << pair.first << "->" << pair.second << ' ' << delay.minimum << ".." << delay.maximum;
     std::cout << '\n';
 
@@ -627,7 +628,7 @@ void compactAdder() {
         const auto before = randomVector(*gates.dut, random, false);
         auto after = randomVector(*gates.dut, random, false);
         std::string changing;
-        if (round % 3 == 1) { after = before; after["Cin"][0] = before.at("Cin")[0] == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW; changing = "Cin"; }
+        if (round % 3 == 1) { after = before; after["C_IN"][0] = before.at("C_IN")[0] == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW; changing = "C_IN"; }
         if (round % 3 == 2) { after = before; after["A"] = randomVector(*gates.dut, random, false)["A"]; changing = "A"; }
         const auto real = gates.change(before, after, 30, 30), modeled = compact.change(before, after, 30, 30);
         for (const auto& [name, wire] : gates.outputs)
@@ -635,7 +636,7 @@ void compactAdder() {
         for (const auto& [name, tick] : modeled) {
             const auto limit = changing.empty() ? endpoint(proven, name).bound : arcs[{changing, name}].maximum;
             check(tick <= limit, "Compact adder changed after its table allows");
-            if (changing == "Cin") { check(tick <= 3, "A carry-in change must be fast"); ++carry_only; }
+            if (changing == "C_IN") { check(tick <= 3, "A carry-in change must be fast"); ++carry_only; }
         }
         // The gates may glitch and return to the old value; the compact part
         // then shows no change at all. Where it does change, it is not early.
@@ -646,7 +647,7 @@ void compactAdder() {
         }
     }
     check(carry_only > 50, "Carry-in changes were not exercised");
-    std::cout << "Compact Adder<32> on its proven table: 600 input changes matched; the gates glitched without a final change "
+    std::cout << "Compact ParallelPrefixAdder<32> on its proven table: 600 input changes matched; the gates glitched without a final change "
               << glitches << " times\n";
 
     // Parents: built from compact adders, a circuit is never faster than the

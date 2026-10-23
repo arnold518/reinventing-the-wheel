@@ -23,9 +23,9 @@ add_executable(SafeClockTimingTest cpp/SafeClockTimingTest.cpp)
 # A sample of the stored delay tables, recomputed from the gates. The full
 # check is `part_delay_tables --check` (about ten minutes).
 add_test(NAME PartDelayTablesTest COMMAND part_delay_tables --check
-    word.adder.32.prefix word.addsub.32.integer.prefix logic.mux.32.32 logic.decoder.5.full
-    word.barrelshifter.32.integer word.zerodetect.32 rv32i.decode-control rv32i.pipeline.forwarding
-    rv32i.pipeline.hazard-detection word.alu.8.extended.ripple rv32i.prediction.predictor rv32i.memory-lanes)
+    word.parallel-prefix-adder.32 rv32i.alu.add-sub logic.mux.32.32 logic.decoder.5.full
+    rv32i.alu.shifter word.zero-detect.32 rv32i.decode-control rv32i.pipeline.forwarding
+    rv32i.pipeline.hazard-detection word.alu.8 rv32i.prediction.predictor rv32i.memory-lanes)
 set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIMEOUT 600)
 add_test(NAME PartDelayTablesCompleteTest COMMAND part_delay_tables --verify
     ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.generated.inc)
@@ -385,34 +385,31 @@ set(SIMULATION_TESTS
     Mux32Width32Test
     DecoderWidth5Test
     DecoderWidth5ZeroDisabledTest
-    AdderRippleWidth8Test
+    RippleCarryAdderWidth8Test
     ZeroDetectWidth8Test
-    ALUExtendedWidth8Test
-    AddSubExtendedWidth8Test
-    ArithmeticExtendedWidth8Test
-    LogicExtendedWidth8Test
-    ShiftExtendedWidth8Test
-    CompareExtendedWidth8Test
-    FlagsExtendedWidth8Test
-    ExtendedALUContractTest
-    ExtendedALUFidelityContractTest
-    ALUControlExtendedTest
-    ResultSelectorExtendedWidth8Test
-    ALUControlIntegerTest
-    CompareIntegerWidth32Test
-    ResultSelectorIntegerWidth32Test
-    FlagsIntegerWidth32Test
+    AddSubWidth8Test
+    ArithmeticUnitWidth8Test
+    LogicUnitWidth8Test
+    BarrelShifterWidth8Test
+    CompareSelectWidth8Test
+    ALUFlagUnitWidth8Test
+    ALUContractTest
+    ALUFidelityContractTest
+    ALUControlDecoderTest
+    ALUResultSelectorWidth8Test
+    RV32IALUControlTest
+    RV32IALUCompareTest
+    RV32IALUResultSelectTest
     ALUHierarchyTest
-    AdderPrefixWidth32Test
-    AddSubIntegerWidth32Test
+    ParallelPrefixAdderWidth32Test
+    RV32IALUAddSubTest
     RV32IMemoryLanesTest
     RV32IMemoryRequestTest
-    LogicIntegerWidth32Test
+    RV32IALULogicTest
     ZeroDetectWidth32Test
-    ShiftIntegerWidth32Test
-    ALUIntegerWidth32Test
-    ALUIntegerCoreWidth32Test
-    IntegerALUSliceTest
+    RV32IALUShifterTest
+    RV32IALUTest
+    RV32IALUSliceTest
     RV32IDecodeControlUnitTest
     RV32IExecutionControlStatusUnitTest
     RV32IIFIDPipelineRegisterTest
@@ -477,7 +474,7 @@ set(INFRASTRUCTURE_TESTS
 )
 
 set(SEMANTIC_TESTS
-    IntegerALUSliceTest
+    RV32IALUSliceTest
     RewireValidationTest
     RV32IDecoderTest
     RV32IControlTest
@@ -499,8 +496,7 @@ set(SLOW_SIMULATION_TESTS
     RV32IMemoryArrangementBTest
     RV32IMemoryArrangementD0Test
     RV32IMemoryArrangementDIDTest
-    ALUIntegerWidth32Test
-    ALUIntegerCoreWidth32Test
+    RV32IALUTest
     FFMemoryContractTest
     RegisterFileWidth32Count32Test
     RV32ISingleCycleCoreTest
@@ -627,7 +623,7 @@ foreach(test_name RV32ISharedMemoryProgramTest RV32IMemoryArrangementBTest RV32I
 endforeach()
 
 # Generic arithmetic ownership precedes the game/device append hook.
-foreach(test_name ALUWidthContractTest ALUScenarioTest ALUWidth8ScenarioTest ALUWidth32ScenarioTest AdderRippleScenarioTest AdderPrefixScenarioTest)
+foreach(test_name ALUWidthContractTest ALUScenarioTest ALUWidth8ScenarioTest ALUWidth32ScenarioTest RippleCarryAdderWidth16Test ParallelPrefixAdderWidth16Test)
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;alu;width")
     list(APPEND SIMULATION_TESTS ${test_name})
@@ -661,7 +657,6 @@ set(RV32IM_PHASE3_TESTS
     IndexedPixelSelectorWidth32Test
     FramebufferDisplayTest
     DeviceInspectorTest
-    ALUWidth16RippleScenarioTest
     MultiplyStepScenarioTest
     DivideStepScenarioTest
     MultiplierWidth32ScenarioTest

@@ -2,7 +2,7 @@
 // Construction helpers only. Every operation below builds existing gates,
 // rewires, adders or register families; this is not a behavioral evaluator.
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/utility/BitAdapter.hpp"
@@ -68,9 +68,9 @@ public:
         if(a.size()!=c.size()) throw std::invalid_argument("Adder width mismatch");
         const auto width=a.size();
         if(width==8 || width==16 || width==32) {
-            auto p=b.add(circuit::families::adder(width,circuit::word::AdderTopology::ParallelPrefix),id("ADD"+std::to_string(width)));
+            auto p=b.add(circuit::families::parallelPrefixAdder(width),id("ADD"+std::to_string(width)));
             w.connect(join(a),p->getInputPinDynamic("A"));w.connect(join(c),p->getInputPinDynamic("B"));
-            w.connect(carry,p->getInputPin("Cin"));return {split(p->getOutputPinDynamic("Sum")),p->getOutputPin("Cout")};
+            w.connect(carry,p->getInputPin("C_IN"));return {split(p->getOutputPinDynamic("OUT")),p->getOutputPin("C_OUT")};
         }
         V r;for(size_t i=0;i<a.size();++i){
             auto p=b.addNewComponent<FullAdder>(id("FA"));

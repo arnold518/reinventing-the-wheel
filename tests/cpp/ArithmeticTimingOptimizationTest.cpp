@@ -1,5 +1,7 @@
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/ALU.hpp"
+#include "modules/composite/RippleCarryAdder.hpp"
 #include "modules/composite/ParallelPrefixAdder.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/TimingProfile.hpp"
@@ -22,23 +24,22 @@ struct Comparison {
     std::map<std::string,std::pair<std::shared_ptr<WireBase>,std::shared_ptr<WireBase>>> outputs;
     Simulator sim;
     SimulationTime time=0; size_t rows=0;
-    Comparison(bool subtract) {
-        fast=subtract?std::static_pointer_cast<IOComponent>(Component::create<AddSub<32>>("FAST",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}))
-                     :std::static_pointer_cast<IOComponent>(Component::create<Adder<32>>("FAST",circuit::word::AdderTopology::ParallelPrefix));
-        reference=subtract?std::static_pointer_cast<IOComponent>(Component::create<AddSub<32>>("RIPPLE",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple,true}))
-                          :std::static_pointer_cast<IOComponent>(Component::create<Adder<32>>("RIPPLE",circuit::word::AdderTopology::Ripple));
+    Comparison() {
+        fast=Component::create<ParallelPrefixAdder<32>>("FAST");
+        reference=Component::create<RippleCarryAdder<32>>("RIPPLE");
         root->addChild(fast);root->addChild(reference);ComponentBuilder b(root);
         for(const auto& [n,p]:fast->getAllInputPins())inputs[n]=b.addNewWireDynamic(n,p->getWidth(),nullptr,{p,reference->getInputPinDynamic(n)});
-        for(const auto& [n,p]:fast->getAllOutputPins())outputs[n]={b.addNewWireDynamic("fast_"+n,p->getWidth(),p,{}),
-            b.addNewWireDynamic("ripple_"+n,p->getWidth(),reference->getOutputPinDynamic(n),{})};
+        // Both adders share A, B, C_IN -> OUT, C_OUT; only the prefix adder has C_SIGN.
+        for(const auto& [n,p]:reference->getAllOutputPins())outputs[n]={b.addNewWireDynamic("fast_"+n,p->getWidth(),fast->getOutputPinDynamic(n),{}),
+            b.addNewWireDynamic("ripple_"+n,p->getWidth(),p,{})};
         sim.setHistoryRecordingEnabled(false);SimulationTest::scheduleInitialEventsForTree(root,sim,0);
         const auto f=circuit::analysis::CircuitTimingAnalyzer::settling(fast);
         const auto r=circuit::analysis::CircuitTimingAnalyzer::settling(reference);
         check(f.valid&&r.valid&&f.bound<r.bound,"Prefix must shorten the settling bound");
-        std::cout<<(subtract?"AddSub<32,integer,prefix>":"Adder<32,prefix>")<<": ripple "<<r.bound<<", prefix "<<f.bound<<" ticks\n";
+        std::cout<<"32-bit adders: RippleCarryAdder "<<r.bound<<", ParallelPrefixAdder "<<f.bound<<" ticks\n";
     }
-    void row(const Bits& a,const Bits& b,LogicValue carry,bool subtract) {
-        for(const auto& [name,value]:std::map<std::string,Bits>{{"A",a},{"B",b},{subtract?"SUB":"Cin",{carry}}}) {
+    void row(const Bits& a,const Bits& b,LogicValue carry) {
+        for(const auto& [name,value]:std::map<std::string,Bits>{{"A",a},{"B",b},{"C_IN",{carry}}}) {
             auto wire=inputs.at(name);
             if(value.size()==1)sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(time,std::dynamic_pointer_cast<Wire<1>>(wire),value));
             else sim.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(time,std::dynamic_pointer_cast<Wire<32>>(wire),value));
@@ -50,37 +51,37 @@ struct Comparison {
         time+=400;++rows;
     }
 };
-void arithmetic(bool subtract) {
-    Comparison c(subtract);
+void arithmetic() {
+    Comparison c;
     for(unsigned n=0;n<1024;++n) {
         auto a=bits(0xfffffffc),b=bits(0);
         for(unsigned i=0;i<2;++i){a[i]=LogicValue((n>>(2*i))&3);b[i]=LogicValue((n>>(4+2*i))&3);}
-        c.row(a,b,LogicValue(n>>8),subtract);
+        c.row(a,b,LogicValue(n>>8));
     }
     std::mt19937 random(0x20260923);
     for(unsigned n=0;n<2048;++n) {
         auto a=bits(random()),b=bits(random());
         if(n&1)for(unsigned i=0;i<32;++i){a[i]=LogicValue(random()%4);b[i]=LogicValue(random()%4);}
-        c.row(a,b,LogicValue(random()%4),subtract);
+        c.row(a,b,LogicValue(random()%4));
     }
     for(unsigned i=0;i<32;++i)for(unsigned carry=0;carry<2;++carry) {
-        c.row(bits((uint32_t{1}<<i)-1),bits(1),LogicValue(carry),subtract);
-        c.row(bits(0x80000000),bits(0x7fffffff),LogicValue(carry),subtract);
+        c.row(bits((uint32_t{1}<<i)-1),bits(1),LogicValue(carry));
+        c.row(bits(0x80000000),bits(0x7fffffff),LogicValue(carry));
     }
-    std::cout<<c.rows<<" binary/four-state arithmetic rows passed\n";
+    std::cout<<c.rows<<" binary/four-state rows: both adders agree\n";
 }
 void incrementByFour() {
     auto root=Component::create<IOComponent>("ROOT");
     auto increment=Component::create<Incrementer<32,4>>("INCREMENT");
-    auto reference=Component::create<Adder<32>>("REFERENCE");
+    auto reference=Component::create<ParallelPrefixAdder<32>>("REFERENCE");
     root->addChild(increment);root->addChild(reference);
     ComponentBuilder builder(root);
     auto input=builder.addNewWire<32>("INPUT",nullptr,
         {increment->getInputPin<32>("A"),reference->getInputPin<32>("A")});
     auto four=builder.addNewWire<32>("FOUR",nullptr,{reference->getInputPin<32>("B")});
-    auto zero=builder.addNewWire("ZERO",nullptr,{reference->getInputPin("Cin")});
+    auto zero=builder.addNewWire("ZERO",nullptr,{reference->getInputPin("C_IN")});
     auto actual=builder.addNewWire<32>("ACTUAL",increment->getOutputPin<32>("Sum"),{});
-    auto expected=builder.addNewWire<32>("EXPECTED",reference->getOutputPin<32>("Sum"),{});
+    auto expected=builder.addNewWire<32>("EXPECTED",reference->getOutputPin<32>("OUT"),{});
     Simulator simulator;
     simulator.setHistoryRecordingEnabled(false);
     SimulationTest::scheduleInitialEventsForTree(root,simulator,0);
@@ -141,51 +142,35 @@ struct WordTiming {
     size_t prefix_levels;
 };
 
-WordTiming wordTiming(const circuit::ComponentFamily& family, const char* profile,
-                      size_t width, const char* unit, const char* operations,
-                      bool full_flags, bool prefix) {
+WordTiming wordTiming(const circuit::ComponentFamily& family, const char* profile) {
     auto built = circuit::builtinComponentCatalog().createRoot(
         family.request("WORD"), circuit::strictAllStructural());
     const auto report = circuit::analysis::CircuitTimingAnalyzer::settling(built.root);
     check(report.valid && report.bound > 0, "Invalid generic word settling graph");
     const auto levels = prefixLevels(built.root);
-    std::cout << "WORD_TIMING profile=" << profile << " width=" << width
-              << " unit=" << unit << " operations=" << operations
-              << " full_flags=" << full_flags << " prefix=" << prefix
+    std::cout << "WORD_TIMING profile=" << profile << " type=" << family.typeName()
               << " bound=" << report.bound << " prefix_levels=" << levels << '\n';
     return {report.bound, levels};
 }
 
-void genericWordTiming() {
+// The adder comparison: at every width and timing profile the prefix adder
+// must settle sooner than the ripple adder and actually use carry levels.
+void adderComparison() {
     // Four-state sources remain unrestricted. These are conservative settling
     // bounds, not exact minimum delays, hold proofs or physical clock rates.
-    using namespace circuit::word;
     const std::string previous_profile(circuit::timing::activeTimingProfile().name);
     for (const char* profile : {"unit", "embedded", "desktop"}) {
         circuit::timing::setActiveTimingProfile(profile);
         for (size_t width : {8u, 16u, 32u}) {
-            const auto ripple = wordTiming(circuit::families::adder(width, AdderTopology::Ripple),
-                profile, width, "adder", "shared", true, false);
-            const auto prefix = wordTiming(circuit::families::adder(width, AdderTopology::ParallelPrefix),
-                profile, width, "adder", "shared", true, true);
-            check(prefix.bound < ripple.bound, "Configured prefix adder must shorten the settling bound");
-            check(prefix.prefix_levels > ripple.prefix_levels, "Adder topology configuration was ignored");
-            for (auto operations : {Operations::Extended, Operations::IntegerDatapath}) {
-                for (bool full_flags : {true, false}) {
-                    if (operations == Operations::Extended && !full_flags) continue;
-                    const char* name = operations == Operations::Extended ? "extended" : "integer";
-                    const auto slow = wordTiming(circuit::families::alu(width,
-                        {operations, AdderTopology::Ripple, full_flags}),
-                        profile, width, "alu", name, full_flags, false);
-                    const auto fast = wordTiming(circuit::families::alu(width,
-                        {operations, AdderTopology::ParallelPrefix, full_flags}),
-                        profile, width, "alu", name, full_flags, true);
-                    check(fast.prefix_levels > slow.prefix_levels, "ALU adder topology configuration was ignored");
-                }
-            }
+            const auto ripple = wordTiming(circuit::families::rippleCarryAdder(width), profile);
+            const auto prefix = wordTiming(circuit::families::parallelPrefixAdder(width), profile);
+            check(prefix.bound < ripple.bound, "The prefix adder must shorten the settling bound");
+            check(prefix.prefix_levels > ripple.prefix_levels, "The prefix adder must contain carry levels");
+            wordTiming(circuit::families::alu(width), profile);
         }
+        wordTiming(circuit::families::rv32iALU(), profile);
     }
     circuit::timing::setActiveTimingProfile(previous_profile);
 }
 }
-int main(){try{arithmetic(false);arithmetic(true);incrementByFour();incrementConfigurations<8>();incrementConfigurations<16>();incrementConfigurations<32>();genericWordTiming();}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
+int main(){try{arithmetic();incrementByFour();incrementConfigurations<8>();incrementConfigurations<16>();incrementConfigurations<32>();adderComparison();}catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

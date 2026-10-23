@@ -1,10 +1,11 @@
-#include "tests/IntegerALUTests.hpp"
+#include "tests/RV32IALUTests.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/IOComponent.hpp"
 #include "modules/basic/Gate.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/WordComponent.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include <array>
@@ -307,14 +308,14 @@ TestRow addSubRow(uint32_t a, uint32_t b, bool sub) {
     const uint32_t result = sub ? (a - b) : (a + b);
     return {{{"A", bits(a)}, {"B", bits(b)}, {"SUB", bit(sub)}},
             {{"OUT", bits(result)},
-             {"CARRY_OUT", bit(sub ? subCarry(a, b) : addCarry(a, b))},
+             {"C_OUT", bit(sub ? subCarry(a, b) : addCarry(a, b))},
              {"OVERFLOW", bit(sub ? subOverflow(a, b, result) : addOverflow(a, b, result))}}};
 }
 
 TestRow adder32Row(uint32_t a, uint32_t b, bool cin) {
     const uint64_t wide = static_cast<uint64_t>(a) + static_cast<uint64_t>(b) + (cin ? 1ULL : 0ULL);
-    return {{{"A", bits(a)}, {"B", bits(b)}, {"Cin", bit(cin)}},
-            {{"Sum", bits(static_cast<uint32_t>(wide))}, {"Cout", bit(wide > MASK32)}}};
+    return {{{"A", bits(a)}, {"B", bits(b)}, {"C_IN", bit(cin)}},
+            {{"OUT", bits(static_cast<uint32_t>(wide))}, {"C_OUT", bit(wide > MASK32)}}};
 }
 
 TestRow addSub4Row(uint32_t a, uint32_t b, bool sub) {
@@ -344,8 +345,8 @@ TestRow shifterRow(
 
 TestRow aluRow(uint32_t a, uint32_t b, uint8_t op, uint32_t out, bool carry = false, bool overflow = false) {
     const bool comparison_valid =
-        op == circuit::word::IntegerOp::SUB || op == circuit::word::IntegerOp::SLT
-        || op == circuit::word::IntegerOp::SLTU;
+        op == ::rv32i::ALUOp::SUB || op == ::rv32i::ALUOp::SLT
+        || op == ::rv32i::ALUOp::SLTU;
     return {{{"A", bits(a)}, {"B", bits(b)}, {"OP", bits(op)}},
             {{"OUT", bits(out)},
              {"ZERO", bit(out == 0)},
@@ -359,19 +360,19 @@ TestRow aluRow(uint32_t a, uint32_t b, uint8_t op, uint32_t out, bool carry = fa
 
 uint32_t aluExpectedOut(uint32_t a, uint32_t b, uint8_t op) {
     switch (op) {
-        case circuit::word::IntegerOp::ADD: return a + b;
-        case circuit::word::IntegerOp::SUB: return a - b;
-        case circuit::word::IntegerOp::AND: return a & b;
-        case circuit::word::IntegerOp::OR: return a | b;
-        case circuit::word::IntegerOp::XOR: return a ^ b;
-        case circuit::word::IntegerOp::SLL: return a << (b & 0x1fU);
-        case circuit::word::IntegerOp::SRL: return a >> (b & 0x1fU);
-        case circuit::word::IntegerOp::SRA: return sra(a, b);
-        case circuit::word::IntegerOp::SLT: return static_cast<int32_t>(a) < static_cast<int32_t>(b) ? 1U : 0U;
-        case circuit::word::IntegerOp::SLTU: return a < b ? 1U : 0U;
-        case circuit::word::IntegerOp::PASS_A: return a;
-        case circuit::word::IntegerOp::PASS_B: return b;
-        case circuit::word::IntegerOp::ZERO: return 0;
+        case ::rv32i::ALUOp::ADD: return a + b;
+        case ::rv32i::ALUOp::SUB: return a - b;
+        case ::rv32i::ALUOp::AND: return a & b;
+        case ::rv32i::ALUOp::OR: return a | b;
+        case ::rv32i::ALUOp::XOR: return a ^ b;
+        case ::rv32i::ALUOp::SLL: return a << (b & 0x1fU);
+        case ::rv32i::ALUOp::SRL: return a >> (b & 0x1fU);
+        case ::rv32i::ALUOp::SRA: return sra(a, b);
+        case ::rv32i::ALUOp::SLT: return static_cast<int32_t>(a) < static_cast<int32_t>(b) ? 1U : 0U;
+        case ::rv32i::ALUOp::SLTU: return a < b ? 1U : 0U;
+        case ::rv32i::ALUOp::PASS_A: return a;
+        case ::rv32i::ALUOp::PASS_B: return b;
+        case ::rv32i::ALUOp::CLEAR: return 0;
         default: return 0;
     }
 }
@@ -380,10 +381,10 @@ TestRow aluAutoRow(uint32_t a, uint32_t b, uint8_t op) {
     const uint32_t out = aluExpectedOut(a, b, op);
     bool carry = false;
     bool overflow = false;
-    if (op == circuit::word::IntegerOp::ADD) {
+    if (op == ::rv32i::ALUOp::ADD) {
         carry = addCarry(a, b);
         overflow = addOverflow(a, b, out);
-    } else if (op == circuit::word::IntegerOp::SUB || op == circuit::word::IntegerOp::SLT || op == circuit::word::IntegerOp::SLTU) {
+    } else if (op == ::rv32i::ALUOp::SUB || op == ::rv32i::ALUOp::SLT || op == ::rv32i::ALUOp::SLTU) {
         const uint32_t diff = a - b;
         carry = subCarry(a, b);
         overflow = subOverflow(a, b, diff);
@@ -421,11 +422,11 @@ std::vector<TestRow> adder32Rows() {
             {
                 {"A", TestValue(left)},
                 {"B", TestValue(right)},
-                {"Cin", bit(false)},
+                {"C_IN", bit(false)},
             },
             {
-                {"Sum", TestValue(expected.out)},
-                {"Cout", TestValue(expected.carry_out)},
+                {"OUT", TestValue(expected.out)},
+                {"C_OUT", TestValue(expected.carry_out)},
             },
         });
     }
@@ -484,7 +485,7 @@ std::vector<TestRow> addSub32Rows() {
             },
             {
                 {"OUT", TestValue(expected.out)},
-                {"CARRY_OUT", TestValue(expected.carry_out)},
+                {"C_OUT", TestValue(expected.carry_out)},
                 {"OVERFLOW", TestValue(expected.overflow)},
             },
         });
@@ -500,7 +501,7 @@ std::vector<TestRow> addSub32Rows() {
         },
         {
             {"OUT", TestValue(unknown_sub_expected.out)},
-            {"CARRY_OUT", TestValue(
+            {"C_OUT", TestValue(
                 unknown_sub_expected.carry_out)},
             {"OVERFLOW", TestValue(
                 unknown_sub_expected.overflow)},
@@ -641,33 +642,33 @@ std::vector<TestRow> shifter32Rows() {
 
 std::vector<TestRow> integerALURows() {
     std::vector<TestRow> rows{
-        aluAutoRow(0x00000001U, 0x00000002U, circuit::word::IntegerOp::ADD),
-        aluAutoRow(0xffffffffU, 0x00000001U, circuit::word::IntegerOp::ADD),
-        aluAutoRow(0xffffffffU, 0xffffffffU, circuit::word::IntegerOp::ADD),
-        aluAutoRow(0x7fffffffU, 0x00000001U, circuit::word::IntegerOp::ADD),
-        aluAutoRow(0x80000000U, 0x80000000U, circuit::word::IntegerOp::ADD),
-        aluAutoRow(0x00000005U, 0x00000005U, circuit::word::IntegerOp::SUB),
-        aluAutoRow(0x00000000U, 0x00000001U, circuit::word::IntegerOp::SUB),
-        aluAutoRow(0x80000000U, 0x7fffffffU, circuit::word::IntegerOp::SUB),
-        aluAutoRow(0x7fffffffU, 0xffffffffU, circuit::word::IntegerOp::SUB),
-        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, circuit::word::IntegerOp::AND),
-        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, circuit::word::IntegerOp::OR),
-        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, circuit::word::IntegerOp::XOR),
-        aluAutoRow(0x00000001U, 0x0000001fU, circuit::word::IntegerOp::SLL),
-        aluAutoRow(0x00000001U, 0x00000020U, circuit::word::IntegerOp::SLL),
-        aluAutoRow(0x80000000U, 0x0000001fU, circuit::word::IntegerOp::SRL),
-        aluAutoRow(0x80000000U, 0x00000021U, circuit::word::IntegerOp::SRL),
-        aluAutoRow(0x80000000U, 0x0000001fU, circuit::word::IntegerOp::SRA),
-        aluAutoRow(0x80000000U, 0x00000021U, circuit::word::IntegerOp::SRA),
-        aluAutoRow(0xffffffffU, 0x00000001U, circuit::word::IntegerOp::SLT),
-        aluAutoRow(0x80000000U, 0x00000000U, circuit::word::IntegerOp::SLT),
-        aluAutoRow(0x7fffffffU, 0x80000000U, circuit::word::IntegerOp::SLT),
-        aluAutoRow(0xffffffffU, 0x00000001U, circuit::word::IntegerOp::SLTU),
-        aluAutoRow(0x00000000U, 0xffffffffU, circuit::word::IntegerOp::SLTU),
-        aluAutoRow(0x7fffffffU, 0x80000000U, circuit::word::IntegerOp::SLTU),
-        aluAutoRow(0x12345678U, 0x9abcdef0U, circuit::word::IntegerOp::PASS_A),
-        aluAutoRow(0x12345678U, 0x9abcdef0U, circuit::word::IntegerOp::PASS_B),
-        aluAutoRow(0x12345678U, 0x9abcdef0U, circuit::word::IntegerOp::ZERO),
+        aluAutoRow(0x00000001U, 0x00000002U, ::rv32i::ALUOp::ADD),
+        aluAutoRow(0xffffffffU, 0x00000001U, ::rv32i::ALUOp::ADD),
+        aluAutoRow(0xffffffffU, 0xffffffffU, ::rv32i::ALUOp::ADD),
+        aluAutoRow(0x7fffffffU, 0x00000001U, ::rv32i::ALUOp::ADD),
+        aluAutoRow(0x80000000U, 0x80000000U, ::rv32i::ALUOp::ADD),
+        aluAutoRow(0x00000005U, 0x00000005U, ::rv32i::ALUOp::SUB),
+        aluAutoRow(0x00000000U, 0x00000001U, ::rv32i::ALUOp::SUB),
+        aluAutoRow(0x80000000U, 0x7fffffffU, ::rv32i::ALUOp::SUB),
+        aluAutoRow(0x7fffffffU, 0xffffffffU, ::rv32i::ALUOp::SUB),
+        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ::rv32i::ALUOp::AND),
+        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ::rv32i::ALUOp::OR),
+        aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ::rv32i::ALUOp::XOR),
+        aluAutoRow(0x00000001U, 0x0000001fU, ::rv32i::ALUOp::SLL),
+        aluAutoRow(0x00000001U, 0x00000020U, ::rv32i::ALUOp::SLL),
+        aluAutoRow(0x80000000U, 0x0000001fU, ::rv32i::ALUOp::SRL),
+        aluAutoRow(0x80000000U, 0x00000021U, ::rv32i::ALUOp::SRL),
+        aluAutoRow(0x80000000U, 0x0000001fU, ::rv32i::ALUOp::SRA),
+        aluAutoRow(0x80000000U, 0x00000021U, ::rv32i::ALUOp::SRA),
+        aluAutoRow(0xffffffffU, 0x00000001U, ::rv32i::ALUOp::SLT),
+        aluAutoRow(0x80000000U, 0x00000000U, ::rv32i::ALUOp::SLT),
+        aluAutoRow(0x7fffffffU, 0x80000000U, ::rv32i::ALUOp::SLT),
+        aluAutoRow(0xffffffffU, 0x00000001U, ::rv32i::ALUOp::SLTU),
+        aluAutoRow(0x00000000U, 0xffffffffU, ::rv32i::ALUOp::SLTU),
+        aluAutoRow(0x7fffffffU, 0x80000000U, ::rv32i::ALUOp::SLTU),
+        aluAutoRow(0x12345678U, 0x9abcdef0U, ::rv32i::ALUOp::PASS_A),
+        aluAutoRow(0x12345678U, 0x9abcdef0U, ::rv32i::ALUOp::PASS_B),
+        aluAutoRow(0x12345678U, 0x9abcdef0U, ::rv32i::ALUOp::CLEAR),
     };
 
     for (uint8_t op = 0x0d; op <= 0x1f; ++op) {
@@ -676,63 +677,99 @@ std::vector<TestRow> integerALURows() {
     return rows;
 }
 
-circuit::test::ComponentTestSpec integerALUTestSpec() {
-    circuit::test::ComponentTestSpec spec{
-        "ALUIntegerWidth32Test",
-        std::string(circuit::word::family(circuit::word::Unit::ALU,32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}).id()),
-        "ALU_INTEGER_W32_ROOT",
-        {},
-        {},
-    };
-    spec.scenarios.push_back(circuit::test::actionScenarioFromRows(
-        "truth-table",
-        spec.contract_id,
-        integerALURows(),
-        {100'000, 2'000'000}));
-    return spec;
+std::vector<TestRow> control32Rows() {
+    std::vector<TestRow> rows;
+    for (unsigned op = 0; op < 32; ++op) {
+        const bool arithmetic = op == 0 || op == 1 || op == 8 || op == 9;
+        rows.push_back({{{"OP", bits(op)}}, {
+            {"LOCAL_OP", bits(op & 7)}, {"HIGH_HALF", bit(op & 8)}, {"OUT_OF_RANGE", bit(op & 16)},
+            {"SUB", bit(arithmetic && op != 0)},
+            {"SHIFT_LEFT", bit(!(op & 2))}, {"SHIFT_ARITHMETIC", bit(op & 1)}}});
+    }
+    return rows;
 }
-
-circuit::test::ComponentTestSpec integerALUCoreTestSpec() {
+std::vector<TestRow> compare32Rows() {
+    std::vector<TestRow> rows;
+    for (unsigned controls = 0; controls < 8; ++controls)
+        for (unsigned diff : {0u, 1u, 0x80000000u, 0xffffffffu}) {
+            const bool enable = controls & 1, carry = controls & 2, overflow = controls & 4;
+            const bool lt = enable && (bool(diff & 0x80000000u) != overflow);
+            const bool ltu = enable && !carry;
+            rows.push_back({{{"DIFF", bits(diff)}, {"CARRY_IN", bit(carry)},
+                {"OVERFLOW_IN", bit(overflow)}, {"ENABLE", bit(enable)}}, {
+                {"EQ", bit(enable && diff == 0)}, {"LT_SIGNED", bit(lt)}, {"LT_UNSIGNED", bit(ltu)},
+                {"SLT_RESULT", bits(lt)}, {"SLTU_RESULT", bits(ltu)}}});
+        }
+    for (auto unknown : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto row = rows.front();
+        row.inputs["DIFF"] = TestValue(std::vector<LogicValue>(32, unknown));
+        row.inputs["CARRY_IN"] = unknown;
+        row.inputs["OVERFLOW_IN"] = unknown;
+        rows.push_back(row);
+    }
+    return rows;
+}
+std::vector<TestRow> selector32Rows() {
+    constexpr std::array<const char*, 9> names{"ARITHMETIC_RESULT", "AND_RESULT", "OR_RESULT", "XOR_RESULT",
+        "SHIFT_RESULT", "SLT_RESULT", "SLTU_RESULT", "A", "B"};
+    constexpr std::array<int, 16> selected{0, 0, 1, 2, 3, 4, 4, 4, 5, 6, 7, 8, -1, -1, -1, -1};
+    std::vector<TestRow> rows;
+    for (unsigned pattern : {0x12345678u, 0xedcba987u}) for (unsigned op = 0; op < 32; ++op) {
+        TestRow row;
+        for (unsigned i = 0; i < names.size(); ++i) row.inputs[names[i]] = bits(pattern ^ (0x11111111u * i));
+        row.inputs["LOCAL_OP"] = bits(op & 7);
+        row.inputs["HIGH_HALF"] = bit(op & 8);
+        row.inputs["OUT_OF_RANGE"] = bit(op & 16);
+        row.outputs["OUT"] = op < 16 && selected[op] >= 0
+            ? row.inputs.at(names[selected[op]]) : bits(0);
+        rows.push_back(row);
+    }
+    for (auto unknown : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto row = rows[16];
+        for (auto name : names) row.inputs[name] = TestValue(std::vector<LogicValue>(32, unknown));
+        rows.push_back(row);
+    }
+    return rows;
+}
+circuit::test::ComponentTestSpec rv32iALUTestSpec() {
     auto rows = integerALURows();
     for (auto& row : rows)
         for (const auto* flag : {"ZERO", "NEGATIVE", "CARRY_OUT", "OVERFLOW"})
             row.outputs.erase(flag);
     circuit::test::ComponentTestSpec spec{
-        "ALUIntegerCoreWidth32Test", std::string(circuit::word::family(circuit::word::Unit::ALU,32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,false}).id()),
-        "ALU_INTEGER_W32_CORE_ROOT", {}, {}};
+        "RV32IALUTest", std::string(circuit::families::rv32iALU().id()),
+        "RV32I_ALU_ROOT", {}, {}};
     spec.scenarios.push_back(circuit::test::actionScenarioFromRows(
         "truth-table", spec.contract_id, rows, {100'000, 2'000'000}));
     return spec;
 }
 }
 
-AdderPrefixWidth32Test::AdderPrefixWidth32Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Adder,32,circuit::word::Operations::Extended,circuit::word::AdderTopology::ParallelPrefix>>("AdderPrefixWidth32Test", "ADDER_W32_PREFIX_ROOT", adder32Rows()) {}
-
-AddSubIntegerWidth32Test::AddSubIntegerWidth32Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::AddSub,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix>>("AddSubIntegerWidth32Test", "ADD_SUB_INTEGER_W32_ROOT", addSub32Rows()) {}
-
-LogicIntegerWidth32Test::LogicIntegerWidth32Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Logic,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple>>("LogicIntegerWidth32Test", "LOGIC_INTEGER_W32_ROOT", logic32Rows()) {}
-
+ParallelPrefixAdderWidth32Test::ParallelPrefixAdderWidth32Test()
+    : TruthTableComponentTest("ParallelPrefixAdderWidth32Test", "PARALLEL_PREFIX_ADDER_W32_ROOT", adder32Rows()) {}
 ZeroDetectWidth32Test::ZeroDetectWidth32Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,32,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>>("ZeroDetectWidth32Test", "ZERO_DETECT_W32_ROOT", zeroDetect32Rows()) {}
+    : TruthTableComponentTest("ZeroDetectWidth32Test", "ZERO_DETECT_W32_ROOT", zeroDetect32Rows()) {}
+RV32IALUAddSubTest::RV32IALUAddSubTest()
+    : TruthTableComponentTest("RV32IALUAddSubTest", "RV32I_ALU_ADD_SUB_ROOT", addSub32Rows()) {}
+RV32IALULogicTest::RV32IALULogicTest()
+    : TruthTableComponentTest("RV32IALULogicTest", "RV32I_ALU_LOGIC_ROOT", logic32Rows()) {}
+RV32IALUShifterTest::RV32IALUShifterTest()
+    : TruthTableComponentTest("RV32IALUShifterTest", "RV32I_ALU_SHIFTER_ROOT", shifter32Rows()) {}
+RV32IALUControlTest::RV32IALUControlTest()
+    : TruthTableComponentTest("RV32IALUControlTest", "RV32I_ALU_CONTROL_ROOT", control32Rows()) {}
+RV32IALUCompareTest::RV32IALUCompareTest()
+    : TruthTableComponentTest("RV32IALUCompareTest", "RV32I_ALU_COMPARE_ROOT", compare32Rows()) {}
+RV32IALUResultSelectTest::RV32IALUResultSelectTest()
+    : TruthTableComponentTest("RV32IALUResultSelectTest", "RV32I_ALU_RESULT_SELECT_ROOT", selector32Rows()) {}
+RV32IALUTest::RV32IALUTest()
+    : ComponentScenarioTest(rv32iALUTestSpec(), "truth-table") {}
 
-ShiftIntegerWidth32Test::ShiftIntegerWidth32Test()
-    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Shift,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple>>("ShiftIntegerWidth32Test", "SHIFT_INTEGER_W32_ROOT", shifter32Rows()) {}
-
-ALUIntegerWidth32Test::ALUIntegerWidth32Test()
-    : ComponentScenarioTest(integerALUTestSpec(), "truth-table") {}
-
-ALUIntegerCoreWidth32Test::ALUIntegerCoreWidth32Test()
-    : ComponentScenarioTest(integerALUCoreTestSpec(), "truth-table") {}
-
-std::string IntegerALUSliceTest::getTestName() const {
-    return "IntegerALUSliceTest";
+std::string RV32IALUSliceTest::getTestName() const {
+    return "RV32IALUSliceTest";
 }
 
-void IntegerALUSliceTest::verifyResults() {
+void RV32IALUSliceTest::verifyResults() {
     expect(
         runRowsBatched<AddSub4Slice>(addSub4Rows(), 100),
-        "IntegerALUSliceTest AddSub4Slice exhaustive");
+        "RV32IALUSliceTest AddSub4Slice exhaustive");
 }

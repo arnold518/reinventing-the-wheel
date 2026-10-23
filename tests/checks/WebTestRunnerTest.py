@@ -25,7 +25,7 @@ class WebTestRunnerTest(unittest.TestCase):
         rows = runner.test_inventory()
         self.assertEqual(runner.select_tests(rows, 'all', None), rows)
         self.assertTrue(all(r['kind'] == 'parity' for r in runner.select_tests(rows, 'parity', None)))
-        self.assertEqual([r['name'] for r in runner.select_tests(rows, 'smoke', ['IntegerALUWasmParityTest'])], ['IntegerALUWasmParityTest'])
+        self.assertEqual([r['name'] for r in runner.select_tests(rows, 'smoke', ['RV32IALUWasmParityTest'])], ['RV32IALUWasmParityTest'])
         with self.assertRaisesRegex(ValueError, 'Unknown web tests'):
             runner.select_tests(rows, 'all', ['missing'])
 
@@ -33,7 +33,7 @@ class WebTestRunnerTest(unittest.TestCase):
         args = argparse.Namespace(wasm_dir=Path('/chosen/wasm'), build_dir=Path('/chosen/native'),
                                   browser_python='/chosen/python', node='/chosen/node')
         rows = runner.test_inventory()
-        parity = runner.command_for(next(r for r in rows if r['name'] == 'IntegerALUWasmParityTest'), args, 'http://test/')
+        parity = runner.command_for(next(r for r in rows if r['name'] == 'RV32IALUWasmParityTest'), args, 'http://test/')
         self.assertEqual(parity[0], '/chosen/node')
         self.assertEqual(parity[2:], ['/chosen/wasm/pages/simulator/circuitsim_wasm.js',
                                      '/chosen/wasm/pages/simulator/circuitsim_wasm.wasm', '/chosen/native/tests/VisualizerSessionProbe'])

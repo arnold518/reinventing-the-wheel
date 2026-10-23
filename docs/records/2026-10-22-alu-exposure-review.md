@@ -1,20 +1,23 @@
 # ALU external interface and documentation review
 
-Started: 2026-10-22. Status: open (review done; owner direction pending).
-Code state: main `alpha` at `88c0a95` plus the uncommitted component
-replacement described in the
-[closed replacement record](2026-10-22-general-component-retirement.md).
+Started: 2026-10-22. Status: closed (2026-10-23).
+Code state: implementation and acceptance on main `alpha`, based on checkpoint
+`971ab53`; the source, integration and documentation below are included in
+this change. Git history supplies its commit identity.
 
 ## Summary
 
-The owner is not satisfied with how `ALU<W>` and its units are exposed or
-documented. The review finds that the replacement made width a parameter,
-but `Operations` still selects two unrelated designs under one set of class
-names: eight names have two different pin sets. Most problems in the
-interface, contract IDs, menu titles and the Chapter 2 site pages follow from
-this. Several factual errors in the pages are listed below. No code or
-public page has been changed yet; the next step needs the owner's choice of
-naming/contract direction.
+Chapter 2 exposes width-only components at 8/16/32 bits with prefix arithmetic;
+`RV32IALU` is a separate fixed-width contract with six parts. The headers,
+bindings, parents, scenarios, saved identities and public references follow
+that interface. Focused native checks, serial native/WASM builds, all 156
+example groups, strict package/preview builds and nine selected web checks
+pass. The 18 changed delay-table families verify in all three profiles, and
+compiled native/WASM snapshots match at 809 entries per profile. Migrated 44
+layout scopes; 367 scenarios cleared the complete scan, and the remaining
+fetch root passes its final focused recheck. Port 8893 serves the fresh
+package with the timing-cache fix loaded. Full suites and remaining game
+acceptance are outside this topic.
 
 ## 2026-10-22 — Evidence
 
@@ -311,3 +314,286 @@ dedicated performance tests in their sections, and every ALU uses the fast
 (parallel-prefix) adder. `AddSub<W>`, `ArithmeticUnit<W>` and `ALU<W>`
 therefore have only W; ripple carry remains as its own adder component.
 Remaining confirmations are listed in the reply of the same date.
+
+## 2026-10-23 — Owner decisions and implementation
+
+The owner accepted every recommendation (fixed-width `RV32IALU` exception,
+5-bit OP, carry pin renames, `ZERO` → `CLEAR`, no `ARITHMETIC_ENABLE` on the
+RV32I control part, deferred `AddSub<32>` reuse, branch/PC adders through
+families, `RippleCarryAdder<W>`/`ParallelPrefixAdder<W>` names, four new
+compact adder forms, checkpoint commit first) and directed that the Chapter 2
+section describe only `ALU<W>`. Minimal tests were requested.
+
+The prior uncommitted work was committed locally as `971ab53` (one
+checkpoint commit: STATUS, CHANGELOG and several sources mixed topics).
+
+Implemented:
+
+- **Chapter 2 interface.** One public header per component
+  (`ALU.hpp`, `AddSub.hpp`, `ArithmeticUnit.hpp`, `LogicUnit.hpp`,
+  `BarrelShifter.hpp`, `CompareSelect.hpp`, `ZeroDetect.hpp`,
+  `ALUFlagUnit.hpp`, `ALUResultSelector.hpp`, `ALUControlDecoder.hpp`,
+  `RippleCarryAdder.hpp`, `ParallelPrefixAdder.hpp`) plus the shared
+  `WordComponent.hpp` base. `WordDatapath.hpp`, `Adder.hpp`, `ALUConfig`,
+  `Operations`, `AdderTopology` and `full_flags` are gone; construction,
+  registration and compact factories are private (`WordRecipes.hpp`). Each
+  component takes only W. IDs: `word.alu.W`, `word.add-sub.W`,
+  `word.arithmetic-unit.W`, `word.logic-unit.W`, `word.barrel-shifter.W`,
+  `word.compare-select.W`, `word.alu-flag-unit.W`,
+  `word.alu-result-selector.W`, `word.zero-detect.W`,
+  `word.ripple-carry-adder.W`, `word.parallel-prefix-adder.W`,
+  `word.alu-control-decoder` (34 contracts, previously 77).
+- **Carry pins.** Word adders use `C_IN`/`OUT`/`C_OUT`, the prefix adder adds
+  `C_SIGN`; `AddSub` `CARRY_OUT` → `C_OUT`. One-bit cells unchanged.
+- **Prefix carry everywhere above the adder.** `AddSub<W>` now contains
+  `ParallelPrefixAdder<W>` directly (`ADD`), so `ArithmeticUnit<W>` and
+  `ALU<W>` use prefix carry. The 8-bit compact forms of these three were
+  recharacterized; compact forms were added for the ripple adder at 16/32
+  and the prefix adder at 8/16.
+- **`RV32IALU`.** Fixed 32-bit `RV32IALU` with parts `RV32IALUControl`,
+  `RV32IALUAddSub`, `RV32IALULogic`, `RV32IALUShifter`, `RV32IALUCompare`,
+  `RV32IALUResultSelect` (`rv32i.alu`, `rv32i.alu.*`), moved from the former
+  integer recipes with identical gates. Opcodes are `rv32i::ALUOp`
+  (`CLEAR` = 12); the shared value rule is `rv32i::alu_value`. Python:
+  `create_rv32i_alu`; `create_alu` and the configuration arguments of
+  `create_word_component` are removed.
+- **Parents.** Execute requests `families::rv32iALU()`; the single-cycle
+  branch-target adder, the baseline PC+4 adder and the prediction target
+  adder request `families::parallelPrefixAdder(32)`. The architecture
+  profile now selects `rv32i.*` only. Profiles that prefer compact parts
+  everywhere (the RV32I architecture view and depth-limited test profiles)
+  now get the compact 32-bit prefix adder for those three adders.
+- **Retired:** the integer full-flag ALU and flag unit, integer 8/16-bit and
+  ripple configurations, `ALUExtendedWidth8Test`,
+  `ALUWidth16RippleScenarioTest`, `FlagsIntegerWidth32Test`,
+  `ALUIntegerWidth32Test` and their aliases. Tests and aliases were renamed
+  (for example `AddSubWidth8Test`/`add-sub-w8`, `RV32IALUTest`/`rv32i-alu`).
+- **Found while building:** `tests/cpp/RV32ILogicOptimizationTest.cpp` did not
+  compile at the checkpoint (it named a removed builder class); fixed.
+  `tests/web/RV32IBuildingBlocksBrowserTest.py` used a page slug broken by the
+  earlier mechanical rename; fixed.
+
+## 2026-10-23 — Progress audit and remaining acceptance
+
+This replaces the earlier summary and project-status statement that nothing
+was implemented. The implementation section above matches the current
+headers, recipes, parent wiring, registry, bindings and public pages. Chapter
+2 now has pages 2.1–2.6; 2.7 is removed, and §4.3.3 specifies `RV32IALU` and
+its six parts. `ALU<8>` has both fidelities; `ALU<16>` and `ALU<32>` remain
+structural-only. Both named adders have compact forms at all three widths.
+
+Existing evidence inspected, rather than rerun in this audit:
+
+- `build-milestone/alu-exposure-build5.log` reaches 100%, including the native
+  runner, Python module and timing tools. Its configuration has Python
+  deployment disabled. Thirty individual ALU/component logs in the prior
+  session scratch directory end in PASS, including width, exhaustive
+  contract, fidelity and RV32I slice checks.
+- The three `delays.{unit,embedded,desktop}.log` files report 18 characterized
+  tables each; the three tracked generated profiles contain the new IDs.
+  These logs establish scoped regeneration, not a fresh complete-file timing
+  verification.
+- The prior ten-check CTest selection passed eight checks (including both
+  arithmetic timing checks, scenario catalog, RV32I documentation and native
+  bindings) and failed `DocumentationExamplesTest` and
+  `TimingTableDocumentationTest`.
+- The prior MkDocs log reports a successful documentation build. The saved
+  layout audits report 6,420 problems across 77 affected scenarios, both for
+  the working layout and a checkpoint comparison (368 versus 372 scenarios
+  total). The count alone does not establish which problems predate this
+  refactor; that attribution and current layout acceptance remain open.
+
+Fresh checks in this audit:
+
+```sh
+ctest --test-dir build-milestone \
+  -R '^(ALUWidthContractTest|RV32IALUTest|ALUHierarchyTest|TimingTableDocumentationTest)$' \
+  --output-on-failure -j1
+```
+
+The three ALU checks passed. `TimingTableDocumentationTest` failed at
+`test_component_timing_stands_alone`: 16 timing paragraphs were found while
+the test expects 17. Total time was 22.21 seconds; CTest exited 8.
+
+A separate current native export of `ALUWidth8ScenarioTest` was passed through
+`mkdocs_examples.render_table` with the metadata mutations from
+`DocumentationExamplesTest`. Negative time, bad row index, empty checkpoint
+and missing inputs were rejected. Changing the first checkpoint from
+`case-0` to `row-8` was accepted, reproducing the failing negative test:
+`row-8` no longer supplies the duplicate label that this fixture expects.
+
+Remaining work:
+
+- Resolve these two documentation checks and rerun their focused selection.
+- Reconcile layout failures against the checkpoint, then verify affected
+  current layouts and browser scenarios.
+- Rebuild the WASM/site package and regenerate examples for the new registry
+  and IDs; run the renamed ALU/RV32IALU parity and relevant browser checks.
+  The inspected WASM module predates the current interface sources, so prior
+  portable acceptance does not verify this refactor.
+- Finish migration cleanup, including the old
+  `ALU<32,integer,prefix>.OP` name in
+  `docs/reference/rv32i-single-cycle-documentation-notes.md`, five trailing
+  blank-line findings from `git diff --check HEAD`, and
+  `CHECKS_PLACEHOLDER` in the pending changelog entry. Commit after acceptance.
+
+No implementation or public-page changes were made by this audit. Only this
+record and the living status were updated. No full suite, current WASM/browser
+run, deployment or published-site check is claimed.
+
+## 2026-10-23 — Acceptance resumed
+
+The owner directed completion after the progress report. Repaired the
+metadata test using an actual duplicate checkpoint from the exported rows
+instead of the retired `row-8` naming convention; changed the timing paragraph
+inventory from 17 to 16 after removal of the duplicate ALU section. The two
+documentation checks and `WebTestRunnerTest` pass (3/3, 87.04 seconds).
+Corrected the internal single-cycle note's ALU and CLEAR names, the word-page
+exception for the width-independent decoder, the adder browser check's section
+names/anchors, and the five trailing blank lines reported by the audit.
+
+The saved layout audit's 6,420 problem lines match its checkpoint comparison
+exactly after normalizing profile fingerprints. Current topology and the
+parent revision's actual type names identify stale keys from the earlier
+width replacement: child types such as `Mux2to1`/`CacheTagMatch32` changed,
+but the containing cache/prediction layout hashes still used those names.
+The pruning tool also compacted bracketed strings as if they were arrays,
+inserting spaces into SRAM/FF storage keys. Fixed that formatter; a temporary
+fixture verifies that pruning leaves bracketed keys and string values intact.
+
+Migrated 43 saved scopes using exact prior/current child signatures and
+canonical storage keys, preserving existing geometry and current canonical
+overrides. Added the missing fetch-stage scenario fallback from its prior
+root placements and current type defaults. The migration report and original
+working layout are retained under `build-milestone/alu-acceptance/`; important
+findings are recorded here rather than relying on those ignored files alone.
+Active layout/palette/profile/scenario JSON contains no retired ALU operation
+or topology IDs. The broader layout checks and fresh package are in progress.
+
+### Layout verification and package rebuild
+
+`SRAMLayoutTest` and `CacheLayoutTest` pass (4.25 and 73.92 seconds). The
+complete `VisualizerStaticLayoutTest` scanned all 368 public scenarios in
+561.54 seconds and reduced 6,420 findings to two, both the fetch root's
+`PC_PLUS_4`/`NEXT_PC_MUX` placements. The browser seeds a canonical root
+fallback, while the native lookup and static audit read the exact profile
+key. Materialized `rv32-i-fetch-stage@d6de8e32d1e34b33` using the restored
+fallback, bringing the scope migration total to 44. A direct focused
+`tools/check-static-layouts.py rv32-i-fetch-stage` recheck passes with zero
+problems; the other 367 scenarios were unchanged after their complete scan.
+The initial three-check CTest selection therefore exited 8; its two remaining
+findings are resolved by this final focused check, rather than hidden by
+claiming that the original full registration passed.
+
+Native topology inspection also corrected the adder browser smoke test's
+remaining ripple-era component counts: prefix-based `AddSub<8>` has 156
+components and `ArithmeticUnit<8>` has 897. A serial native rebuild, scoped
+18-table checks in each timing profile, and a full isolated WASM/site build
+are running. The WASM build retains the configured O1 link setting and bounded
+compiler launcher; example generation selects all groups in isolated processes.
+
+## 2026-10-23 — Current package and local preview recovery
+
+The serial native rebuild completed with Python deployment disabled. The 18
+changed table families pass `part_delay_tables --check` in each of `unit`,
+`embedded` and `desktop`, with zero differences. A fresh WASM build and full
+isolated example export completed: all 156 current example groups verify, and
+the combined strict MkDocs/site build passes. The compiled native and WASM
+delay snapshots are byte-identical, with 809 entries per profile (SHA-256
+`7f64ce04e95a9d1e8502034519e13717452bc097f2a0f771f6dd4c7d4c68c4dd`).
+The 18-table checks are scoped structural recharacterization checks; the
+snapshot comparison verifies all compiled entries, not a new gate analysis of
+all 809 entries.
+
+The three portable checks pass: `RV32IALUWasmParityTest`, `ALUWasmParityTest`
+and `VisualizerScenarioWasmParityTest`. The first six browser attempts failed
+before execution because `/home/arnold/venv/bin/python` lacks Playwright; they
+are being rerun using `/usr/bin/python3`, which has the installed browser
+package. The runner's initial localhost socket attempt was sandbox-blocked;
+its retry runs outside the sandbox. These environmental failures do not count
+as product acceptance.
+
+The owner reported port 8893 unavailable. The service was running, but HTTP
+requests timed out while its rebuild loop failed on the newly named
+`word.ripple-carry-adder.8.behavioral` table. The timing hook had cached the old
+generated tables for the lifetime of `mkdocs serve`. Its packaged simulator
+also predated this interface change. Refreshed `build-wasm/pages/simulator`
+from the new package after verifying all 28 file hashes, retained the prior
+package under `build-wasm/alu-preview-refresh/`, and restarted the existing
+service without changing its unit or memory cap. Its strict build completes
+in 89.45 seconds. Live HTTP now passes six reference/simulator routes and
+26 non-HTML simulator asset hashes; HTML retains preview script injection.
+The service's published GitHub Pages site was not changed.
+
+The timing hook now clears its generated-table cache at each MkDocs build,
+so subsequent preview rebuilds can follow renamed or regenerated tables.
+A focused regression replaces the table files between two builds and checks
+that the new key renders and the retired key is refused. Its first fixture
+attempt omitted the no-gate inventory; after supplying that file, the timing
+documentation registration passes all seven methods (4.22 seconds). Browser
+acceptance remains in progress.
+
+## 2026-10-23 — Browser acceptance follow-up
+
+Five of the six browser registrations pass on the current package:
+`AdderDocumentationBrowserTest` (24.68 seconds),
+`RV32IBuildingBlocksBrowserTest` (295.71 seconds), `SRAMLayoutBrowserTest`
+(37.02 seconds), `VisualizerScenarioBrowserTest` (22.76 seconds) and
+`VisualizerTimingProfileBrowserTest` (8.83 seconds). The building-block check
+verifies all six public pages and 15 live recordings, including all 447
+shifter checkpoints, hierarchy geometry and the whole `RV32IALU`.
+
+`VisualizerWasmBrowserTest` stopped on a stale camera fixture that still
+requires a `HalfAdder` inside the now-prefix `ArithmeticUnit<8>`. Replaced
+that fixture and the matching `ALU<8>` fixture with the named add/subtract,
+prefix adder, carry-combine and XOR components. Reviewed later assertions
+before retrying: the six arithmetic embeds now include the prefix recording,
+all 731 Chapter 2 rows are counted, iframe selectors allow `embed=1`, and the
+structural `ALU<16>` recording is checked separately from the page's compact
+`ALU<8>` description. A focused retry is in progress.
+
+### Profile-layout fallback correction
+
+The first focused retry reached the live `ALU<8>` API probe after passing all
+731 reference rows, camera bounds and structural/behavioral switching. It
+then dereferenced an absent exact-profile root key. Source review of
+`normalizeLayoutPayload` confirms that explicit fidelity overrides get a new
+fingerprint and the UI seeds their root placement from the scenario-wide
+layout. Updated the raw-payload assertion to use that same documented fallback
+while still requiring all seven groups and their minimum widths. The final
+focused retry is in progress; no runtime/layout behavior was changed for
+these two fixture failures.
+
+## 2026-10-23 — Final browser acceptance
+
+`VisualizerWasmBrowserTest` passes in 197.03 seconds after the profile-fallback
+fixture correction. Its report verifies all six arithmetic embeds and all
+731 Chapter 2 example rows, 32 camera-bound checks, compact controls at
+960/640/360/320 pixels, browser layout/profile persistence, live ALU fidelity
+switching, one shared prefix adder with no ripple full-adders, the seven
+Chapter 2 groups and six RV32I groups. There are no page errors. Combined
+with the five earlier browser passes and three portable passes, all nine
+selected web registrations now pass. No broader native or web suite is
+implied by that selection.
+
+The fresh package's layout, scenario metadata and worker source are byte-for-
+byte equal to the tracked inputs. The preview is being restarted once more
+to load the tested per-build timing-cache reset; its final strict build and
+live route/asset check remain the last acceptance step.
+
+## 2026-10-23 — Preview verification and closure
+
+The preview restart loads the per-build timing-cache reset. Its final strict
+MkDocs build passes in 53.05 seconds, and the existing service is active on
+port 8893 with its 768 MiB/no-swap cap unchanged. The final HTTP smoke passes
+six reference/simulator pages, verifies the iframe live-reload guard on their
+HTML, and matches all 26 non-HTML simulator assets to the current package.
+Its first extra HTML assertion incorrectly expected an internal timing key
+that selected-row output does not expose; checking the rendered component
+names corrects that smoke fixture, with no service or page change needed.
+
+The status and changelog now describe the completed interface and its scoped
+acceptance. All work requested for this topic is complete. No full native/web
+suite, new complete-file gate reanalysis, remaining phase-6 game campaign,
+push or published-site verification is claimed. The earlier failed checks
+and their corrections remain above. This record is closed.

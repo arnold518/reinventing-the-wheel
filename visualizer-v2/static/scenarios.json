@@ -10,12 +10,8 @@
       "title": "Wiring, multiplexers and decoders"
     },
     {
-      "id": "word-alu",
-      "title": "Arithmetic and ALU / configurable word widths"
-    },
-    {
-      "id": "extended-alu",
-      "title": "ALU / Extended operation contract"
+      "id": "alu",
+      "title": "ALU / Chapter 2 components"
     },
     {
       "id": "ff",
@@ -54,8 +50,8 @@
       "title": "RV32I / Registers"
     },
     {
-      "id": "integer-alu",
-      "title": "ALU / Integer datapath contract"
+      "id": "rv32i-alu",
+      "title": "RV32I / ALU"
     },
     {
       "id": "rv32i-blocks",
@@ -104,10 +100,6 @@
     {
       "id": "device-io",
       "title": "Device I/O / Recorded components"
-    },
-    {
-      "id": "word",
-      "title": "Parameterized word components"
     }
   ],
   "aliases": {
@@ -196,41 +188,38 @@
     "ConstantValue32Test": [
       "constant32"
     ],
-    "AdderRippleWidth8Test": [
-      "adder-ripple-w8"
+    "RippleCarryAdderWidth8Test": [
+      "ripple-carry-adder-w8"
     ],
     "ZeroDetectWidth8Test": [
       "zero-detect-w8"
     ],
-    "ALUExtendedWidth8Test": [
-      "alu-extended-ripple-w8"
+    "AddSubWidth8Test": [
+      "add-sub-w8"
     ],
-    "AddSubExtendedWidth8Test": [
-      "addsub-extended-ripple-w8"
+    "ArithmeticUnitWidth8Test": [
+      "arithmetic-unit-w8"
     ],
-    "ArithmeticExtendedWidth8Test": [
-      "arithmetic-extended-ripple-w8"
+    "LogicUnitWidth8Test": [
+      "logic-unit-w8"
     ],
-    "LogicExtendedWidth8Test": [
-      "logic-extended-w8"
+    "BarrelShifterWidth8Test": [
+      "barrel-shifter-w8"
     ],
-    "ShiftExtendedWidth8Test": [
-      "shift-extended-w8"
+    "CompareSelectWidth8Test": [
+      "compare-select-w8"
     ],
-    "CompareExtendedWidth8Test": [
-      "compare-extended-w8"
+    "ALUFlagUnitWidth8Test": [
+      "alu-flag-unit-w8"
     ],
-    "FlagsExtendedWidth8Test": [
-      "flags-extended-w8"
+    "ALUControlDecoderTest": [
+      "alu-control-decoder"
     ],
-    "ALUControlExtendedTest": [
-      "alu-control-extended"
+    "ALUResultSelectorWidth8Test": [
+      "alu-result-selector-w8"
     ],
-    "ResultSelectorExtendedWidth8Test": [
-      "result-selector-extended-w8"
-    ],
-    "ALUControlIntegerTest": [
-      "alu-control-integer"
+    "RV32IALUControlTest": [
+      "rv32i-alu-control"
     ],
     "RV32IMemoryLanesTest": [
       "rv32i-memory-lanes"
@@ -244,14 +233,11 @@
     "RV32IBitPatternMatcherTest": [
       "rv32i-pattern-matcher"
     ],
-    "CompareIntegerWidth32Test": [
-      "compare-integer-w32"
+    "RV32IALUCompareTest": [
+      "rv32i-alu-compare"
     ],
-    "ResultSelectorIntegerWidth32Test": [
-      "result-selector-integer-w32"
-    ],
-    "FlagsIntegerWidth32Test": [
-      "flags-integer-w32"
+    "RV32IALUResultSelectTest": [
+      "rv32i-alu-result-select"
     ],
     "Mux32Width1Test": [
       "mux-32-w1"
@@ -268,26 +254,23 @@
     "RewireTest": [
       "rewire"
     ],
-    "AdderPrefixWidth32Test": [
-      "adder-prefix-w32"
+    "ParallelPrefixAdderWidth32Test": [
+      "parallel-prefix-adder-w32"
     ],
-    "AddSubIntegerWidth32Test": [
-      "addsub-integer-prefix-w32"
+    "RV32IALUAddSubTest": [
+      "rv32i-alu-add-sub"
     ],
-    "LogicIntegerWidth32Test": [
-      "logic-integer-w32"
+    "RV32IALULogicTest": [
+      "rv32i-alu-logic"
     ],
     "ZeroDetectWidth32Test": [
       "zero-detect-w32"
     ],
-    "ShiftIntegerWidth32Test": [
-      "shift-integer-w32"
+    "RV32IALUShifterTest": [
+      "rv32i-alu-shifter"
     ],
-    "ALUIntegerWidth32Test": [
-      "alu-integer-prefix-w32"
-    ],
-    "ALUIntegerCoreWidth32Test": [
-      "alu-integer-prefix-core-w32"
+    "RV32IALUTest": [
+      "rv32i-alu"
     ],
     "RV32ISingleCycleCoreTest": [
       "rv32i-core"
@@ -468,9 +451,6 @@
     "RV32IMDeviceSystemScenarioTest": [
       "rv32im-device-system"
     ],
-    "ALUWidth16RippleScenarioTest": [
-      "alu-extended-ripple-w16"
-    ],
     "ALUScenarioTest": [
       "alu"
     ],
@@ -480,11 +460,11 @@
     "ALUWidth32ScenarioTest": [
       "alu-width32"
     ],
-    "AdderRippleScenarioTest": [
-      "adder-ripple"
+    "RippleCarryAdderWidth16Test": [
+      "ripple-carry-adder-w16"
     ],
-    "AdderPrefixScenarioTest": [
-      "adder-prefix"
+    "ParallelPrefixAdderWidth16Test": [
+      "parallel-prefix-adder-w16"
     ],
     "Mux2Width1Test": [
       "mux-2-w1"
@@ -578,7 +558,7 @@
       "group": "memory-interface"
     },
     "RV32ISharedMemoryProgramTest": {
-      "title": "C-ID · L1 caches over one shared memory (program 21)",
+      "title": "C-ID \u00b7 L1 caches over one shared memory (program 21)",
       "group": "memory-systems"
     },
     "MemoryEndpointFFTest": {
@@ -866,12 +846,80 @@
       "group": "wiring"
     },
     "HalfAdderTest": {
-      "title": "Half Adder",
-      "group": "extended-alu"
+      "title": "HalfAdder",
+      "group": "alu"
     },
     "FullAdderTest": {
-      "title": "Full Adder",
-      "group": "extended-alu"
+      "title": "FullAdder",
+      "group": "alu"
+    },
+    "RippleCarryAdderWidth8Test": {
+      "title": "RippleCarryAdder<8>",
+      "group": "alu"
+    },
+    "RippleCarryAdderWidth16Test": {
+      "title": "RippleCarryAdder<16>",
+      "group": "alu"
+    },
+    "ParallelPrefixAdderWidth16Test": {
+      "title": "ParallelPrefixAdder<16>",
+      "group": "alu"
+    },
+    "ParallelPrefixAdderWidth32Test": {
+      "title": "ParallelPrefixAdder<32>",
+      "group": "alu"
+    },
+    "AddSubWidth8Test": {
+      "title": "AddSub<8>",
+      "group": "alu"
+    },
+    "ArithmeticUnitWidth8Test": {
+      "title": "ArithmeticUnit<8>",
+      "group": "alu"
+    },
+    "LogicUnitWidth8Test": {
+      "title": "LogicUnit<8>",
+      "group": "alu"
+    },
+    "BarrelShifterWidth8Test": {
+      "title": "BarrelShifter<8>",
+      "group": "alu"
+    },
+    "ZeroDetectWidth8Test": {
+      "title": "ZeroDetect<8>",
+      "group": "alu"
+    },
+    "ZeroDetectWidth32Test": {
+      "title": "ZeroDetect<32>",
+      "group": "alu"
+    },
+    "CompareSelectWidth8Test": {
+      "title": "CompareSelect<8>",
+      "group": "alu"
+    },
+    "ALUFlagUnitWidth8Test": {
+      "title": "ALUFlagUnit<8>",
+      "group": "alu"
+    },
+    "ALUControlDecoderTest": {
+      "title": "ALUControlDecoder",
+      "group": "alu"
+    },
+    "ALUResultSelectorWidth8Test": {
+      "title": "ALUResultSelector<8>",
+      "group": "alu"
+    },
+    "ALUWidth8ScenarioTest": {
+      "title": "ALU<8>",
+      "group": "alu"
+    },
+    "ALUScenarioTest": {
+      "title": "ALU<16>",
+      "group": "alu"
+    },
+    "ALUWidth32ScenarioTest": {
+      "title": "ALU<32>",
+      "group": "alu"
     },
     "Mux2Width1Test": {
       "title": "Mux<2,1>",
@@ -917,73 +965,33 @@
       "title": "Decoder<5>",
       "group": "wiring"
     },
-    "AdderRippleWidth8Test": {
-      "title": "Adder<8,ripple>",
-      "group": "extended-alu"
+    "RV32IALUTest": {
+      "title": "RV32IALU",
+      "group": "rv32i-alu"
     },
-    "ZeroDetectWidth8Test": {
-      "title": "Zero Detect8",
-      "group": "extended-alu"
+    "RV32IALUControlTest": {
+      "title": "RV32IALUControl",
+      "group": "rv32i-alu"
     },
-    "ALUExtendedWidth8Test": {
-      "title": "ALU<8,extended,ripple>",
-      "group": "extended-alu"
+    "RV32IALUAddSubTest": {
+      "title": "RV32IALUAddSub",
+      "group": "rv32i-alu"
     },
-    "AddSubExtendedWidth8Test": {
-      "title": "Add Sub8",
-      "group": "extended-alu"
+    "RV32IALULogicTest": {
+      "title": "RV32IALULogic",
+      "group": "rv32i-alu"
     },
-    "ArithmeticExtendedWidth8Test": {
-      "title": "Arithmetic Unit8",
-      "group": "extended-alu"
+    "RV32IALUShifterTest": {
+      "title": "RV32IALUShifter",
+      "group": "rv32i-alu"
     },
-    "LogicExtendedWidth8Test": {
-      "title": "Logic Unit8",
-      "group": "extended-alu"
+    "RV32IALUCompareTest": {
+      "title": "RV32IALUCompare",
+      "group": "rv32i-alu"
     },
-    "ShiftExtendedWidth8Test": {
-      "title": "Barrel Shifter8",
-      "group": "extended-alu"
-    },
-    "CompareExtendedWidth8Test": {
-      "title": "Compare Select8",
-      "group": "extended-alu"
-    },
-    "FlagsExtendedWidth8Test": {
-      "title": "ALU<8,extended,ripple>Flag Unit",
-      "group": "extended-alu"
-    },
-    "ALUControlExtendedTest": {
-      "title": "ALU<8,extended,ripple>Control Decoder",
-      "group": "extended-alu"
-    },
-    "ResultSelectorExtendedWidth8Test": {
-      "title": "ALU<8,extended,ripple>Result Selector",
-      "group": "extended-alu"
-    },
-    "ALUControlIntegerTest": {
-      "title": "ALU<32,integer,prefix>Control Decoder",
-      "group": "integer-alu"
-    },
-    "CompareIntegerWidth32Test": {
-      "title": "ALU<32,integer,prefix>Compare Unit",
-      "group": "integer-alu"
-    },
-    "ResultSelectorIntegerWidth32Test": {
-      "title": "ALU<32,integer,prefix>Result Selector",
-      "group": "integer-alu"
-    },
-    "FlagsIntegerWidth32Test": {
-      "title": "ALU<32,integer,prefix>Flag Unit",
-      "group": "integer-alu"
-    },
-    "AdderPrefixWidth32Test": {
-      "title": "Adder<32,prefix>",
-      "group": "integer-alu"
-    },
-    "AddSubIntegerWidth32Test": {
-      "title": "Add Sub32",
-      "group": "integer-alu"
+    "RV32IALUResultSelectTest": {
+      "title": "RV32IALUResultSelect",
+      "group": "rv32i-alu"
     },
     "RV32IMemoryLanesTest": {
       "title": "Memory Lanes",
@@ -992,26 +1000,6 @@
     "RV32IMemoryRequestTest": {
       "title": "Memory Request",
       "group": "rv32i-blocks"
-    },
-    "LogicIntegerWidth32Test": {
-      "title": "LogicUnit<32,integer>",
-      "group": "integer-alu"
-    },
-    "ZeroDetectWidth32Test": {
-      "title": "Zero Detect32",
-      "group": "integer-alu"
-    },
-    "ShiftIntegerWidth32Test": {
-      "title": "BarrelShifter<32,integer>",
-      "group": "integer-alu"
-    },
-    "ALUIntegerWidth32Test": {
-      "title": "ALU<32,integer,prefix>",
-      "group": "integer-alu"
-    },
-    "ALUIntegerCoreWidth32Test": {
-      "title": "ALU<32> Core Datapath",
-      "group": "integer-alu"
     },
     "RV32IDecodeControlUnitTest": {
       "title": "Decode Control Unit",
@@ -1170,15 +1158,15 @@
       "group": "baseline"
     },
     "RV32IMemoryArrangementBTest": {
-      "title": "B · One shared memory, no caches (program 21)",
+      "title": "B \u00b7 One shared memory, no caches (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementD0Test": {
-      "title": "D-0 · Shared L2 cache below the arbiter (program 21)",
+      "title": "D-0 \u00b7 Shared L2 cache below the arbiter (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementDIDTest": {
-      "title": "D-ID · L1 caches and a shared L2 (program 21)",
+      "title": "D-ID \u00b7 L1 caches and a shared L2 (program 21)",
       "group": "memory-systems"
     },
     "MultiplyStepScenarioTest": {
@@ -1268,30 +1256,6 @@
     "RV32IMDeviceSystemScenarioTest": {
       "title": "RV32IMDeviceSystem",
       "group": "device-io"
-    },
-    "ALUWidth16RippleScenarioTest": {
-      "title": "ALU<16> · extended operations",
-      "group": "word"
-    },
-    "ALUScenarioTest": {
-      "title": "ALU<W>: W=16, parallel prefix",
-      "group": "word-alu"
-    },
-    "ALUWidth8ScenarioTest": {
-      "title": "ALU<W>: W=8, parallel prefix",
-      "group": "word-alu"
-    },
-    "ALUWidth32ScenarioTest": {
-      "title": "ALU<W>: W=32, parallel prefix",
-      "group": "word-alu"
-    },
-    "AdderRippleScenarioTest": {
-      "title": "Adder<W>: W=16, ripple carry",
-      "group": "word-alu"
-    },
-    "AdderPrefixScenarioTest": {
-      "title": "Adder<W>: W=16, parallel prefix",
-      "group": "word-alu"
     }
   },
   "programs": [

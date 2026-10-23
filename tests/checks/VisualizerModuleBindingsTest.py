@@ -197,11 +197,11 @@ def main():
             for fragment in forbidden_test_fragments
         )
 
-    alu_test = circuit_backend.create_test_by_name("ALUExtendedWidth8Test")
+    alu_test = circuit_backend.create_test_by_name("ALUWidth8ScenarioTest")
     alu_test.setup_circuit()
     alu = alu_test.get_root()
-    assert alu.get_type_name() == "ALU<8,extended,ripple>"
-    assert alu.get_contract_id() == "word.alu.8.extended.ripple"
+    assert alu.get_type_name() == "ALU<8>"
+    assert alu.get_contract_id() == "word.alu.8"
     assert alu.get_contract_version() == 1
     assert pin_shape(alu) == (
         {"A": 8, "B": 8, "OP": 5, "C_IN": 1},
@@ -210,12 +210,12 @@ def main():
     )
     assert set(alu.get_available_fidelities()) == {"structural", "behavioral"}
     for component_type,test_name in (
-        ("Adder<8,ripple>","AdderRippleWidth8Test"),("AddSub<8,ripple>","AddSubExtendedWidth8Test"),
-        ("ArithmeticUnit<8,ripple>","ArithmeticExtendedWidth8Test"),("LogicUnit<8>","LogicExtendedWidth8Test"),
-        ("BarrelShifter<8>","ShiftExtendedWidth8Test"),("ZeroDetect<8>","ZeroDetectWidth8Test"),
-        ("CompareSelect<8>","CompareExtendedWidth8Test"),("ALUFlagUnit<8>","FlagsExtendedWidth8Test"),
-        ("ALUControlDecoder<extended>","ALUControlExtendedTest"),("ALUResultSelector<8>","ResultSelectorExtendedWidth8Test"),
-        ("ALU<8,extended,ripple>","ALUExtendedWidth8Test"),
+        ("RippleCarryAdder<8>","RippleCarryAdderWidth8Test"),("AddSub<8>","AddSubWidth8Test"),
+        ("ArithmeticUnit<8>","ArithmeticUnitWidth8Test"),("LogicUnit<8>","LogicUnitWidth8Test"),
+        ("BarrelShifter<8>","BarrelShifterWidth8Test"),("ZeroDetect<8>","ZeroDetectWidth8Test"),
+        ("CompareSelect<8>","CompareSelectWidth8Test"),("ALUFlagUnit<8>","ALUFlagUnitWidth8Test"),
+        ("ALUControlDecoder","ALUControlDecoderTest"),("ALUResultSelector<8>","ALUResultSelectorWidth8Test"),
+        ("ALU<8>","ALUWidth8ScenarioTest"),
     ):
         test=circuit_backend.create_test_by_name(test_name)
         test.setup_circuit()
@@ -230,14 +230,15 @@ def main():
         assert direct.get_selected_fidelity() == "behavioral"
         assert not list(direct.get_children())
         assert pin_shape(direct) == expected_pins
-    for unit in ("add-sub","arithmetic","logic","shift","compare","flags","result","zero","adder","alu"):
-        component=circuit_backend.create_word_component(unit,"WORD",8,"extended","ripple")
+    for unit in ("add-sub","arithmetic","logic","shift","compare","flags","result","zero","ripple-adder","prefix-adder","alu"):
+        component=circuit_backend.create_word_component(unit,"WORD",8)
         assert component.get_input_pins()
         assert list(component.get_children())
-    for operations in ("extended","integer"):
-        control=circuit_backend.create_alu_control("CONTROL",operations)
-        assert control.get_input_pins()["OP"].get_width()==5
-    for retired in ("ALU8","ALU32","Adder8","Adder32","Mux8to1","Mux8to1_8bit","Decoder5to32"):
+    control=circuit_backend.create_alu_control("CONTROL")
+    assert control.get_input_pins()["OP"].get_width()==5
+    rv32i_alu=circuit_backend.create_rv32i_alu("ALU","behavioral")
+    assert rv32i_alu.get_type_name()=="RV32IALU" and not list(rv32i_alu.get_children())
+    for retired in ("ALU8","ALU32","Adder8","Adder32","Mux8to1","Mux8to1_8bit","Decoder5to32","create_alu"):
         assert not hasattr(circuit_backend,retired)
     assert "RV32ISingleCycleCoreTest" in registered
     assert not hasattr(circuit_backend, "RV32ISingleCycleCoreTest")

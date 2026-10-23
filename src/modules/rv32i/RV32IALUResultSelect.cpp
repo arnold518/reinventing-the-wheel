@@ -1,9 +1,11 @@
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordBuilder.hpp"
-#include "modules/composite/ParallelPrefixAdder.hpp"
-#include "modules/composite/WordDatapath.hpp"
-#include "modules/composite/FullAdder.hpp"
-#include "modules/utility/Rewire.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/WordSliceBuilder.hpp"
+#include "modules/composite/ZeroDetect.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/Mux.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
 namespace {
 // A visible bit slice keeps the selection network expandable without putting
 // hundreds of gates in the selector's top-level view.
@@ -30,9 +32,9 @@ public:
 }
 
 
-namespace circuit::word {
+namespace rv32i::alu_detail {
 using OneBitPin=std::shared_ptr<Pin<>>;using SinkList=std::vector<OneBitPin>;
-template<size_t W>void integerResult(IOComponent& root,ComponentBuilder& builder,ALUConfig config) {
+template<size_t W>void integerResult(IOComponent& root,ComponentBuilder& builder) {
     circuit::detail::WordSliceBuilder n(root, builder);
     auto local=n.split<3>("LOCAL_BITS",n.input("LOCAL_OP"));
     std::array<circuit::detail::WordSliceBuilder::Signal,4> op{
@@ -68,7 +70,5 @@ template<size_t W>void integerResult(IOComponent& root,ComponentBuilder& builder
     n.connect(n.join<W>("RESULT",result),n.output("OUT"));
     n.finish();
 }
-void buildIntegerResult(IOComponent& root,ComponentBuilder& b,size_t w,ALUConfig c){
-    if(w==8)integerResult<8>(root,b,c);else if(w==16)integerResult<16>(root,b,c);else integerResult<32>(root,b,c);
 }
-}
+void RV32IALUResultSelect::buildInternals(ComponentBuilder& b) { rv32i::alu_detail::integerResult<32>(*this,b); }

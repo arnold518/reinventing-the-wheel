@@ -2,6 +2,8 @@
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "modules/composite/ALU.hpp"
+#include "modules/composite/RippleCarryAdder.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
 #include "modules/composite/WordALUValueModel.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/StandardProfiles.hpp"
@@ -55,9 +57,9 @@ NamedValues inputs(size_t w, uint64_t a, uint64_t b, unsigned op, bool cin) {
     return {{"A",logicBits(w,a)}, {"B",logicBits(w,b)}, {"OP",logicBits(5,op)}, {"C_IN",logicBit(cin)}};
 }
 
-template<size_t W, AdderTopology T>
+template<size_t W>
 NamedValues modeled(const NamedValues& in) {
-    using Model = ExtendedALUValueModel<W,T>;
+    using Model = ALUValueModel<W,Carry::Prefix>;
     auto bits = [&]<size_t N>(const char* name) {
         typename Model::template Bits<N> result;
         std::copy(in.at(name).begin(),in.at(name).end(),result.begin());
@@ -93,12 +95,12 @@ public:
     }
 };
 
-template<size_t W, AdderTopology T> void checkConfiguration() {
-    GateFixture gates(circuit::families::alu(W,{Operations::Extended,T,true}));
+template<size_t W> void checkConfiguration() {
+    GateFixture gates(circuit::families::alu(W));
     const uint64_t mask=(uint64_t{1}<<W)-1, sign=uint64_t{1}<<(W-1);
     auto checkBinary=[&](uint64_t a,uint64_t b,unsigned op,bool cin) {
         const auto in=inputs(W,a,b,op,cin), out=expected(W,a,b,op,cin);
-        if(modeled<W,T>(in)!=out) throw std::runtime_error("Width-aware value rule differs from binary reference");
+        if(modeled<W>(in)!=out) throw std::runtime_error("Width-aware value rule differs from binary reference");
         gates.check(in,out);
     };
     for(auto [a,b]:std::array<std::pair<uint64_t,uint64_t>,4>{{{0,0},{mask,1},{sign,mask},{sign-1,1}}})
@@ -109,29 +111,21 @@ template<size_t W, AdderTopology T> void checkConfiguration() {
         for(unsigned op:{0u,1u,2u,8u,16u,21u,26u,28u,30u,31u}) {
             auto in=inputs(W,mask,1,op,true);
             in["A"][W/2]=unknown; in["B"][W-1]=unknown; in["C_IN"][0]=unknown;
-            gates.check(in,modeled<W,T>(in));
+            gates.check(in,modeled<W>(in));
         }
         for(unsigned bit=0;bit<5;++bit) {
             auto in=inputs(W,sign,mask,0,false); in["OP"][bit]=unknown;
-            gates.check(in,modeled<W,T>(in));
+            gates.check(in,modeled<W>(in));
         }
     }
-    if(circuit::families::alu(W).id()!=circuit::families::alu(W,defaultALUConfig).id())
-        throw std::runtime_error("ALU factory default must select parallel prefix");
-    auto default_alu=Component::create<ALU<W>>("DEFAULT");
-    if(std::string(default_alu->getTypeName()).find(",prefix>")==std::string::npos)
-        throw std::runtime_error("ALU constructor default must select parallel prefix");
-    std::cout<<"ALU<"<<W<<"> "<<(T==AdderTopology::Ripple?"ripple":"prefix")
-        <<": binary reference, all shift distances and targeted four-state rules agree\n";
+    std::cout<<"ALU<"<<W<<">: binary reference, all shift distances and targeted four-state rules agree\n";
 }
 
 class ALUWidthContractTest final : public StandaloneVerificationTest {
 public:
     std::string getTestName()const override{return "ALUWidthContractTest";}
     void verifyResults()override {
-        checkConfiguration<8,AdderTopology::Ripple>(); checkConfiguration<8,AdderTopology::ParallelPrefix>();
-        checkConfiguration<16,AdderTopology::Ripple>(); checkConfiguration<16,AdderTopology::ParallelPrefix>();
-        checkConfiguration<32,AdderTopology::Ripple>(); checkConfiguration<32,AdderTopology::ParallelPrefix>();
+        checkConfiguration<8>(); checkConfiguration<16>(); checkConfiguration<32>();
     }
 };
 
@@ -148,16 +142,16 @@ ComponentTestSpec aluSpec(const std::string& name,size_t w) {
     return spec;
 }
 
-ComponentTestSpec adderSpec(const std::string& name,AdderTopology topology) {
+ComponentTestSpec adderSpec(const std::string& name,const circuit::ComponentFamily& family) {
     constexpr size_t W=16;
-    ComponentTestSpec spec{name,std::string(circuit::families::adder(W,topology).id()),"ADDER",{},{{"contract",{},{},{}}}};
+    ComponentTestSpec spec{name,std::string(family.id()),"ADDER",{},{{"contract",{},{},{}}}};
     unsigned index=0;
     for(auto [a,b]:std::array<std::pair<uint64_t,uint64_t>,4>{{{0,0},{0xffff,1},{0x7fff,1},{0x1234,0x4321}}})
         for(bool cin:{false,true}) {
             const uint64_t total=a+b+cin;
             spec.scenarios[0].actions.push_back({"sum-"+std::to_string(index++),CheckpointKind::Settled,
-                {{"A",logicBits(W,a)},{"B",logicBits(W,b)},{"Cin",logicBit(cin)}},
-                {{"Sum",logicBits(W,total)},{"Cout",logicBit(total>0xffff)}},true,{}});
+                {{"A",logicBits(W,a)},{"B",logicBits(W,b)},{"C_IN",logicBit(cin)}},
+                {{"OUT",logicBits(W,total)},{"C_OUT",logicBit(total>0xffff)}},true,{}});
         }
     return spec;
 }
@@ -171,9 +165,11 @@ void appendWordALUTests(std::vector<TestRegistryEntry>& entries) {
         entries.push_back({name,"ALUWidthContractTest",RegisteredTestKind::TruthTable,{contract},"contract",{"simulation","alu","width"},
             [name,w]{return std::make_unique<ComponentScenarioTest>(aluSpec(name,w),"contract",circuit::strictAllStructural());},true});
     }
-    for(auto [name,t]:std::array<std::pair<std::string,AdderTopology>,2>{{{"AdderRippleScenarioTest",AdderTopology::Ripple},{"AdderPrefixScenarioTest",AdderTopology::ParallelPrefix}}}) {
-        const std::string contract(circuit::families::adder(16,t).id());
+    for(auto [name,family]:std::array<std::pair<std::string,const circuit::ComponentFamily*>,2>{{
+            {"RippleCarryAdderWidth16Test",&circuit::families::rippleCarryAdder(16)},
+            {"ParallelPrefixAdderWidth16Test",&circuit::families::parallelPrefixAdder(16)}}}) {
+        const std::string contract(family->id());
         entries.push_back({name,"ALUWidthContractTest",RegisteredTestKind::TruthTable,{contract},"contract",{"simulation","alu","width"},
-            [name,t]{return std::make_unique<ComponentScenarioTest>(adderSpec(name,t),"contract",circuit::strictAllStructural());},true});
+            [name,family]{return std::make_unique<ComponentScenarioTest>(adderSpec(name,*family),"contract",circuit::strictAllStructural());},true});
     }
 }

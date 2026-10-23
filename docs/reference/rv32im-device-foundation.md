@@ -35,11 +35,10 @@ tracks system/game acceptance through phase 6.
 ## Parameterized execution and transport
 
 The [word-component reference](../../site-docs/components/word-components.md)
-defines the new public C++ APIs. `ALU<W>` chooses extended or integer semantics
-and ripple/prefix addition at construction; widths 8/16/32 use the same
-operation/flag contract. Legacy ALU<8,extended,ripple>/ALU<32,integer,prefix> wrappers keep their own operation
-maps, IDs and defaults. Shared recipes also back muxes, register files,
-comparison, shifts, flags, result selection and operation decoding.
+lists the parameterized word APIs. `ALU<W>` (Chapter 2) takes only its width;
+the RV32I and RV32IM cores use the fixed 32-bit `RV32IALU`, with `MulDivUnit<32>`
+beside it in the RV32IM execute stage. Shared recipes also back muxes and
+register files.
 
 `Multiplier<W>`, `Divider<W>` and `MulDivUnit<W>` support 4/8/16/32 with W
 enabled iterations after launch. The M core remains W=32 and retains its

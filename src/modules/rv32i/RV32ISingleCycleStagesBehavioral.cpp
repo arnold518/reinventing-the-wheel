@@ -1,9 +1,9 @@
 #include "RV32ISingleCycleStagesBehavioral.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "RV32IMemoryRequestModel.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "modules/storage/RegisterFileBehavioral.hpp"
@@ -143,8 +143,8 @@ private:
         const auto as=value("ALU_A_SEL"),bs=value("ALU_B_SEL");
         const auto a=as==0?value("RS1_VALUE"):as==1?value("PC"):0;
         const auto b=bs==0?value("RS2_VALUE"):bs==1?value("IMM"):0;
-        const auto op=value("ALU_OP"),result=circuit::word::integer_value::result<32>(op,a,b),jump=value("JUMP_TYPE");
-        const bool cmp=op==circuit::word::IntegerOp::SUB||op==circuit::word::IntegerOp::SLT||op==circuit::word::IntegerOp::SLTU;
+        const auto op=value("ALU_OP"),result=::rv32i::alu_value::result<32>(op,a,b),jump=value("JUMP_TYPE");
+        const bool cmp=op==::rv32i::ALUOp::SUB||op==::rv32i::ALUOp::SLT||op==::rv32i::ALUOp::SLTU;
         const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
         const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
         emit("ALU_RESULT",result,t,s);emit("BRANCH_TAKEN",conditions[value("BRANCH_TYPE")],t,s);

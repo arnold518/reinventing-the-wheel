@@ -55,14 +55,11 @@ rejects(lambda: backend.create_device_component('device.fifo.8', 'BAD', {}, 'unk
 print('PASS: Python catalog parameters, larger displays, queue fidelities, stable/default layout keys and invalid declarations')
 
 for width in (8,16,32):
-    for operations in ('extended','integer'):
-        for topology in ('ripple','prefix'):
-            alu=backend.create_alu('ALU',width,operations,topology)
-            assert alu.get_input_pins()['A'].get_width()==width
-            assert ('C_IN' in alu.get_input_pins()) == (operations=='extended')
-rejects(lambda:backend.create_alu('BAD',12))
-rejects(lambda:backend.create_alu('BAD',16,'integer','prefix',True,'behavioral'))
-rejects(lambda:backend.create_alu('BAD',16,'extended','prefix',False))
+    alu=backend.create_word_component('alu','ALU',width)
+    assert alu.get_input_pins()['A'].get_width()==width and 'C_IN' in alu.get_input_pins()
+rejects(lambda:backend.create_word_component('alu','BAD',12))
+rejects(lambda:backend.create_word_component('alu','BAD',16,'behavioral'))
+assert 'C_IN' not in backend.create_rv32i_alu('ALU').get_input_pins()
 for width in (8,16,32):
     router=backend.create_device_component(f'bus.word.address-router.{width}','MAP',{'video_base':str(0x30000000),'video_bytes':'8192'})
     assert 'VIDEO_805306368:8192' in backend.component_layout_variant(router)

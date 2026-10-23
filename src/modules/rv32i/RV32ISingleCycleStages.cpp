@@ -5,8 +5,9 @@
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/storage/RegisterFile.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -183,8 +184,7 @@ std::vector<std::vector<LogicValue>> RV32ISingleCycleDecodeStage::getRegisterSta
 
 void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto alu=b.add(circuit::families::alu(32,
-        {circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,false}),"ALU");
+    auto alu=b.add(circuit::families::rv32iALU(),"ALU");
     auto a=b.addNewComponent<Mux<4,32>>("OPERAND_A");
     auto c=b.addNewComponent<Mux<4,32>>("OPERAND_B");
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO32",0);
@@ -204,14 +204,14 @@ void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     in(w,*this,branch,"BRANCH_TYPE","SEL");out(w,*this,branch,"OUT","BRANCH_TAKEN");
     // A branch needs this addition concurrently with the ALU comparison.
     // JAL/JALR instead reuse the main ALU; no RS1+IMM adder is duplicated.
-    auto target_add=b.addNewComponent<Adder<32>>("BRANCH_TARGET_ADD");
+    auto target_add=b.add(circuit::families::parallelPrefixAdder(32),"BRANCH_TARGET_ADD");
     in(w,*this,target_add,"PC","A");in(w,*this,target_add,"IMM","B");
-    w.connect(low,target_add->getInputPin("Cin"));
+    w.connect(low,target_add->getInputPin("C_IN"));
     auto mask=b.addNewComponent<Rewire>("JALR_MASK",std::vector<Rewire::WireSpec>{{"IN",32}},
         std::vector<Rewire::WireSpec>{{"OUT",32}},identity_mapping("IN",1,31,"OUT",1),Rewire::UnmappedBitValue::LOW);
     w.connect(alu->getOutputPin<32>("OUT"),mask->getInputPin<32>("IN"));
     auto target=b.addNewComponent<Mux<4,32>>("TARGET_SELECT");
-    w.connect(target_add->getOutputPin<32>("Sum"),target->getInputPin<32>("IN0"));
+    w.connect(target_add->getOutputPin<32>("OUT"),target->getInputPin<32>("IN0"));
     w.connect(alu->getOutputPin<32>("OUT"),target->getInputPin<32>("IN1"));
     w.connect(mask->getOutputPin<32>("OUT"),target->getInputPin<32>("IN2"));
     w.connect(zero->getOutputPin<32>("OUT"),target->getInputPin<32>("IN3"));

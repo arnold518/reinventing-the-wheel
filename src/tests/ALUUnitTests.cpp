@@ -1,7 +1,9 @@
-#include "tests/ExtendedALUTests.hpp"
+#include "tests/ALUUnitTests.hpp"
 #include "tests/ArithmeticLogicTests.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/ALU.hpp"
+#include "modules/composite/AddSub.hpp"
+#include "modules/composite/BarrelShifter.hpp"
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -23,7 +25,7 @@ Expected addsubExpected(unsigned a, unsigned b, bool sub, bool cin) {
             sub ? unsigned_result >= 0 : unsigned_result > 255, overflow8(signed_result)};
 }
 Expected aluExpected(unsigned a, unsigned b, unsigned op, bool cin) {
-    using namespace circuit::word::ExtendedOp;
+    using namespace circuit::word::ALUOp;
     const unsigned n = b & 7;
     Expected r;
     switch (op) {
@@ -80,7 +82,7 @@ TestRow aluRowNew(unsigned a, unsigned b, unsigned op, bool cin) {
 TestRow addsubRow(unsigned a, unsigned b, bool sub, bool cin) {
     auto r = addsubExpected(a,b,sub,cin);
     return {{{"A", bits(a)}, {"B", bits(b)}, {"SUB", bit(sub)}, {"C_IN", bit(cin)}},
-        {{"OUT", bits(r.out)}, {"CARRY_OUT", bit(r.carry)}, {"OVERFLOW", bit(r.overflow)}}};
+        {{"OUT", bits(r.out)}, {"C_OUT", bit(r.carry)}, {"OVERFLOW", bit(r.overflow)}}};
 }
 std::vector<TestRow> arithmeticRows() {
     std::vector<TestRow> rows;
@@ -184,38 +186,26 @@ public:
 };
 }
 
-AddSubExtendedWidth8Test::AddSubExtendedWidth8Test() : TruthTableComponentTest("AddSubExtendedWidth8Test","ADD_SUB_EXTENDED_W8_ROOT", [] {
+AddSubWidth8Test::AddSubWidth8Test() : TruthTableComponentTest("AddSubWidth8Test","ADD_SUB_W8_ROOT", [] {
     std::vector<TestRow> rows;
     for (unsigned a : {0u,1u,127u,128u,255u}) for (unsigned b : {0u,1u,128u,255u})
         for (bool sub : {false,true}) for (bool cin : {false,true}) rows.push_back(addsubRow(a,b,sub,cin));
     return rows;
 }()) {}
-ArithmeticExtendedWidth8Test::ArithmeticExtendedWidth8Test() : TruthTableComponentTest("ArithmeticExtendedWidth8Test","ARITHMETIC_EXTENDED_W8_ROOT",arithmeticRows()) {}
-LogicExtendedWidth8Test::LogicExtendedWidth8Test() : TruthTableComponentTest("LogicExtendedWidth8Test","LOGIC_EXTENDED_W8_ROOT",logicRows()) {}
-ShiftExtendedWidth8Test::ShiftExtendedWidth8Test() : TruthTableComponentTest("ShiftExtendedWidth8Test","SHIFT_EXTENDED_W8_ROOT",shiftRows()) {}
-CompareExtendedWidth8Test::CompareExtendedWidth8Test() : TruthTableComponentTest("CompareExtendedWidth8Test","COMPARE_EXTENDED_W8_ROOT",comparisonRows()) {}
-FlagsExtendedWidth8Test::FlagsExtendedWidth8Test() : TruthTableComponentTest("FlagsExtendedWidth8Test","FLAGS_EXTENDED_W8_ROOT",flagsRows()) {}
+ArithmeticUnitWidth8Test::ArithmeticUnitWidth8Test() : TruthTableComponentTest("ArithmeticUnitWidth8Test","ARITHMETIC_UNIT_W8_ROOT",arithmeticRows()) {}
+LogicUnitWidth8Test::LogicUnitWidth8Test() : TruthTableComponentTest("LogicUnitWidth8Test","LOGIC_UNIT_W8_ROOT",logicRows()) {}
+BarrelShifterWidth8Test::BarrelShifterWidth8Test() : TruthTableComponentTest("BarrelShifterWidth8Test","BARREL_SHIFTER_W8_ROOT",shiftRows()) {}
+CompareSelectWidth8Test::CompareSelectWidth8Test() : TruthTableComponentTest("CompareSelectWidth8Test","COMPARE_SELECT_W8_ROOT",comparisonRows()) {}
+ALUFlagUnitWidth8Test::ALUFlagUnitWidth8Test() : TruthTableComponentTest("ALUFlagUnitWidth8Test","ALU_FLAG_UNIT_W8_ROOT",flagsRows()) {}
 
-ALUExtendedWidth8Test::ALUExtendedWidth8Test() : TruthTableComponentTest("ALUExtendedWidth8Test","ALU_EXTENDED_W8_ROOT", [] {
-    std::vector<TestRow> rows;
-    for (unsigned op=0; op<32; ++op) {
-        rows.push_back(aluRowNew(0x81,3,op,false));
-        rows.push_back(aluRowNew(0x7F,1,op,true));
-    }
-    for (auto [a,b,op,cin] : std::vector<std::array<unsigned,4>>{
-        {255,1,0,0},{0,0,6,0},{128,0,6,0},{255,255,3,0},{0x81,0,16,1},{0x81,8,20,1}})
-        rows.push_back(aluRowNew(a,b,op,cin));
-    return rows;
-}()) {}
-
-void ExtendedALUContractTest::verifyResults() {
+void ALUContractTest::verifyResults() {
     const auto started = std::chrono::steady_clock::now();
-    Harness add(Component::create<AddSub<8>>("ADD_SUB",circuit::word::AdderTopology::Ripple), &circuit::word::family(circuit::word::Unit::AddSub,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}));
+    Harness add(Component::create<AddSub<8>>("ADD_SUB"), &circuit::word::family(Unit::AddSub,8));
     for (unsigned a=0; a<256; ++a) for (unsigned b=0; b<256; ++b)
         for (bool sub : {false,true}) for (bool cin : {false,true}) add.check(addsubRow(a,b,sub,cin));
     add.report();
 
-    Harness shifter(Component::create<BarrelShifter<8>>("SHIFT"), &circuit::word::family(circuit::word::Unit::Shift,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}));
+    Harness shifter(Component::create<BarrelShifter<8>>("SHIFT"), &circuit::word::family(Unit::Shift,8));
     for (unsigned op=0; op<5; ++op) for (unsigned a=0; a<256; ++a)
         for (unsigned distance=0; distance<8; ++distance) for (bool cin : {false,true}) {
             auto r = aluExpected(a,distance,op+16,cin);
@@ -224,7 +214,7 @@ void ExtendedALUContractTest::verifyResults() {
         }
     shifter.report();
 
-    Harness alu(Component::create<ALU<8>>("ALU",circuit::word::ALUConfig{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}));
+    Harness alu(Component::create<ALU<8>>("ALU"), &circuit::word::family(Unit::ALU,8));
     if (alu.root->getInputPinDynamic("OP")->getWidth()!=5) throw std::runtime_error("ALU<8> opcode width");
     std::map<std::string,size_t> type_counts;
     std::function<void(std::shared_ptr<Component>)> visit = [&](auto c) {
@@ -232,8 +222,9 @@ void ExtendedALUContractTest::verifyResults() {
         for (const auto& child : c->getChildren()) visit(child);
     };
     visit(alu.root);
-    if (type_counts["AddSub<8,ripple>"] != 1 || type_counts["Adder<8,ripple>"] != 1 || type_counts["FullAdder"] != 8)
-        throw std::runtime_error("ALU<8> must share one structural eight-bit adder");
+    if (type_counts["AddSub<8>"] != 1 || type_counts["ParallelPrefixAdder<8>"] != 1
+        || type_counts["HalfAdder"] != 8 || type_counts["FullAdder"] != 0)
+        throw std::runtime_error("ALU<8> must share one eight-bit parallel-prefix adder");
     constexpr std::array<unsigned,9> edges{0,1,2,7,15,127,128,254,255};
     for (unsigned op=0; op<32; ++op) for (auto a : edges) for (auto b : edges)
         for (bool cin : {false,true}) alu.check(aluRowNew(a,b,op,cin));
@@ -244,32 +235,32 @@ void ExtendedALUContractTest::verifyResults() {
     }
     // All ignored operand/carry inputs must remain isolated, including X/Z.
     for (auto unknown : {LogicValue::UNKNOWN,LogicValue::HIGH_Z}) {
-        for (unsigned op : {circuit::word::ExtendedOp::INC,circuit::word::ExtendedOp::DEC,circuit::word::ExtendedOp::NEG,circuit::word::ExtendedOp::NOT,circuit::word::ExtendedOp::PASS_A}) {
+        for (unsigned op : {circuit::word::ALUOp::INC,circuit::word::ALUOp::DEC,circuit::word::ALUOp::NEG,circuit::word::ALUOp::NOT,circuit::word::ALUOp::PASS_A}) {
             auto row=aluRowNew(0x81,0,op,false);
             row.inputs["B"] = TestValue(std::vector<LogicValue>(8,unknown));
             row.inputs["C_IN"] = TestValue(unknown);
             alu.check(row);
         }
-        for (unsigned op : {7u,15u,31u,unsigned(circuit::word::ExtendedOp::CLEAR)}) {
+        for (unsigned op : {7u,15u,31u,unsigned(circuit::word::ALUOp::CLEAR)}) {
             auto row=aluRowNew(0,0,op,false);
             row.inputs["A"] = row.inputs["B"] = TestValue(std::vector<LogicValue>(8,unknown));
             row.inputs["C_IN"] = TestValue(unknown);
             alu.check(row);
         }
-        auto masked = aluRowNew(0,0,circuit::word::ExtendedOp::AND,false);
+        auto masked = aluRowNew(0,0,circuit::word::ALUOp::AND,false);
         masked.inputs["A"] = TestValue(std::vector<LogicValue>(8,unknown));
         alu.check(masked);
         auto input = circuit::test::logicBits(8,0); input[0]=unknown;
         auto output = circuit::test::logicBits(8,0); output[0]=LogicValue::UNKNOWN;
-        auto row=aluRowNew(0,0,circuit::word::ExtendedOp::XOR,false);
+        auto row=aluRowNew(0,0,circuit::word::ALUOp::XOR,false);
         row.inputs["A"]=TestValue(input); row.outputs["OUT"]=TestValue(output);
         row.outputs["ZERO"]=TestValue(LogicValue::UNKNOWN); alu.check(row);
-        auto shifted=aluRowNew(0x81,1,circuit::word::ExtendedOp::SLL,false);
+        auto shifted=aluRowNew(0x81,1,circuit::word::ALUOp::SLL,false);
         auto shift_amount=circuit::test::logicBits(8,1);
         for (size_t i=3;i<8;++i) shift_amount[i]=unknown;
         shifted.inputs["B"]=TestValue(shift_amount); shifted.inputs["C_IN"]=TestValue(unknown);
         alu.check(shifted);
-        auto zero_shift=aluRowNew(0x81,0,circuit::word::ExtendedOp::ROR,false);
+        auto zero_shift=aluRowNew(0x81,0,circuit::word::ALUOp::ROR,false);
         zero_shift.inputs["C_IN"]=TestValue(unknown);
         zero_shift.outputs["CARRY"]=TestValue(LogicValue::UNKNOWN); alu.check(zero_shift);
         auto unknown_op=aluRowNew(0,0,0,false);

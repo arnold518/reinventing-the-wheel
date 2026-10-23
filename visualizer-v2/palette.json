@@ -493,7 +493,7 @@
       45,
       190
     ],
-    "ALUControlDecoder<": [
+    "ALUControlDecoder": [
       45,
       145,
       125,
@@ -505,7 +505,7 @@
       45,
       190
     ],
-    "Adder<": [
+    "RippleCarryAdder<": [
       80,
       60,
       120,
@@ -741,16 +741,10 @@
       140,
       190
     ],
-    "Adder<8,ripple>": [
+    "RippleCarryAdder<8>": [
       80,
       60,
       120,
-      190
-    ],
-    "Adder<32,prefix>": [
-      90,
-      60,
-      140,
       190
     ],
     "ParallelPrefixAdder<32>": [
@@ -777,19 +771,19 @@
       140,
       190
     ],
-    "AddSub<32,integer,prefix>": [
+    "RV32IALUAddSub": [
       125,
       58,
       135,
       190
     ],
-    "AddSub<8,ripple>": [
+    "AddSub<8>": [
       125,
       58,
       135,
       190
     ],
-    "ArithmeticUnit<8,ripple>": [
+    "ArithmeticUnit<8>": [
       105,
       50,
       125,
@@ -819,7 +813,7 @@
       115,
       190
     ],
-    "ALUControlDecoder<extended>": [
+    "ALUControlDecoder": [
       110,
       100,
       150,
@@ -831,28 +825,22 @@
       50,
       190
     ],
-    "ALUControlDecoder<integer>": [
+    "RV32IALUControl": [
       110,
       100,
       150,
       190
     ],
-    "CompareSelect<32,integer>": [
+    "RV32IALUCompare": [
       20,
       130,
       115,
       190
     ],
-    "ALUResultSelector<32,integer>": [
+    "RV32IALUResultSelect": [
       220,
       140,
       50,
-      190
-    ],
-    "ALUFlagUnit<32,integer>": [
-      20,
-      130,
-      115,
       190
     ],
     "Decoder<5>": [
@@ -873,31 +861,25 @@
       95,
       190
     ],
-    "BarrelShifter<32,integer>": [
+    "RV32IALUShifter": [
       38,
       105,
       135,
       190
     ],
-    "LogicUnit<32,integer>": [
+    "RV32IALULogic": [
       45,
       110,
       75,
       190
     ],
-    "ALU<8,extended,ripple>": [
+    "ALU<8>": [
       55,
       65,
       115,
       190
     ],
-    "ALU<32,integer,prefix>": [
-      68,
-      70,
-      125,
-      190
-    ],
-    "ALU<32,integer,prefix,core>": [
+    "RV32IALU": [
       68,
       70,
       125,

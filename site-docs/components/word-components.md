@@ -1,107 +1,18 @@
 # Parameterized word components
 
-Width, operation contract, adder topology and storage geometry are independent
-construction parameters. Each supported configuration has its own exact catalog
-ID and build-profile selection. `RegisterFile32x32` is the RV32I architectural
-exception: the ISA fixes both its word width and register count.
+Width and storage geometry are independent construction parameters. Each supported configuration has its own exact catalog
+ID and build-profile selection. `RegisterFile32x32` and `RV32IALU` retain
+fixed RV32I interfaces: the ISA fixes the register count and datapath width.
 
-## `ALU<W>`
+## ALU components
 
-`ALU<W>` supports **8, 16 and 32** bits. `ALUConfig` selects its operations
-and physical adder when the circuit is built. `ALU<W>(name)` and `families::alu(W)` select extended operations, parallel-prefix carry and full flags. An explicit configuration selects the other supported recipes:
+The Chapter 2 arithmetic and logic components (`RippleCarryAdder<W>`, `ParallelPrefixAdder<W>`, `AddSub<W>`, `ArithmeticUnit<W>`, `LogicUnit<W>`, `BarrelShifter<W>`, `ZeroDetect<W>`, `CompareSelect<W>`, `ALUFlagUnit<W>`, `ALUResultSelector<W>` and `ALU<W>`) take only the width W = 8, 16 or 32. `ALUControlDecoder` has no width parameter. Their headers, family functions and contract IDs are listed in [Construction and selection](../alu/2.6.md#construction-and-selection). The CPU's 32-bit [`RV32IALU`](../rv32i/4.3/alu.md) is specified with the RV32I building blocks.
 
-```cpp
-#include "modules/composite/ALU.hpp"
-
-using namespace circuit::word;
-ALUConfig config{Operations::Extended, AdderTopology::ParallelPrefix, true};
-auto alu = Component::create<ALU<16>>("ALU", config);
-// In a parent, use the selectable family:
-builder.add(circuit::families::alu(16, config), "ALU");
-```
-
-Python provides the same choice through
-`circuit_backend.create_alu("ALU", 16, "extended", "prefix")`. Unsupported
-fidelities and configurations are rejected.
-
-Changing `W` preserves operation codes and flag rules. `full_flags` may be
-false for `IntegerDatapath`; the extended contract requires its flags.
-Fidelity is selected by the existing build profile, independently of this
-configuration.
-
-| Contract | Operation codes | Arithmetic and flags |
-| --- | --- | --- |
-| `Extended` | [extended codes](../alu/2.6.md), at every W | 29 operations; carry/no-borrow input; arithmetic and shift carry; comparison results clear carry/overflow; reserved 7, 15, 31 assert `INVALID_OP` |
-| `IntegerDatapath` | [integer codes](../alu/2.7.md), at every W | 13 operations; comparison flags qualified by SUB/SLT/SLTU; subtraction flags retained for SLT/SLTU; reserved codes produce zero |
-
-| Pin | Direction | Width | Availability |
-| --- | --- | --- | --- |
-| A, B | Input | W each | Both contracts |
-| OP | Input | 5 | Both contracts |
-| C_IN | Input | 1 | Extended |
-| OUT | Output | W | Both contracts |
-| ZERO, NEGATIVE, OVERFLOW | Output | 1 each | Extended, or integer with `full_flags` |
-| CARRY, INVALID_OP | Output | 1 each | Extended |
-| CARRY_OUT | Output | 1 | Integer with `full_flags` |
-| EQ, LT_SIGNED, LT_UNSIGNED | Output | 1 each | Integer |
-
-Shifts consume the low `log2(W)` bits of B. Rotation and zero-distance shift
-carry follow the extended contract. Both contracts use four-state gates;
-unknown inputs are propagated by the selected circuit's gates.
-
-The [extended ALU](../alu/2.6.md) composes arithmetic, selected logic, barrel
-shifter, comparison, result-selection and flag recipes. The [integer ALU](../alu/2.7.md)
-composes its control decoder, add/subtract, parallel logic, barrel shifter,
-comparison, result-selection and flag recipes. Ripple and parallel-prefix
-addition are explicit choices at all supported widths. `ALUConfig{}` selects
-extended operations, parallel-prefix carry and full flags.
-
-Width/configuration families without a characterized behavioral factory provide **structural** circuits.
-Behavioral factories are scoped to their characterized contracts. Delay
-tables are specific to width, operation contract and topology.
-
-### Recorded 16-bit example
-
-The shared generator checks all 32 opcodes with two operand/carry sets (64 rows). W = 8 and W = 32 use the same scenario definition. The independently selectable ripple example is `alu-extended-ripple-w16`.
-
-<!-- simulator-examples: alu ALUScenarioTest -->
-
-<div class="simulator-embed"><iframe src="../../simulator/?scenario=alu&amp;embed=1" title="ALU&lt;16&gt;" loading="lazy" allowfullscreen></iframe></div>
-
-## Arithmetic and selection units
-
-`WordDatapath.hpp` also exposes `Adder<W>`, `AddSub<W>`, `ZeroDetect<W>`,
-`ArithmeticUnit<W>`, `LogicUnit<W>`, `BarrelShifter<W>`, `CompareSelect<W>`,
-`ALUFlagUnit<W>` and `ALUResultSelector<W>`. Their W is 8, 16 or 32.
-`ALUControlDecoder` takes an operation contract; decoding itself has no
-operand width.
-
-| Component | Inputs | Outputs |
-| --- | --- | --- |
-| `Adder<W>` | A[W], B[W], Cin | Sum[W], Cout |
-| `AddSub<W>`, extended | A[W], B[W], SUB, C_IN | OUT[W], CARRY_OUT, OVERFLOW |
-| `AddSub<W>`, integer | A[W], B[W], SUB | OUT[W], CARRY_OUT, OVERFLOW |
-| `ZeroDetect<W>` | A[W] | ZERO |
-
-The remaining slice pin names follow their [extended](../alu/2.6.md) or
-[integer](../alu/2.7.md) contract, with operand/result widths replaced
-by W. Extended add/subtract uses the explicit C_IN even when SUB is set;
-integer add/subtract uses SUB as the carry input. The sign/overflow gates
-retain their contract-specific four-state rules.
-
-`ArithmeticUnit<W>` uses the extended arithmetic contract; its configuration
-chooses the adder topology. `ALUControlDecoder` selects an operation contract
-without a data-width parameter. `word.control.extended` and
-`word.control.integer` identify its two control maps. Each map works at every
-supported operand width.
+## Multiplexers, decoders and incrementers
 
 `Mux<Inputs,W>` supports Inputs = 2, 4, 8, 16 or 32 and W = 1, 4, 8, 16 or 32.
 Two-input muxes have A and B; larger muxes have IN0…IN(Inputs−1). SEL has
 `log2(Inputs)` bits; OUT has W bits. Its balanced tree composes scalar two-input muxes. `circuit::word::mux(Inputs,W)` returns its family.
-
-`ParallelPrefixAdder<W>` exposes A[W], B[W], Cin, Sum[W], Cout and the carry
-into the sign bit (`C7`, `C15` or `C31`). Half-adder cells form generate/propagate signals; logarithmically many
-carry-combination levels supply every sum bit.
 
 `Decoder<AddressBits>` accepts ADDR[AddressBits] and ENABLE; its 2^AddressBits
 single-bit outputs are OUT0…OUT(N−1). AddressBits is 1 through 5. With known
@@ -192,6 +103,6 @@ input.
 `WidthComponentsTest` checks ALU codes/flags, four-state carries, supported
 mux selections, iterative arithmetic latency/results, register-file
 geometries, narrower ports and pixel selection. Component, fidelity and timing checks validate the corresponding configured
-contracts. `ALUScenarioTest` provides the recorded example above. Geometry checks run the actual guest
+contracts. Geometry checks run the actual guest
 drawing library against large and odd/padded strides; compiled game evidence
 is documented separately in [recorded games](../rv32im/recorded-games.md).

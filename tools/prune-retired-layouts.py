@@ -35,7 +35,11 @@ if apply:
     for fp, k in gone['profile']: del d['profile_layouts'][fp][k]
     for fp in [fp for fp, v in d['profile_layouts'].items() if not v]: del d['profile_layouts'][fp]
     for k in gone['root']: del d['root_layouts'][k]
-    # Same formatting as LayoutManager.save: indent 4, lists on one line.
+    # Same formatting as LayoutManager.save: compact lists, preserve strings.
     pretty = json.dumps(d, indent=4)
-    path.write_text(re.sub(r"\[(.*?)\]", lambda m: "[" + re.sub(r"\s+", "", m.group(1)).replace(",", ", ") + "]", pretty, flags=re.DOTALL))
+    def compact_list(match):
+        if match.group(1) is None:
+            return match.group(0)
+        return "[" + re.sub(r"\s+", "", match.group(1)).replace(",", ", ") + "]"
+    path.write_text(re.sub(r'"(?:\\.|[^"\\])*"|\[(.*?)\]', compact_list, pretty, flags=re.DOTALL))
     print('written', path.stat().st_size, 'bytes')

@@ -1,5 +1,6 @@
-#include "tests/ExtendedALUTests.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "tests/ALUUnitTests.hpp"
+#include "modules/composite/WordComponent.hpp"
+#include "modules/composite/ALUControlDecoder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include <algorithm>
 #include <array>
@@ -78,11 +79,16 @@ LogicVector fourStateBits(size_t width, unsigned index) {
 }
 } // namespace
 
-void ExtendedALUFidelityContractTest::verifyResults() {
-    const std::array<const ComponentFamily*, 11> chapter_families{
-        &circuit::word::family(circuit::word::Unit::Adder,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::AddSub,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::Arithmetic,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::Logic,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}),
-        &circuit::word::family(circuit::word::Unit::Shift,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::Zero,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::Compare,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}),
-        &circuit::word::family(circuit::word::Unit::Flags,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::controlFamily(circuit::word::Operations::Extended), &circuit::word::family(circuit::word::Unit::Result,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), &circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true})};
+void ALUFidelityContractTest::verifyResults() {
+    using circuit::word::Unit;
+    auto f8 = [](Unit u) { return &circuit::word::family(u, 8); };
+    // Every Chapter 2 compact form: all units at 8 bits, both adders at 16 and 32.
+    const std::array<const ComponentFamily*, 16> chapter_families{
+        f8(Unit::RippleAdder), f8(Unit::PrefixAdder), f8(Unit::AddSub), f8(Unit::Arithmetic), f8(Unit::Logic),
+        f8(Unit::Shift), f8(Unit::Zero), f8(Unit::Compare), f8(Unit::Flags), &circuit::families::aluControlDecoder(),
+        f8(Unit::Result), f8(Unit::ALU),
+        &circuit::word::family(Unit::RippleAdder, 16), &circuit::word::family(Unit::PrefixAdder, 16),
+        &circuit::word::family(Unit::RippleAdder, 32), &circuit::word::family(Unit::PrefixAdder, 32)};
     std::mt19937 rng(0xA108B);
     for (const auto* family : chapter_families) {
         Probe structural(*family, canonicalDefaultProfile());
@@ -122,10 +128,10 @@ void ExtendedALUFidelityContractTest::verifyResults() {
             }
         }
         // Exhaustive four-state zero detector and independent selector enables.
-        if (family == &circuit::word::family(circuit::word::Unit::Zero,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true})) {
+        if (family == &circuit::word::family(Unit::Zero,8)) {
             for (unsigned i = 0; i < 65536; ++i) check({{"A", fourStateBits(8, i)}});
         }
-        if (family == &circuit::word::family(circuit::word::Unit::Result,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true})) {
+        if (family == &circuit::word::family(Unit::Result,8)) {
             for (unsigned i = 0; i < 4096; ++i) {
                 auto inputs = structural.randomInputs(rng, i % 3);
                 auto index = i;
@@ -138,7 +144,7 @@ void ExtendedALUFidelityContractTest::verifyResults() {
         std::cout << family->typeName() << ": " << rows << " settled equivalence rows\n";
     }
 
-    Probe structural(circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), canonicalDefaultProfile());
+    Probe structural(circuit::word::family(Unit::ALU,8), canonicalDefaultProfile());
     std::vector<NamedValues> inputs, expected;
     for (size_t i = 0; i < 256; ++i) {
         inputs.push_back(structural.randomInputs(rng, i % 3));
@@ -154,7 +160,7 @@ void ExtendedALUFidelityContractTest::verifyResults() {
         "DUT.ARITHMETIC.ADD_SUB.ADD", "DUT.LOGIC", "DUT.SHIFTER", "DUT.COMPARE_SELECT",
         "DUT.COMPARE_SELECT.EQUAL", "DUT.RESULT_SELECT", "DUT.FLAGS"};
     auto checkMixed = [&](const std::string& label, BuildProfile profile) {
-        Probe mixed(circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), std::move(profile));
+        Probe mixed(circuit::word::family(Unit::ALU,8), std::move(profile));
         require(countComponents(mixed.root) < countComponents(structural.root), label + ": selection did not collapse internals");
         for (size_t i = 0; i < inputs.size(); ++i) compare(expected[i], mixed.evaluate(inputs[i]), inputs[i], label);
     };
@@ -165,7 +171,7 @@ void ExtendedALUFidelityContractTest::verifyResults() {
     for (const auto* family : chapter_families) overrides.push_back(preferFidelity(Fidelity::Behavioral, ProfileSelector::contract(*family)));
     overrides.push_back(preferFidelity(Fidelity::Structural, ProfileSelector::exactPath("DUT")));
     auto hybrid = withProfileOverrides(canonicalDefaultProfile(), overrides, "chapter2-hybrid");
-    Probe hybrid_probe(circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), hybrid);
+    Probe hybrid_probe(circuit::word::family(Unit::ALU,8), hybrid);
     require(countComponents(hybrid_probe.root) == 8, "Hybrid ALU<8> must contain root plus seven behavioral units");
     checkMixed("all seven units", hybrid);
     std::cout << "Mixed fidelity: 13 profiles x 256 settled rows\n";
@@ -175,7 +181,7 @@ void ExtendedALUFidelityContractTest::verifyResults() {
     std::vector<NamedValues> workload;
     for (size_t i = 0; i < 1024; ++i) workload.push_back(structural.randomInputs(rng, 0));
     for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
-        Probe probe(circuit::word::family(circuit::word::Unit::ALU,8,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), withExactFidelity(canonicalDefaultProfile(), "DUT", fidelity));
+        Probe probe(circuit::word::family(Unit::ALU,8), withExactFidelity(canonicalDefaultProfile(), "DUT", fidelity));
         probe.evaluate(workload.front());
         const auto events_before = probe.sim.getPerformanceCounters().processed_events;
         const auto start = std::chrono::steady_clock::now();

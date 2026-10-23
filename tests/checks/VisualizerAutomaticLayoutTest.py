@@ -163,7 +163,7 @@ class AutomaticLayoutTest(unittest.TestCase):
             self.assertIn("type/RV32IMemoryLanes", result["changed"])
             self.assertIn("type/RV32IFiveStageCore", result["preserved_manual"])
             self.assertIn("profile/unrecognized-test/RV32IMemoryLanes", result["unmatched"])
-            for kind in ["SRAM<8>", "SRAMRow<16>", "SRAMStorageBank<8,4,2>", "RV32IFiveStageCore", "RegisterFile32x32", "ALUFlagUnit<32,integer>"]:
+            for kind in ["SRAM<8>", "SRAMRow<16>", "SRAMStorageBank<8,4,2>", "RV32IFiveStageCore", "RegisterFile32x32", "RV32IALUCompare"]:
                 self.assertEqual(updated["type_layouts"][kind], original["type_layouts"][kind], kind)
             for store in ["type_layouts", "root_layouts"]:
                 self.assertEqual(set(updated[store]), set(original[store]))
@@ -172,7 +172,7 @@ class AutomaticLayoutTest(unittest.TestCase):
                         if field not in {"children", "automatic_layout_history", "automatic_layout_revision", "layout_mode"}:
                             self.assertEqual(updated[store][key][field], value, (store,key,field))
             # Refresh descendants, even inside a preserved pipeline floorplan.
-            self.assertIn("type/ALU<32,integer,prefix,core>", result["automatic"])
+            self.assertIn("type/RV32IALU", result["automatic"])
             snapshot = path.read_bytes()
             second = refresh.refresh_automatic(path, scenarios)
             self.assertFalse(second["changed"])
@@ -198,11 +198,11 @@ class AutomaticLayoutTest(unittest.TestCase):
             self.assertEqual(shape(topology), shape(test.get_root()), name)
 
     def test_wide_child_pins_in_shallow_parent(self):
-        root = server.circuit_backend.create_layout_topology("FlagsIntegerWidth32Test")
+        root = server.circuit_backend.create_layout_topology("RV32IALUCompareTest")
         children = list(root.get_children())
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         for aspect in [.45, .725, 2.0]:
-            manager.type_layouts["ALUFlagUnit<32,integer>"]["aspect_ratio"] = aspect
+            manager.type_layouts["RV32IALUCompare"]["aspect_ratio"] = aspect
             arguments = refresh.layout_arguments(manager, root, children)
             generated = server._layered_graph_layout(*arguments)
             refresh._assert_no_child_overlap(manager,root,children,generated,1,"")

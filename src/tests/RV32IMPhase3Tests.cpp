@@ -1,4 +1,5 @@
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/composite/WordComponent.hpp"
 #include "modules/basic/WordMux.hpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/storage/RegisterFile.hpp"
@@ -538,26 +539,29 @@ std::vector<uint64_t> coreProgram(bool fault, bool compiled=false, bool reset_in
 int64_t signedWord(uint64_t value,size_t w){return value&(uint64_t{1}<<(w-1))?int64_t(value)-int64_t(uint64_t{1}<<w):int64_t(value);}
 void widthComponents(){
     using namespace circuit::word;
-    for(size_t w:{8u,16u,32u})for(auto topology:{AdderTopology::Ripple,AdderTopology::ParallelPrefix}){
+    for(size_t w:{8u,16u,32u})for(auto adder:{Unit::RippleAdder,Unit::PrefixAdder}){
         const uint64_t mask=(uint64_t{1}<<w)-1;
-        Rig ad(family(Unit::Adder,w,{Operations::Extended,topology}));
+        Rig ad(family(adder,w));
         for(auto unknown:{LogicValue::UNKNOWN,LogicValue::HIGH_Z}){
-            ad.drive({{"A",mask},{"B",1},{"Cin",0}});ad.unknown("Cin",unknown);
+            ad.drive({{"A",mask},{"B",1},{"C_IN",0}});ad.unknown("C_IN",unknown);
             auto a=circuit::test::logicBits(w,mask),b=circuit::test::logicBits(w,1);auto carry=unknown;
             std::vector<LogicValue> expected;
             using namespace circuit::logic_values;
             for(size_t i=0;i<w;++i){auto h=xorGate(a[i],b[i]);expected.push_back(xorGate(h,carry));carry=orGate(andGate(a[i],b[i]),andGate(h,carry));}
-            require(ad.root->getOutputPinDynamic("Sum")->getValueAsVector()==expected,"Generic adder four-state sum");
-            require(ad.root->getOutputPin("Cout")->getValue()==carry,"Generic adder four-state carry");
+            require(ad.root->getOutputPinDynamic("OUT")->getValueAsVector()==expected,"Generic adder four-state sum");
+            require(ad.root->getOutputPin("C_OUT")->getValue()==carry,"Generic adder four-state carry");
         }
-        for(auto operations:{Operations::Extended,Operations::IntegerDatapath}){
-            Rig alu(family(Unit::ALU,w,{operations,topology,true}));
+    }
+    for(size_t w:{8u,16u,32u}){
+        const uint64_t mask=(uint64_t{1}<<w)-1;
+        {
+            Rig alu(family(Unit::ALU,w));
             for(auto pair:std::vector<std::pair<uint64_t,uint64_t>>{{0,0},{mask,1},{uint64_t{1}<<(w-1),w-1},{mask>>1,mask}})
-                for(unsigned op=0;op<32;++op)for(unsigned cin=0;cin<(operations==Operations::Extended?2u:1u);++cin){
+                for(unsigned op=0;op<32;++op)for(unsigned cin=0;cin<2u;++cin){
                     auto [a,b]=pair;uint64_t out=0,carry=0,overflow=0;unsigned amount=b&(w-1);
                     std::map<std::string,uint64_t> inputs{{"A",a},{"B",b},{"OP",op}};
                     auto add=[&](uint64_t x,uint64_t y,unsigned c){uint64_t sum=x+y+c;out=sum&mask;carry=sum>>w;overflow=((~(x^y)&(x^out))>>(w-1))&1;};
-                    if(operations==Operations::Extended){inputs["C_IN"]=cin;
+                    {inputs["C_IN"]=cin;
                         switch(op){case 0:add(a,b,0);break;case 1:add(a,b,cin);break;case 2:add(a,(~b)&mask,1);break;case 3:add(a,(~b)&mask,cin);break;
                         case 4:add(a,0,1);break;case 5:add(a,(~uint64_t{1})&mask,1);break;case 6:add(0,(~a)&mask,1);break;
                         case 8:out=a&b;break;case 9:out=a|b;break;case 10:out=a^b;break;case 11:out=(~a)&mask;break;
@@ -571,26 +575,19 @@ void widthComponents(){
                         case 24:out=std::min(a,b);break;case 25:out=std::max(a,b);break;
                         case 26:out=signedWord(a,w)<signedWord(b,w)?a:b;break;case 27:out=signedWord(a,w)<signedWord(b,w)?b:a;break;
                         case 28:out=a;break;case 29:out=b;break;default:break;}
-                    }else{
-                        switch(op){case 0:add(a,b,0);break;case 1:case 8:case 9:add(a,(~b)&mask,1);
-                            if(op==8)out=signedWord(a,w)<signedWord(b,w);if(op==9)out=a<b;break;
-                        case 2:out=a&b;break;case 3:out=a|b;break;case 4:out=a^b;break;case 5:out=(a<<amount)&mask;break;
-                        case 6:out=a>>amount;break;case 7:out=uint64_t(signedWord(a,w)>>amount)&mask;break;case 10:out=a;break;case 11:out=b;break;default:break;}
                     }
                     alu.drive(inputs);const std::string context=std::to_string(w)+" op "+std::to_string(op);
                     require(alu.out("OUT")==out,"Generic ALU result "+context);
                     require(alu.out("ZERO")==!out && alu.out("NEGATIVE")==((out>>(w-1))&1),"Generic ALU result flags "+context);
-                    require(alu.out(operations==Operations::Extended?"CARRY":"CARRY_OUT")==carry && alu.out("OVERFLOW")==overflow,"Generic ALU arithmetic flags "+context);
-                    if(operations==Operations::Extended)require(alu.out("INVALID_OP")== (op==7||op==15||op==31),"Generic ALU reserved opcode");
-                    else{const bool compare=op==1||op==8||op==9;
-                        require(alu.out("EQ")== (compare&&a==b) && alu.out("LT_UNSIGNED")== (compare&&a<b) && alu.out("LT_SIGNED")== (compare&&signedWord(a,w)<signedWord(b,w)),"Generic integer compare flags");}
+                    require(alu.out("CARRY")==carry && alu.out("OVERFLOW")==overflow,"Generic ALU arithmetic flags "+context);
+                    require(alu.out("INVALID_OP")== (op==7||op==15||op==31),"Generic ALU reserved opcode");
                 }
         }
-        std::cout<<"width "<<w<<" topology "<<int(topology)<<": all 32 ALU codes, flags, carries and four-state addition passed\n";
+        std::cout<<"width "<<w<<": all 32 ALU codes, flags, carries and four-state addition passed\n";
     }
-    for(size_t w:{8u,16u,32u})for(auto operations:{Operations::Extended,Operations::IntegerDatapath}){
-        Rig flags(family(Unit::Flags,w,{operations}));flags.unknown("RESULT",LogicValue::HIGH_Z);
-        require(flags.root->getOutputPin("NEGATIVE")->getValue()==(operations==Operations::Extended?LogicValue::UNKNOWN:LogicValue::HIGH_Z),"Width-independent flag four-state contract");
+    for(size_t w:{8u,16u,32u}){
+        Rig flags(family(Unit::Flags,w));flags.unknown("RESULT",LogicValue::HIGH_Z);
+        require(flags.root->getOutputPin("NEGATIVE")->getValue()==LogicValue::UNKNOWN,"Width-independent flag four-state contract");
     }
     for(size_t w:{1u,4u,8u,16u,32u})for(size_t inputs:{2u,4u,8u,16u,32u}){
         const auto& family=circuit::word::mux(inputs,w);
@@ -673,14 +670,9 @@ void widthComponents(){
         routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width);
         routing(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,width),true,width);
         routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width,{{"console_base",std::to_string(0x18000000)}});
-        for(auto topology:{AdderTopology::Ripple,AdderTopology::ParallelPrefix}){
-            Rig core(family(Unit::ALU,width,{Operations::IntegerDatapath,topology,false}));
-            require(!core.root->getOutputPinDynamic("ZERO")&&!core.root->getOutputPinDynamic("CARRY_OUT"),"Generic integer core flag omission");
-            core.drive({{"A",7},{"B",9},{"OP",0}});require(core.out("OUT")==16,"Generic integer core result");
-        }
     }
-    bool bad_config=false;try{(void)family(Unit::ALU,16,{Operations::Extended,AdderTopology::Ripple,false});}catch(const std::invalid_argument&){bad_config=true;}
-    require(bad_config,"Extended flag contract silently disabled");
+    bool bad_width=false;try{(void)family(Unit::ALU,12);}catch(const std::invalid_argument&){bad_width=true;}
+    require(bad_width,"Unsupported ALU width accepted");
     circuit::device::AddressMap map;map.validate();map.regions[1].base=0;
     bool rejected=false;try{map.validate();}catch(const std::invalid_argument&){rejected=true;}require(rejected,"Overlapping map accepted");
     std::cout<<"PASS generic ALU, adder, iterative M, ports, pixel words, counters, queues and register files\n";

@@ -72,9 +72,7 @@ circuit::BuildProfile architectureStructuralProfile(
 
     std::set<std::string> contract_ids;
     for (const auto& contract : catalog.contracts()) {
-        if (contract.id.starts_with("rv32i.") ||
-            (contract.id.starts_with("word.") && contract.id.find(".32.integer")!=std::string::npos) ||
-            contract.id=="word.control.integer") {
+        if (contract.id.starts_with("rv32i.")) {
             contract_ids.insert(contract.id);
         }
     }

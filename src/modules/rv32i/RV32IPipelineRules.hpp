@@ -4,8 +4,8 @@
 // these, so each rule is stated once. (The instruction oracle in src/rv32i
 // keeps its own independent statement on purpose.)
 
-#include "modules/composite/WordDatapath.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "rv32i/RV32IControl.hpp"
 #include "rv32i/RV32IState.hpp"
 #include <cstdint>
@@ -98,10 +98,10 @@ inline ExecuteResult execute(const RV32IControlSignals& control, uint32_t pc, ui
     const uint32_t a = control.alu_a == RV32IALUSourceA::RS1 ? rs1 : control.alu_a == RV32IALUSourceA::PC ? pc : 0U;
     const uint32_t b = control.alu_b == RV32IALUSourceB::RS2 ? rs2
                      : control.alu_b == RV32IALUSourceB::Immediate ? immediate : 0U;
-    r.alu_result = circuit::word::integer_value::result<32>(control.alu_op, a, b);
+    r.alu_result = ::rv32i::alu_value::result<32>(control.alu_op, a, b);
     r.pc_plus_4 = pc + 4U;
-    const bool compare = control.alu_op == circuit::word::IntegerOp::SUB || control.alu_op == circuit::word::IntegerOp::SLT
-                      || control.alu_op == circuit::word::IntegerOp::SLTU;
+    const bool compare = control.alu_op == ::rv32i::ALUOp::SUB || control.alu_op == ::rv32i::ALUOp::SLT
+                      || control.alu_op == ::rv32i::ALUOp::SLTU;
     const bool eq = compare && a == b, lt = compare && int32_t(a) < int32_t(b), ltu = compare && a < b;
     const bool conditions[]{false, eq, !eq, lt, !lt, ltu, !ltu, false};
     r.is_branch = control.branch != RV32IBranchType::None;

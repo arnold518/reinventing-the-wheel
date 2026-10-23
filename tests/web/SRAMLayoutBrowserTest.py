@@ -67,7 +67,7 @@ with sync_playwright() as p:
                 store[key] = {...cloneJson(entry.previous_default), ...(entry.color ? {color:entry.color} : {})};
         }
         old.type_layouts['SRAMRow<16>'].color = [70,150,120,190];
-        old.type_layouts['ALU<8,extended,ripple>'].color = [11,22,33,190];
+        old.type_layouts['ALU<8>'].color = [11,22,33,190];
         app.layout = old;
         await saveLayout();
     }""")
@@ -76,7 +76,7 @@ with sync_playwright() as p:
     idle(page)
     verify_matrix(page, "SRAM_ROOT.STORAGE")
     assert page.evaluate("app.layout.type_layouts['SRAMRow<16>'].color") == [70,150,120,190]
-    assert page.evaluate("app.layout.type_layouts['ALU<8,extended,ripple>'].color") == [11,22,33,190]
+    assert page.evaluate("app.layout.type_layouts['ALU<8>'].color") == [11,22,33,190]
     # A later explicit placement must survive reload, rather than reflowing again.
     page.evaluate("""async () => {
         const row = app.components.get('SRAM_ROOT.STORAGE.ROW_0');

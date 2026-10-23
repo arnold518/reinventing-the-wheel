@@ -256,24 +256,20 @@ the acceptance report without another simulated game run.
 ### Width components
 
 The component references in `site-docs/alu/2.1.md` through `2.6.md` specify
-the extended contract with recorded configurations at several widths. The
-primary ALU recording is 16-bit with parallel-prefix addition. `2.7.md` owns the
-reusable integer components and their 32-bit examples;
-`site-docs/rv32i/4.3/alu.md` specifies the CPU's core-interface configuration.
-`DocumentationExamplesTest` checks the extended examples and their preserved
-anchors. `RV32IBuildingBlocksDocumentationTest` checks the integer and CPU
-references together, including pin schemas and exact C++ reference replay.
-`RV32ISingleCycleDocumentationTest` reads the integer references before the
-stage examples that call them. These checks use the existing native probe and
+the Chapter 2 components, recorded mostly at 8 bits; the primary `ALU<W>`
+recording is 16-bit. `site-docs/rv32i/4.3/alu.md` specifies `RV32IALU` and its
+six parts. `DocumentationExamplesTest` checks the Chapter 2 examples and page
+structure. `RV32IBuildingBlocksDocumentationTest` checks the RV32I ALU and the
+other 4.3 references, including pin schemas and exact C++ reference replay.
+`RV32ISingleCycleDocumentationTest` reads the 4.3 references before the stage
+examples that call them. These checks use the existing native probe and
 do not require a core or game campaign.
 
-`WidthComponentsTest` covers both ALU operation contracts and adder topologies
-at 8/16/32 bits, mux/register-file geometries, narrow transport/pixel helpers
+`WidthComponentsTest` covers `ALU<W>` and both adders at 8/16/32 bits, mux/register-file geometries, narrow transport/pixel helpers
 and iterative M units at 4/8/16 bits. Recorded 32-bit M checks remain separate.
 The same registered semantic test can run through `circuitsim_verification.js`.
-`ALUWidth16RippleScenarioTest` supplies the public `alu-extended-ripple-w16` recording;
-`VisualizerScenarioWasmParityTest` compares its complete topology, examples,
-states and rewind with native. `GuestDisplayGeometryTest` compiles the actual
+`VisualizerScenarioWasmParityTest` compares the complete topology, examples,
+states and rewind of the `alu` recording with native. `GuestDisplayGeometryTest` compiles the actual
 guest drawing library for host reference IO at 64x48, 320x200 and odd/padded
 row strides. This host test is distinct from compiled CPU execution.
 

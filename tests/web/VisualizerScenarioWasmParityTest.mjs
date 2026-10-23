@@ -25,7 +25,7 @@ try {
     assert.deepEqual(actual[field], expected[field], field);
   console.log(`${descriptors.length} descriptors match; all 22 programs configurable; new prediction scenario matches`);
   bridge.clearProfileOverrides();
-  const wordTest = 'ALUWidth16RippleScenarioTest', wordAlias = 'alu-extended-ripple-w16';
+  const wordTest = 'ALUScenarioTest', wordAlias = 'alu';
   const word = JSON.parse(bridge.loadScenario(wordTest, wordAlias, 0));
   const wordExpected = JSON.parse(execFileSync(probe, ['topology', wordTest, wordAlias],
     {encoding: 'utf8', maxBuffer: 32 * 1024 * 1024}));

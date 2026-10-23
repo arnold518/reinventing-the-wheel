@@ -1,9 +1,7 @@
-#include "modules/composite/WordBehavioral.hpp"
+#include "modules/composite/WordRecipes.hpp"
 #include "modules/composite/WordALUValueModel.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
-#include "basic/LogicValueHelpers.hpp"
 #include <algorithm>
 
 namespace circuit::word {
@@ -11,11 +9,12 @@ namespace {
 constexpr std::array<const char*,6> enables{
     "ARITHMETIC_ENABLE","LOGIC_ENABLE","SHIFT_ENABLE","COMPARE_ENABLE","PASS_A_ENABLE","PASS_B_ENABLE"};
 
-template<size_t W,AdderTopology Topology>
+// Compact form of one Chapter 2 unit: the settled values of its own gates.
+template<size_t W>
 class WordBehavioral final : public BasicComponent {
-    using Value=ExtendedALUValueModel<W,Topology>;
-    using Word=typename Value::Word;
-    Unit unit_; ALUConfig config_; std::string type_;
+    using Value=ALUValueModel<W,Carry::Prefix>;
+    using Ripple=ALUValueModel<W,Carry::Ripple>;
+    Unit unit_; std::string type_;
     template<size_t N> typename Value::template Bits<N> read(const char* name) {
         const auto bits=getInputPin<N>(name)->getValueAsVector();
         typename Value::template Bits<N> out;
@@ -30,16 +29,25 @@ class WordBehavioral final : public BasicComponent {
         write(s,t,"ZERO",f.zero);write(s,t,"NEGATIVE",f.negative);
         write(s,t,"CARRY",f.carry);write(s,t,"OVERFLOW",f.overflow);
     }
-    void extended(Simulator& s,SimulationTime t) {
+public:
+    WordBehavioral(std::string name,Unit unit)
+        :BasicComponent(std::move(name),1,family(unit,W).pinInitializer()),
+         unit_(unit),type_(family(unit,W).typeName()){}
+    const char* getTypeName()const override{return type_.c_str();}
+    void evaluate(SimulationTime t,Simulator& s)override {
         switch(unit_) {
-        case Unit::Adder: {
-            const auto r=Value::add(read<W>("A"),read<W>("B"),bit("Cin"));
-            write<W>(s,t,"Sum",r.out);write(s,t,"Cout",r.carry);break;
+        case Unit::RippleAdder: {
+            const auto r=Ripple::add(read<W>("A"),read<W>("B"),bit("C_IN"));
+            write<W>(s,t,"OUT",r.out);write(s,t,"C_OUT",r.carry);break;
+        }
+        case Unit::PrefixAdder: {
+            const auto r=Value::add(read<W>("A"),read<W>("B"),bit("C_IN"));
+            write<W>(s,t,"OUT",r.out);write(s,t,"C_OUT",r.carry);write(s,t,"C_SIGN",r.carry_into_sign);break;
         }
         case Unit::Zero:write(s,t,"ZERO",Value::zero(read<W>("A")));break;
         case Unit::AddSub: {
             const auto r=Value::addsub(read<W>("A"),read<W>("B"),bit("SUB"),bit("C_IN"));
-            write<W>(s,t,"OUT",r.out);write(s,t,"CARRY_OUT",r.carry);write(s,t,"OVERFLOW",r.overflow);break;
+            write<W>(s,t,"OUT",r.out);write(s,t,"C_OUT",r.carry);write(s,t,"OVERFLOW",r.overflow);break;
         }
         case Unit::Arithmetic: {
             const auto r=Value::arithmetic(read<W>("A"),read<W>("B"),read<3>("OP"),bit("C_IN"));
@@ -69,78 +77,15 @@ class WordBehavioral final : public BasicComponent {
         }
         }
     }
-    void integer(Simulator& s,SimulationTime t) {
-        if(unit_==Unit::Logic) {
-            const auto a=read<W>("A"),b=read<W>("B");Word land,lor,lxor;
-            for(size_t i=0;i<W;++i){land[i]=Value::land(a[i],b[i]);lor[i]=Value::lor(a[i],b[i]);lxor[i]=Value::lxor(a[i],b[i]);}
-            write<W>(s,t,"AND_OUT",land);write<W>(s,t,"OR_OUT",lor);write<W>(s,t,"XOR_OUT",lxor);return;
-        }
-        if(unit_==Unit::AddSub) {
-            const auto a=read<W>("A");auto b=read<W>("B");const auto sub=bit("SUB");
-            for(auto& value:b)value=Value::lxor(value,sub);
-            const auto r=Value::add(a,b,sub);
-            write<W>(s,t,"OUT",r.out);write(s,t,"CARRY_OUT",r.carry);
-            write(s,t,"OVERFLOW",Value::lxor(r.carry_into_sign,r.carry));return;
-        }
-        if(unit_==Unit::Shift) {
-            const auto a=read<W>("A"),b=read<W>("B");
-            const auto left=bit("LEFT"),fill=Value::land(Value::land(a[W-1],bit("ARITHMETIC")),Value::inv(left));
-            Word current;
-            for(size_t i=0;i<W;++i)current[i]=Value::mux(a[i],a[W-1-i],left);
-            for(size_t stage=0;stage<std::countr_zero(W);++stage) {
-                const size_t distance=size_t{1}<<stage;const auto previous=current;
-                for(size_t i=0;i<W;++i)current[i]=Value::mux(previous[i],i+distance<W?previous[i+distance]:fill,b[stage]);
-            }
-            const auto previous=current;
-            for(size_t i=0;i<W;++i)current[i]=Value::mux(previous[i],previous[W-1-i],left);
-            write<W>(s,t,"OUT",current);return;
-        }
-        // The compact integer ALU has a known-binary equivalence domain.
-        // Operand/control X/Z produces unknown outputs, as stated by its contract.
-        if(unit_!=Unit::ALU)throw std::logic_error("No compact integer implementation for this unit");
-        bool known=true;
-        for(const char* name:{"A","B","OP"})known&=circuit::logic_values::allKnown(getInputPinDynamic(name)->getValueAsVector());
-        if(!known) {
-            for(const auto& [name,pin]:getAllOutputPins())
-                _updateOutputWireDynamic(s,name,std::vector<LogicValue>(pin->getWidth(),LogicValue::UNKNOWN),t);
-            return;
-        }
-        const uint32_t a=getInputPin<W>("A")->getValueAsUInt64(),b=getInputPin<W>("B")->getValueAsUInt64();
-        const uint8_t op=getInputPin<5>("OP")->getValueAsUInt64();
-        const auto out=integer_value::result<W>(op,a,b);
-        _updateOutputWire<W>(s,"OUT",out,t);
-        const bool compare=op==1||op==8||op==9;
-        using circuit::logic_values::logic;
-        write(s,t,"EQ",logic(compare&&a==b));
-        write(s,t,"LT_SIGNED",logic(compare&&integer_value::signedValue<W>(a)<integer_value::signedValue<W>(b)));
-        write(s,t,"LT_UNSIGNED",logic(compare&&a<b));
-        if(config_.full_flags) {
-            const bool arithmetic=op==0||compare;
-            const auto ar=integer_value::addsub<W>(a,b,compare);
-            write(s,t,"ZERO",logic(out==0));write(s,t,"NEGATIVE",logic(bool(out&integer_value::sign<W>)));
-            write(s,t,"CARRY_OUT",logic(arithmetic&&ar.carry));write(s,t,"OVERFLOW",logic(arithmetic&&ar.overflow));
-        }
-    }
-public:
-    WordBehavioral(std::string name,Unit unit,ALUConfig config)
-        :BasicComponent(std::move(name),1,family(unit,W,config).pinInitializer()),
-         unit_(unit),config_(config),type_(family(unit,W,config).typeName()){}
-    const char* getTypeName()const override{return type_.c_str();}
-    void evaluate(SimulationTime t,Simulator& s)override {
-        if(config_.operations==Operations::IntegerDatapath && unit_!=Unit::Adder && unit_!=Unit::Zero)integer(s,t);
-        else extended(s,t);
-    }
 };
 
 class ControlBehavioral final : public BasicComponent {
-    std::string type_;
 public:
     explicit ControlBehavioral(std::string name)
-        :BasicComponent(std::move(name),1,controlFamily(Operations::Extended).pinInitializer()),
-         type_(controlFamily(Operations::Extended).typeName()){}
-    const char* getTypeName()const override{return type_.c_str();}
+        :BasicComponent(std::move(name),1,controlFamily().pinInitializer()){}
+    const char* getTypeName()const override{return "ALUControlDecoder";}
     void evaluate(SimulationTime t,Simulator& s)override {
-        using Value=ExtendedALUValueModel<8>;
+        using Value=ALUValueModel<8>;
         Value::Bits<5> op;const auto in=getInputPin<5>("OP")->getValueAsVector();
         std::copy(in.begin(),in.end(),op.begin());const auto c=Value::control(op);
         _updateOutputWireDynamic(s,"LOCAL_OP",{c.local.begin(),c.local.end()},t);
@@ -150,25 +95,26 @@ public:
         _updateOutputWire(s,"INVALID_OP",c.invalid,t);
     }
 };
+
+template<size_t W> FamilyFactory factory(Unit u) {
+    return [u](const std::string& n,const std::shared_ptr<BuildContext>& context){
+        return Component::createWithContext<WordBehavioral<W>>(context,n,u);
+    };
+}
 }
 
-FamilyFactory behavioralFactory(Unit u,size_t width,ALUConfig c) {
-    if(width==8 && c.operations==Operations::Extended && c.adder==AdderTopology::Ripple)
-        return [u,c](const std::string& n,const std::shared_ptr<BuildContext>& context){
-            return Component::createWithContext<WordBehavioral<8,AdderTopology::Ripple>>(context,n,u,c);
-        };
-    const bool supported=width==32 && (u==Unit::Zero || (u==Unit::Adder&&c.adder==AdderTopology::ParallelPrefix) ||
-        (c.operations==Operations::IntegerDatapath && (u==Unit::Logic || u==Unit::Shift ||
-            ((u==Unit::ALU||u==Unit::AddSub)&&c.adder==AdderTopology::ParallelPrefix))));
-    if(supported)return [u,c](const std::string& n,const std::shared_ptr<BuildContext>& context){
-        return Component::createWithContext<WordBehavioral<32,AdderTopology::ParallelPrefix>>(context,n,u,c);
-    };
+// Compact forms exist where they are characterized: every unit at 8 bits,
+// both adders at every width, and zero detection at 32 bits.
+FamilyFactory behavioralFactory(Unit u,size_t width) {
+    const bool adder=u==Unit::RippleAdder || u==Unit::PrefixAdder;
+    if(width==8)return factory<8>(u);
+    if(width==16 && adder)return factory<16>(u);
+    if(width==32 && (adder || u==Unit::Zero))return factory<32>(u);
     return {};
 }
-FamilyFactory controlBehavioralFactory(Operations operations) {
-    if(operations==Operations::Extended)return [](const std::string& n,const std::shared_ptr<BuildContext>& c){
+FamilyFactory controlBehavioralFactory() {
+    return [](const std::string& n,const std::shared_ptr<BuildContext>& c){
         return Component::createWithContext<ControlBehavioral>(c,n);
     };
-    return {};
 }
 }

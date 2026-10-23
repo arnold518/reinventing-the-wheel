@@ -75,7 +75,7 @@ Reference-only host setters can preload a register or change reset PC. They are 
 
 ## Decoded controls are not instruction opcodes
 
-`RV32IControl` produces project-local ALU selectors, operand selectors, writeback/memory controls, branch/jump kinds, and operand-use flags. It does not send `opcode=0x33` directly to `ALU<32,integer,prefix>.OP`.
+`RV32IControl` produces project-local ALU selectors, operand selectors, writeback/memory controls, branch/jump kinds, and operand-use flags. It does not send `opcode=0x33` directly to `RV32IALU.OP`.
 
 | Instruction class | ALU operands / operation | Register writeback | Other controls |
 | --- | --- | --- | --- |
@@ -88,8 +88,8 @@ Reference-only host setters can preload a register or change reset PC. They are 
 | Branch | `RS1`, `RS2`; `SUB` in control mapping | None | Branch kind and immediate; oracle compares original operands directly |
 | JAL | PC, immediate; `ADD` | `PC + 4` | Direct jump; no source-register dependency |
 | JALR | `RS1`, immediate; `ADD` | `PC + 4` | Indirect jump and target-bit clearing |
-| FENCE | Zero, zero; `ZERO` | None | No register or memory request |
-| ECALL / rejected word | `ZERO` | None | Trap, with environment-call / illegal cause |
-| EBREAK | Zero, zero; `ZERO` | None | Halt |
+| FENCE | Zero, zero; `CLEAR` | None | No register or memory request |
+| ECALL / rejected word | `CLEAR` | None | Trap, with environment-call / illegal cause |
+| EBREAK | Zero, zero; `CLEAR` | None | Halt |
 
 The destination-use flag describes the instruction form, not whether the destination is nonzero. `uses_rd`/`reg_write` may therefore be true for an instruction targeting `x0`; the actual register update is still suppressed. No dependency may be inferred from an unused raw field.

@@ -1,9 +1,9 @@
 #include "modules/rv32i/RV32IReferenceCore.hpp"
-#include "modules/composite/IntegerALUValue.hpp"
+#include "modules/rv32i/RV32IALUValue.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "basic/Pin.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "rv32i/RV32IControl.hpp"
@@ -126,7 +126,7 @@ CorePreview previewCore(
             ? static_cast<uint32_t>(result.decoded.immediate)
             : 0;
     result.alu_result =
-        circuit::word::integer_value::result<32>(result.control.alu_op, alu_a, alu_b);
+        ::rv32i::alu_value::result<32>(result.control.alu_op, alu_a, alu_b);
     result.memory_intent =
         result.control.mem_read || result.control.mem_write;
     const bool memory_response_ready =

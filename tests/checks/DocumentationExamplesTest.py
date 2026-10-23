@@ -46,8 +46,8 @@ class DocumentationExamplesTest(unittest.TestCase):
         cls.states = {}
         # Keep these ALU/FF/SRAM reference checks bounded. New technologies have their
         # own MemoryDeviceDocumentationTest and sequential browser checks.
-        # Integer component references in 2.7 are checked by the building-block
-        # documentation check, including their exact C++ reference replay.
+        # The RV32I ALU (4.3.3) is checked by the building-block documentation
+        # check, including its exact C++ reference replay.
         paths = [*(REPOSITORY / f"site-docs/alu/2.{n}.md" for n in range(1, 7)),
                  REPOSITORY / "site-docs/memory/technologies/flip-flop.md",
                  REPOSITORY / "site-docs/memory/technologies/sram.md"]
@@ -59,10 +59,10 @@ class DocumentationExamplesTest(unittest.TestCase):
                 cls.exports[scenario] = json.loads(subprocess.check_output(
                     [PROBE, "examples", test, scenario], text=True))
 
-        # Check a recorded ripple configuration while the public page embeds
-        # the generic default; also replay the same generator at other widths.
-        for scenario, test in (("alu-extended-ripple-w8", "ALUExtendedWidth8Test"), ("alu-width8", "ALUWidth8ScenarioTest"),
-                               ("alu-width32", "ALUWidth32ScenarioTest"), ("adder-ripple", "AdderRippleScenarioTest")):
+        # The pages embed one width; also replay the same generators at the
+        # other widths and the ripple adder's copy of the prefix adder cases.
+        for scenario, test in (("alu-width8", "ALUWidth8ScenarioTest"),
+                               ("alu-width32", "ALUWidth32ScenarioTest"), ("ripple-carry-adder-w16", "RippleCarryAdderWidth16Test")):
             if scenario not in cls.exports:
                 cls.exports[scenario] = json.loads(subprocess.check_output(
                     [PROBE, "examples", test, scenario], text=True))
@@ -82,10 +82,10 @@ class DocumentationExamplesTest(unittest.TestCase):
 
     def test_complete_scenario_coverage(self):
         expected_counts = {"half-adder": 16, "full-adder": 64,
-            "adder-ripple-w8": 14, "addsub-extended-ripple-w8": 80, "arithmetic-extended-ripple-w8": 80, "logic-extended-w8": 32,
-            "shift-extended-w8": 96, "zero-detect-w8": 11, "compare-extended-w8": 40,
-            "flags-extended-w8": 128, "alu-control-extended": 32, "result-selector-extended-w8": 66, "alu-extended-ripple-w8": 70,
-            "alu":64, "alu-width8":64, "alu-width32":64, "adder-prefix":8, "adder-ripple":8,
+            "ripple-carry-adder-w8": 14, "add-sub-w8": 80, "arithmetic-unit-w8": 80, "logic-unit-w8": 32,
+            "barrel-shifter-w8": 96, "zero-detect-w8": 11, "compare-select-w8": 40,
+            "alu-flag-unit-w8": 128, "alu-control-decoder": 32, "alu-result-selector-w8": 66,
+            "alu":64, "alu-width8":64, "alu-width32":64, "parallel-prefix-adder-w16":8, "ripple-carry-adder-w16":8,
             "sr-latch": 8, "gated-d-latch": 12, "dff": 14, "flip-flop-cell": 13,
             "ff-word": 30, "ff-storage-bank": 134, "ff-memory-container": 52,
             "sram-cell": 9, "sram-row": 5, "sram-bitline-pair": 13, "sram-storage-bank": 16,
@@ -93,7 +93,7 @@ class DocumentationExamplesTest(unittest.TestCase):
             "sram-sense-amplifier": 5, "sram-column-selector": 2, "sram-access-control": 5,
             "sram-output-buffer": 4, "sram": 35}
         self.assertEqual({key: len(data["rows"]) for key, data in self.exports.items()}, expected_counts)
-        self.assertEqual(sum(expected_counts.values()), 1315)
+        self.assertEqual(sum(expected_counts.values()), 1245)
         for path, source in self.sources.items():
             count = len(MARKER.findall(source))
             self.assertEqual(count, source.count("### Examples"), path)
@@ -125,13 +125,13 @@ class DocumentationExamplesTest(unittest.TestCase):
                     topology = self.topology(scenario)
                     component_id = topology["rootId"]
                     actual = next(item for item in topology["components"] if item["id"] == component_id)
-                    generic_types = {"Adder<W>": "Adder<8,ripple>", "AddSub<W>": "AddSub<8,ripple>",
-                                     "ArithmeticUnit<W>": "ArithmeticUnit<8,ripple>", "LogicUnit<W>": "LogicUnit<8>",
+                    generic_types = {"RippleCarryAdder<W>": "RippleCarryAdder<8>", "AddSub<W>": "AddSub<8>",
+                                     "ArithmeticUnit<W>": "ArithmeticUnit<8>", "LogicUnit<W>": "LogicUnit<8>",
                                      "BarrelShifter<W>": "BarrelShifter<8>", "ZeroDetect<W>": "ZeroDetect<8>",
                                      "CompareSelect<W>": "CompareSelect<8>", "ALUFlagUnit<W>": "ALUFlagUnit<8>",
-                                     "ALUControlDecoder": "ALUControlDecoder<extended>",
-                                     "ALUResultSelector<W>": "ALUResultSelector<8>", "ALU<W>": r"ALU<16,extended,prefix>",
-                                     "ParallelPrefixAdder<W>": r"Adder<16,prefix>",
+                                     "ALUControlDecoder": "ALUControlDecoder",
+                                     "ALUResultSelector<W>": "ALUResultSelector<8>", "ALU<W>": r"ALU<16>",
+                                     "ParallelPrefixAdder<W>": r"ParallelPrefixAdder<16>",
                                      "FFWord<W>": r"FFWord<(8|16|32)>",
                                      "FFStorageBank<W>": r"FFStorageBank<(8|16|32),[1-9][0-9]*>",
                                      "FFMemory<W>": r"FFMemory(8|16|32)",
@@ -149,7 +149,7 @@ class DocumentationExamplesTest(unittest.TestCase):
                                   if exists == "Yes"}
                     self.assertEqual(documented, set(actual["availableFidelities"]), component)
                 self.assertNotIn("Replacement ALU<8>", source)
-                self.assertNotIn("ALU<8,extended,ripple>V2", source)
+                self.assertNotIn("ALU<8>V2", source)
 
     def test_rendered_values_and_accessibility(self):
         for scenario, data in self.exports.items():
@@ -176,23 +176,23 @@ class DocumentationExamplesTest(unittest.TestCase):
                 format_value(value, width)
 
     def test_reject_inconsistent_metadata(self):
-        base = self.exports["alu-extended-ripple-w8"]
+        base = self.exports["alu-width8"]
         for field, value in [("registeredTest", "WrongTest"), ("schemaVersion", 99), ("rows", [])]:
             broken = deepcopy(base)
             broken[field] = value
             with self.assertRaises(ValueError):
-                render_table(broken, "alu-extended-ripple-w8", "ALUExtendedWidth8Test")
+                render_table(broken, "alu-width8", "ALUWidth8ScenarioTest")
         for field, value in [("time", -1), ("rowIndex", 8), ("checkpoint", ""),
-                             ("checkpoint", "row-8"), ("inputs", {})]:
+                             ("checkpoint", base["rows"][1]["checkpoint"]), ("inputs", {})]:
             broken = deepcopy(base)
             broken["rows"][0][field] = value
             with self.assertRaises(ValueError):
-                render_table(broken, "alu-extended-ripple-w8", "ALUExtendedWidth8Test")
+                render_table(broken, "alu-width8", "ALUWidth8ScenarioTest")
 
     def test_unasserted_output_is_not_invented(self):
-        data = deepcopy(self.exports["alu-extended-ripple-w8"])
+        data = deepcopy(self.exports["alu-width8"])
         del data["rows"][0]["expectedOutputs"]["OUT"]
-        self.assertIn('not checked', render_table(data, "alu-extended-ripple-w8", "ALUExtendedWidth8Test"))
+        self.assertIn('not checked', render_table(data, "alu-width8", "ALUWidth8ScenarioTest"))
 
     def test_component_documentation_pattern(self):
         expected = ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"]
@@ -213,7 +213,7 @@ class DocumentationExamplesTest(unittest.TestCase):
                     self.assertEqual(behavior_headings[-2:], ["C++ example", "Unknown inputs"])
                     self.assertEqual(behavior_headings.count("C++ example"), 1)
                     self.assertEqual(implementation_headings[0], "Structural implementation")
-                    has_behavioral = component not in {"HalfAdder", "FullAdder", "ParallelPrefixAdder<W>", "SRLatch", "GatedDLatch", "DFlipFlop",
+                    has_behavioral = component not in {"HalfAdder", "FullAdder", "SRLatch", "GatedDLatch", "DFlipFlop",
                         "SRAMBitlinePair", "SRAMRowDecoder", "SRAMPrecharge", "SRAMWriteDriver",
                         "SRAMSenseAmplifier", "SRAMColumnSelector<W>", "SRAMAccessControl<W>", "SRAMOutputBuffer<W>"}
                     self.assertEqual(implementation_headings.count("Behavioral implementation"), int(has_behavioral))
@@ -233,7 +233,7 @@ class DocumentationExamplesTest(unittest.TestCase):
         source=self.sources[REPOSITORY/"site-docs/alu/2.1.md"]
         self.assertEqual(re.findall(r"(?m)^## 2\.1\.(\d+)\. `([^`]+)`$",source),[
             (str(index),component) for index,component in enumerate(
-                ("HalfAdder","FullAdder","Adder<W>","AddSub<W>","ArithmeticUnit<W>","ParallelPrefixAdder<W>"),1)])
+                ("HalfAdder","FullAdder","RippleCarryAdder<W>","ParallelPrefixAdder<W>","AddSub<W>","ArithmeticUnit<W>"),1)])
         self.assertNotRegex(source,r'<a id="[^"]*(?:adder8|addsub8|arithmeticunit8)')
 
     def test_sram_cpp_examples_compile_and_match_binary_device_rows(self):
@@ -277,24 +277,23 @@ int main() {
         calls = {
             "half-adder": ("half_adder_ref", "A B"),
             "full-adder": ("full_adder_ref", "A B Carry_in"),
-            "adder-ripple-w8": ("adder_ref<8>", "A B Cin"),
-            "addsub-extended-ripple-w8": ("addsub_ref<8>", "A B SUB C_IN"),
-            "arithmetic-extended-ripple-w8": ("arithmetic_ref<8>", "A B OP C_IN"),
-            "logic-extended-w8": ("logic_ref<8>", "A B OP"),
-            "shift-extended-w8": ("shift_ref<8>", "A B OP C_IN"),
+            "ripple-carry-adder-w8": ("adder_ref<8>", "A B C_IN"),
+            "add-sub-w8": ("addsub_ref<8>", "A B SUB C_IN"),
+            "arithmetic-unit-w8": ("arithmetic_ref<8>", "A B OP C_IN"),
+            "logic-unit-w8": ("logic_ref<8>", "A B OP"),
+            "barrel-shifter-w8": ("shift_ref<8>", "A B OP C_IN"),
             "zero-detect-w8": ("zero_detect_ref<8>", "A"),
-            "compare-extended-w8": ("compare_select_ref<8>", "A B DIFF CARRY_IN OVERFLOW_IN OP"),
-            "flags-extended-w8": ("flags_ref<8>", "RESULT ARITHMETIC SHIFT ARITH_CARRY ARITH_OVERFLOW SHIFT_CARRY"),
-            "alu-control-extended": ("alu_control_ref", "OP"),
-            "result-selector-extended-w8": ("alu_result_selector_ref<8>", ""),
-            "alu-extended-ripple-w8": ("alu_ref<8>", "A B OP C_IN"),
+            "compare-select-w8": ("compare_select_ref<8>", "A B DIFF CARRY_IN OVERFLOW_IN OP"),
+            "alu-flag-unit-w8": ("flags_ref<8>", "RESULT ARITHMETIC SHIFT ARITH_CARRY ARITH_OVERFLOW SHIFT_CARRY"),
+            "alu-control-decoder": ("alu_control_ref", "OP"),
+            "alu-result-selector-w8": ("alu_result_selector_ref<8>", ""),
             "alu": ("alu_ref<16>", "A B OP C_IN"),
             "alu-width8": ("alu_ref<8>", "A B OP C_IN"),
             "alu-width32": ("alu_ref<32>", "A B OP C_IN"),
-            "adder-prefix": ("prefix_adder_ref<16>", "A B Cin"),
-            "adder-ripple": ("adder_ref<16>", "A B Cin"),
+            "parallel-prefix-adder-w16": ("prefix_adder_ref<16>", "A B C_IN"),
+            "ripple-carry-adder-w16": ("adder_ref<16>", "A B C_IN"),
         }
-        scalar_results = {"logic-extended-w8", "zero-detect-w8", "compare-extended-w8", "result-selector-extended-w8"}
+        scalar_results = {"logic-unit-w8", "zero-detect-w8", "compare-select-w8", "alu-result-selector-w8"}
         checks = []
         row_counts = {}
         for scenario, (function, parameters) in calls.items():
@@ -305,7 +304,7 @@ int main() {
                     continue
                 inputs = {name: str(int(bits, 2)) for name, bits in row["inputs"].items()}
                 arguments = ", ".join(inputs[name] for name in parameters.split())
-                if scenario == "result-selector-extended-w8":
+                if scenario == "alu-result-selector-w8":
                     sources = "ARITHMETIC_RESULT LOGIC_RESULT SHIFT_RESULT COMPARE_RESULT A B".split()
                     enables = "ARITHMETIC_ENABLE LOGIC_ENABLE SHIFT_ENABLE COMPARE_ENABLE PASS_A_ENABLE PASS_B_ENABLE".split()
                     arguments = ("{" + ", ".join(inputs[name] for name in sources) + "}, {" +
@@ -319,10 +318,10 @@ int main() {
                 row_counts[scenario] += 1
         self.assertEqual(row_counts, {
             "half-adder": 4, "full-adder": 8,
-            "adder-ripple-w8": 12, "addsub-extended-ripple-w8": 80, "arithmetic-extended-ripple-w8": 80, "logic-extended-w8": 32,
-            "shift-extended-w8": 96, "zero-detect-w8": 7, "compare-extended-w8": 40,
-            "flags-extended-w8": 128, "alu-control-extended": 32, "result-selector-extended-w8": 64, "alu-extended-ripple-w8": 70,
-            "alu":64, "alu-width8":64, "alu-width32":64, "adder-prefix":8, "adder-ripple":8})
+            "ripple-carry-adder-w8": 12, "add-sub-w8": 80, "arithmetic-unit-w8": 80, "logic-unit-w8": 32,
+            "barrel-shifter-w8": 96, "zero-detect-w8": 7, "compare-select-w8": 40,
+            "alu-flag-unit-w8": 128, "alu-control-decoder": 32, "alu-result-selector-w8": 64,
+            "alu":64, "alu-width8":64, "alu-width32":64, "parallel-prefix-adder-w16":8, "ripple-carry-adder-w16":8})
         program = "\n".join(snippets) + "\n#include <cassert>\nint main() {\n" + "\n".join(checks) + "\n}\n"
         with tempfile.TemporaryDirectory(prefix="circuitsim-word-alu-examples-") as directory:
             source_path = Path(directory) / "examples.cpp"

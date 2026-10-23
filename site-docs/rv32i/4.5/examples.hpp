@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "rv32i/RV32IDecoder.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 namespace baseline_example {
 using namespace rv32i::pipeline_encoding;
 // --8<-- [start:packet]
@@ -65,12 +65,12 @@ struct Decode {
 inline uint32_t alu(unsigned op,uint32_t a,uint32_t b) {
     const unsigned sh=b&31;
     switch(op) {
-        case circuit::word::IntegerOp::ADD:return a+b; case circuit::word::IntegerOp::SUB:return a-b;
-        case circuit::word::IntegerOp::AND:return a&b; case circuit::word::IntegerOp::OR:return a|b; case circuit::word::IntegerOp::XOR:return a^b;
-        case circuit::word::IntegerOp::SLL:return a<<sh; case circuit::word::IntegerOp::SRL:return a>>sh;
-        case circuit::word::IntegerOp::SRA:return sh&&(a&0x80000000u)?(a>>sh)|(~uint32_t{0}<<(32-sh)):a>>sh;
-        case circuit::word::IntegerOp::SLT:return int32_t(a)<int32_t(b); case circuit::word::IntegerOp::SLTU:return a<b;
-        case circuit::word::IntegerOp::PASS_A:return a; case circuit::word::IntegerOp::PASS_B:return b; default:return 0;
+        case rv32i::ALUOp::ADD:return a+b; case rv32i::ALUOp::SUB:return a-b;
+        case rv32i::ALUOp::AND:return a&b; case rv32i::ALUOp::OR:return a|b; case rv32i::ALUOp::XOR:return a^b;
+        case rv32i::ALUOp::SLL:return a<<sh; case rv32i::ALUOp::SRL:return a>>sh;
+        case rv32i::ALUOp::SRA:return sh&&(a&0x80000000u)?(a>>sh)|(~uint32_t{0}<<(32-sh)):a>>sh;
+        case rv32i::ALUOp::SLT:return int32_t(a)<int32_t(b); case rv32i::ALUOp::SLTU:return a<b;
+        case rv32i::ALUOp::PASS_A:return a; case rv32i::ALUOp::PASS_B:return b; default:return 0;
     }
 }
 // --8<-- [end:alu]
@@ -81,7 +81,7 @@ inline StageResult execute(Packet p) {
     const uint32_t a=as==0?p.rs1_value:as==1?p.pc:0;
     const uint32_t b=bs==0?p.rs2_value:bs==1?p.immediate:0;
     p.alu_result=alu(op,a,b); p.store_data=p.rs2_value; p.pc_plus_4=p.pc+4;
-    const bool compare=op==circuit::word::IntegerOp::SUB||op==circuit::word::IntegerOp::SLT||op==circuit::word::IntegerOp::SLTU;
+    const bool compare=op==rv32i::ALUOp::SUB||op==rv32i::ALUOp::SLT||op==rv32i::ALUOp::SLTU;
     const bool eq=compare&&a==b,lt=compare&&int32_t(a)<int32_t(b),ltu=compare&&a<b;
     const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
     const bool taken=jump||conditions[branch];

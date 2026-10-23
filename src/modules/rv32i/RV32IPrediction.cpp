@@ -9,8 +9,9 @@
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/composite/Incrementer.hpp"
+#include "modules/composite/ParallelPrefixAdder.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -310,13 +311,13 @@ void RV32IBranchPredecode::buildInternals(ComponentBuilder& b) {
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO",0);
     auto immediate=mux(b,w,"BRANCH_IMMEDIATE",zero->getOutputPin<32>("OUT"),fields->getOutputPin<32>("B"),branch);
     immediate=mux(b,w,"JUMP_IMMEDIATE",immediate,fields->getOutputPin<32>("J"),jump);
-    auto target=b.addNewComponent<Adder<32>>("TARGET_ADD");
+    auto target=b.add(circuit::families::parallelPrefixAdder(32),"TARGET_ADD");
     auto sequential=b.addNewComponent<Incrementer<32,4>>("SEQUENTIAL_ADD");
     input(w,*this,target,"PC","A");
-    w.connect(w.constant("TARGET_CARRY",false),target->getInputPin("Cin"));
+    w.connect(w.constant("TARGET_CARRY",false),target->getInputPin("C_IN"));
     input(w,*this,sequential,"PC","A");
     w.connect(immediate,target->getInputPin<32>("B"));
-    output(w,*this,target,"Sum","TARGET");output(w,*this,sequential,"Sum","PC_PLUS_4");
+    output(w,*this,target,"OUT","TARGET");output(w,*this,sequential,"Sum","PC_PLUS_4");
     w.connect(w.both("BACKWARD",w.either("CONTROL_FLOW",branch,jump),fields->getOutputPin("SIGN")),getOutputPin("BACKWARD"));
     w.finish();
 }

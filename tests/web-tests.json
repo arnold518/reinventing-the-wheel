@@ -2,8 +2,8 @@
   "schema": 1,
   "tests": [
     {
-      "name": "IntegerALUWasmParityTest",
-      "file": "IntegerALUWasmParityTest.mjs",
+      "name": "RV32IALUWasmParityTest",
+      "file": "RV32IALUWasmParityTest.mjs",
       "kind": "parity",
       "args": [
         "{js}",
@@ -14,8 +14,8 @@
       "timeout": 1800
     },
     {
-      "name": "ExtendedALUWasmParityTest",
-      "file": "ExtendedALUWasmParityTest.mjs",
+      "name": "ALUWasmParityTest",
+      "file": "ALUWasmParityTest.mjs",
       "kind": "parity",
       "args": [
         "{js}",
@@ -419,14 +419,14 @@
       "timeout": 120
     },
     {
-      "name": "ALU<8,extended,ripple>WasmRuntimeSmoke",
+      "name": "ALUWidth8WasmRuntimeSmoke",
       "file": "VisualizerWasmRuntimeTest.mjs",
       "kind": "runtime",
       "args": [
         "{js}",
         "{wasm}",
-        "ALUExtendedWidth8Test",
-        "alu-extended-ripple-w8"
+        "ALUWidth8ScenarioTest",
+        "alu-width8"
       ],
       "suites": [
         "smoke"

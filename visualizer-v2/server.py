@@ -1825,7 +1825,7 @@ def _scenario_aliases_to_canonical() -> dict[str, str]:
 SCENARIOS = _scenario_classes()
 SCENARIO_OPTIONS = _scenario_options()
 SCENARIO_ALIASES_TO_CANONICAL = _scenario_aliases_to_canonical()
-DEFAULT_SCENARIO = "adder-ripple-w8" if "adder-ripple-w8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
+DEFAULT_SCENARIO = "ripple-carry-adder-w8" if "ripple-carry-adder-w8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
 
 
 # The timing profile is one setting of the whole C++ library. A session sets

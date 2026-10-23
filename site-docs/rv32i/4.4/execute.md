@@ -14,7 +14,7 @@
 | --- | --- | ---: | --- |
 | `PC` | Input | 32 | Current instruction's old PC |
 | `RS1_VALUE`, `RS2_VALUE`, `IMM` | Input | 32 each | Register operands and decoded immediate |
-| `ALU_OP` | Input | 5 | [ALU<32,integer,prefix>](../4.3/alu.md) opcode |
+| `ALU_OP` | Input | 5 | [RV32IALU](../4.3/alu.md) operation code |
 | `ALU_A_SEL`, `ALU_B_SEL` | Input | 2 each | Operand selectors, defined below |
 | `BRANCH_TYPE` | Input | 3 | Branch-condition selector |
 | `JUMP_TYPE` | Input | 2 | Target selector: 0 branch, 1 JAL, 2 JALR, 3 zero |
@@ -30,7 +30,7 @@
 | `ALU_B_SEL` | RS2_VALUE | IMM | Zero | Zero |
 | `JUMP_TYPE` → CONTROL_TARGET | PC+IMM | ALU_RESULT | ALU_RESULT with bit 0 cleared | Zero |
 
-All additions wrap to 32 bits. ALU operation codes 0–12 and reserved 13–31 retain [ALU<32,integer,prefix>'s complete contract](../4.3/alu.md): reserved operations produce result zero. `ALU_RESULT` is not replaced by the branch target when branching, and a jump's link value is not computed here.
+All additions wrap to 32 bits. ALU operation codes 0–12 and reserved 13–31 follow [RV32IALU](../4.3/alu.md#4337-rv32ialu): reserved operations produce result zero. `ALU_RESULT` is not replaced by the branch target when branching, and a jump's link value is not computed here.
 
 | BRANCH_TYPE | BRANCH_TAKEN |
 | ---: | --- |
@@ -58,7 +58,7 @@ The branch adder remains combinational hardware even during other instructions, 
 
 #### C++ example
 
-Reuse the complete `integer_alu_example::alu<32>` model from [4.3.3](../4.3/alu.md), including its comparison-flag qualifications. Each unsigned selector is supplied within its pin width. The single ALU call represents sharing, not six successive uses of a clocked ALU.
+Reuse the complete `rv32i_alu_example::alu` model from [4.3.3](../4.3/alu.md), including its comparison qualifications. Each unsigned selector is supplied within its pin width. The single ALU call represents sharing, not six successive uses of a clocked ALU.
 
 ```cpp
 #include <cstdint>
@@ -71,7 +71,7 @@ struct ExecuteOutputs { uint32_t ALU_RESULT, CONTROL_TARGET; bool BRANCH_TAKEN; 
 ExecuteOutputs execute(const ExecuteInputs& i) {
     const uint32_t a=i.ALU_A_SEL==0 ? i.RS1_VALUE : i.ALU_A_SEL==1 ? i.PC : 0;
     const uint32_t b=i.ALU_B_SEL==0 ? i.RS2_VALUE : i.ALU_B_SEL==1 ? i.IMM : 0;
-    const auto r=integer_alu_example::alu<32>(a,b,i.ALU_OP);
+    const auto r=rv32i_alu_example::alu(a,b,i.ALU_OP);
     const bool conditions[]{false,r.EQ,!r.EQ,r.LT_SIGNED,!r.LT_SIGNED,
                             r.LT_UNSIGNED,!r.LT_UNSIGNED,false};
     const uint32_t branch_target=i.PC+i.IMM;
@@ -90,7 +90,7 @@ Structural muxes/gates may isolate unused unknown data. The behavioral stage ins
 
 #### Structural implementation
 
-`OPERAND_A` and `OPERAND_B` feed one `ALU<32,integer,prefix,core>` child named `ALU`. It is the integer/prefix W=32 configuration of [ALU&lt;W&gt;](../../alu/2.7.md), with full_flags=false. Its EQ/LT outputs and three inversions feed `BRANCH_CONDITION`. The general `ALU<32,integer,prefix>` flag block is absent here, but the comparison network retains the internal arithmetic carry and overflow it needs. `BRANCH_TARGET_ADD` computes PC+IMM. `JALR_MASK` is a rewire clearing bit 0 of the ALU result; `TARGET_SELECT` chooses branch/JAL/JALR/zero. Constants supply zero words and low control inputs.
+`OPERAND_A` and `OPERAND_B` feed one [`RV32IALU`](../4.3/alu.md) child named `ALU`. Its EQ/LT outputs and three inversions feed `BRANCH_CONDITION`. `BRANCH_TARGET_ADD`, a `ParallelPrefixAdder<32>` requested as a family so a build profile can choose its fidelity, computes PC+IMM. `JALR_MASK` is a rewire clearing bit 0 of the ALU result; `TARGET_SELECT` chooses branch/JAL/JALR/zero. Constants supply zero words and low control inputs.
 
 #### Behavioral implementation
 

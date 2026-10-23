@@ -1,6 +1,7 @@
 #include "tests/ALUIntegrationTests.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/ALU.hpp"
+#include "modules/rv32i/RV32IALU.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <array>
 #include <functional>
@@ -47,136 +48,33 @@ std::vector<TestRow> selector8Rows() {
     }
     return rows;
 }
-std::vector<TestRow> control32Rows() {
-    std::vector<TestRow> rows;
-    for (unsigned op = 0; op < 32; ++op) {
-        const bool arithmetic = op == 0 || op == 1 || op == 8 || op == 9;
-        rows.push_back({{{"OP", bits(op)}}, {
-            {"LOCAL_OP", bits(op & 7)}, {"HIGH_HALF", bit(op & 8)}, {"OUT_OF_RANGE", bit(op & 16)},
-            {"ARITHMETIC_ENABLE", bit(arithmetic)}, {"SUB", bit(arithmetic && op != 0)},
-            {"SHIFT_LEFT", bit(!(op & 2))}, {"SHIFT_ARITHMETIC", bit(op & 1)}}});
-    }
-    return rows;
-}
-std::vector<TestRow> compare32Rows() {
-    std::vector<TestRow> rows;
-    for (unsigned controls = 0; controls < 8; ++controls)
-        for (unsigned diff : {0u, 1u, 0x80000000u, 0xffffffffu}) {
-            const bool enable = controls & 1, carry = controls & 2, overflow = controls & 4;
-            const bool lt = enable && (bool(diff & 0x80000000u) != overflow);
-            const bool ltu = enable && !carry;
-            rows.push_back({{{"DIFF", bits(diff)}, {"CARRY_IN", bit(carry)},
-                {"OVERFLOW_IN", bit(overflow)}, {"ENABLE", bit(enable)}}, {
-                {"EQ", bit(enable && diff == 0)}, {"LT_SIGNED", bit(lt)}, {"LT_UNSIGNED", bit(ltu)},
-                {"SLT_RESULT", bits(lt)}, {"SLTU_RESULT", bits(ltu)}}});
-        }
-    for (auto unknown : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
-        auto row = rows.front();
-        row.inputs["DIFF"] = TestValue(std::vector<LogicValue>(32, unknown));
-        row.inputs["CARRY_IN"] = unknown;
-        row.inputs["OVERFLOW_IN"] = unknown;
-        rows.push_back(row);
-    }
-    return rows;
-}
-std::vector<TestRow> selector32Rows() {
-    constexpr std::array<const char*, 9> names{"ARITHMETIC_RESULT", "AND_RESULT", "OR_RESULT", "XOR_RESULT",
-        "SHIFT_RESULT", "SLT_RESULT", "SLTU_RESULT", "A", "B"};
-    constexpr std::array<int, 16> selected{0, 0, 1, 2, 3, 4, 4, 4, 5, 6, 7, 8, -1, -1, -1, -1};
-    std::vector<TestRow> rows;
-    for (unsigned pattern : {0x12345678u, 0xedcba987u}) for (unsigned op = 0; op < 32; ++op) {
-        TestRow row;
-        for (unsigned i = 0; i < names.size(); ++i) row.inputs[names[i]] = bits(pattern ^ (0x11111111u * i));
-        row.inputs["LOCAL_OP"] = bits(op & 7);
-        row.inputs["HIGH_HALF"] = bit(op & 8);
-        row.inputs["OUT_OF_RANGE"] = bit(op & 16);
-        row.outputs["OUT"] = op < 16 && selected[op] >= 0
-            ? row.inputs.at(names[selected[op]]) : bits(0);
-        rows.push_back(row);
-    }
-    for (auto unknown : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
-        auto row = rows[16];
-        for (auto name : names) row.inputs[name] = TestValue(std::vector<LogicValue>(32, unknown));
-        rows.push_back(row);
-    }
-    return rows;
-}
-std::vector<TestRow> flags32Rows() {
-    std::vector<TestRow> rows;
-    for (unsigned controls = 0; controls < 8; ++controls)
-        for (unsigned value : {0u, 1u, 0x80000000u, 0xffffffffu}) {
-            const bool enable = controls & 1, carry = controls & 2, overflow = controls & 4;
-            rows.push_back({{{"RESULT", bits(value)}, {"ARITHMETIC_ENABLE", bit(enable)},
-                {"ARITH_CARRY", bit(carry)}, {"ARITH_OVERFLOW", bit(overflow)}}, {
-                {"ZERO", bit(value == 0)}, {"NEGATIVE", bit(value & 0x80000000u)},
-                {"CARRY_OUT", bit(enable && carry)}, {"OVERFLOW", bit(enable && overflow)}}});
-        }
-    for (auto unknown : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
-        auto row = rows.front();
-        row.inputs["ARITH_CARRY"] = unknown;
-        row.inputs["ARITH_OVERFLOW"] = unknown;
-        rows.push_back(row);
-    }
-    for (auto lower : {LogicValue::UNKNOWN, LogicValue::HIGH_Z})
-        for (auto sign : {LogicValue::LOW, LogicValue::HIGH, LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
-            auto row = rows.front();
-            std::vector<LogicValue> value(32, lower);
-            value[0] = LogicValue::HIGH; // Known nonzero despite unrelated X/Z bits.
-            value[31] = sign;
-            row.inputs["RESULT"] = TestValue(value);
-            row.outputs["ZERO"] = bit(false);
-            row.outputs["NEGATIVE"] = sign;
-            rows.push_back(row);
-        }
-    return rows;
-}
 void checkHierarchy(const std::shared_ptr<Component>& root,
-                    const std::map<std::string, std::string>& expected, unsigned full_adders,
-                    bool prefix = false) {
+                    const std::map<std::string, std::string>& expected,
+                    const std::string& prefix_type, const std::string& add_sub_type, unsigned width) {
     std::map<std::string, std::string> actual;
     for (const auto& child : root->getChildren()) actual[child->getName()] = child->getTypeName();
-    if (actual != expected) throw std::runtime_error(root->getName() + ": ALU must expose seven named functional blocks");
+    if (actual != expected) throw std::runtime_error(root->getName() + ": ALU must expose its named functional blocks");
     unsigned count = 0, prefixes = 0, half_adders = 0, add_sub_units = 0;
     std::function<void(const std::shared_ptr<Component>&)> visit = [&](const auto& component) {
         if (std::string(component->getTypeName()) == "FullAdder") ++count;
         if (std::string(component->getTypeName()) == "HalfAdder") ++half_adders;
-        if (std::string(component->getTypeName()) == "ParallelPrefixAdder<32>") ++prefixes;
-        if (std::string(component->getTypeName()) == "AddSub<32,integer,prefix>") ++add_sub_units;
+        if (std::string(component->getTypeName()) == prefix_type) ++prefixes;
+        if (std::string(component->getTypeName()) == add_sub_type) ++add_sub_units;
         for (const auto& child : component->getChildren()) visit(child);
     };
     visit(root);
-    if (count != full_adders) throw std::runtime_error(root->getName() + ": arithmetic must use one shared carry chain");
-    if (prefix && (prefixes != 1 || half_adders != 32 || add_sub_units != 1))
-        throw std::runtime_error(root->getName() + ": arithmetic must share one 32-bit prefix add/sub unit");
+    if (count != 0 || prefixes != 1 || half_adders != width || add_sub_units != 1)
+        throw std::runtime_error(root->getName() + ": arithmetic must share one prefix add/subtract unit");
 }
 } // namespace
 
-ALUControlExtendedTest::ALUControlExtendedTest() : TruthTableComponentTest("ALUControlExtendedTest", "ALU_EXTENDED_W8_CONTROL_ROOT", control8Rows()) {}
-ResultSelectorExtendedWidth8Test::ResultSelectorExtendedWidth8Test() : TruthTableComponentTest("ResultSelectorExtendedWidth8Test", "ALU_EXTENDED_W8_RESULT_SELECTOR_ROOT", selector8Rows()) {}
-ALUControlIntegerTest::ALUControlIntegerTest() : TruthTableComponentTest("ALUControlIntegerTest", "ALU_INTEGER_W32_CONTROL_ROOT", control32Rows()) {}
-CompareIntegerWidth32Test::CompareIntegerWidth32Test() : TruthTableComponentTest("CompareIntegerWidth32Test", "ALU_INTEGER_W32_COMPARE_ROOT", compare32Rows()) {}
-ResultSelectorIntegerWidth32Test::ResultSelectorIntegerWidth32Test() : TruthTableComponentTest("ResultSelectorIntegerWidth32Test", "ALU_INTEGER_W32_RESULT_SELECTOR_ROOT", selector32Rows()) {}
-FlagsIntegerWidth32Test::FlagsIntegerWidth32Test() : TruthTableComponentTest("FlagsIntegerWidth32Test", "ALU_INTEGER_W32_FLAGS_ROOT", flags32Rows()) {}
+ALUControlDecoderTest::ALUControlDecoderTest() : TruthTableComponentTest("ALUControlDecoderTest", "ALU_CONTROL_DECODER_ROOT", control8Rows()) {}
+ALUResultSelectorWidth8Test::ALUResultSelectorWidth8Test() : TruthTableComponentTest("ALUResultSelectorWidth8Test", "ALU_RESULT_SELECTOR_W8_ROOT", selector8Rows()) {}
 void ALUHierarchyTest::verifyResults() {
-    checkHierarchy(Component::create<ALU<8>>("ALU",circuit::word::ALUConfig{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), {{"CONTROL", "ALUControlDecoder<extended>"}, {"ARITHMETIC", "ArithmeticUnit<8,ripple>"},
+    checkHierarchy(Component::create<ALU<8>>("ALU"), {{"CONTROL", "ALUControlDecoder"}, {"ARITHMETIC", "ArithmeticUnit<8>"},
         {"LOGIC", "LogicUnit<8>"}, {"SHIFTER", "BarrelShifter<8>"}, {"COMPARE_SELECT", "CompareSelect<8>"},
-        {"RESULT_SELECT", "ALUResultSelector<8>"}, {"FLAGS", "ALUFlagUnit<8>"}}, 8);
-    checkHierarchy(Component::create<ALU<32>>("ALU",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}), {{"CONTROL", "ALUControlDecoder<integer>"}, {"ARITHMETIC", "AddSub<32,integer,prefix>"},
-        {"LOGIC", "LogicUnit<32,integer>"}, {"SHIFT", "BarrelShifter<32,integer>"}, {"COMPARE", "CompareSelect<32,integer>"},
-        {"RESULT_SELECT", "ALUResultSelector<32,integer>"}, {"FLAGS", "ALUFlagUnit<32,integer>"}}, 0, true);
-    auto flags = Component::create<ALUFlagUnit<32>>("FLAGS",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple,true});
-    std::shared_ptr<Rewire> sign;
-    for (const auto& child : flags->getChildren()) {
-        if (child->getName() == "RESULT_SPLIT")
-            throw std::runtime_error("ALU<32> flags must not split all result bits for the sign flag");
-        if (child->getName() == "SIGN_BIT") sign = std::dynamic_pointer_cast<Rewire>(child);
-    }
-    if (!sign || sign->getInputSpecs().size() != 1 || sign->getOutputSpecs().size() != 1
-        || sign->getTotalInputBits() != 32 || sign->getTotalOutputBits() != 1
-        || sign->getBitMappings().size() != 1)
-        throw std::runtime_error("ALU<32> SIGN_BIT must be a 32-to-1 bit-selection rewire");
-    const auto& mapping = sign->getBitMappings().front();
-    if (mapping.src_wire != "RESULT" || mapping.src_bit != 31
-        || mapping.dst_wire != "SIGN" || mapping.dst_bit != 0)
-        throw std::runtime_error("ALU<32> SIGN_BIT must expose only RESULT[31]");
+        {"RESULT_SELECT", "ALUResultSelector<8>"}, {"FLAGS", "ALUFlagUnit<8>"}}, "ParallelPrefixAdder<8>", "AddSub<8>", 8);
+    checkHierarchy(Component::create<RV32IALU>("ALU"), {{"CONTROL", "RV32IALUControl"}, {"ARITHMETIC", "RV32IALUAddSub"},
+        {"LOGIC", "RV32IALULogic"}, {"SHIFT", "RV32IALUShifter"}, {"COMPARE", "RV32IALUCompare"},
+        {"RESULT_SELECT", "RV32IALUResultSelect"}}, "ParallelPrefixAdder<32>", "RV32IALUAddSub", 32);
 }

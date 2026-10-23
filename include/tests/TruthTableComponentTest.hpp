@@ -3,23 +3,20 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestHelpers.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/WordComponent.hpp"
+#include "modules/composite/ALUControlDecoder.hpp"
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-template<circuit::word::Unit U,size_t W,circuit::word::Operations Operations,
-         circuit::word::AdderTopology Topology,bool FullFlags=true>
+template<circuit::word::Unit U,size_t W>
 struct WordTestTarget {
-    static const circuit::ComponentFamily& family() {
-        return circuit::word::family(U,W,{Operations,Topology,FullFlags});
-    }
+    static const circuit::ComponentFamily& family() { return circuit::word::family(U,W); }
 };
-template<circuit::word::Operations Operations>
-struct ControlTestTarget {
-    static const circuit::ComponentFamily& family() {return circuit::word::controlFamily(Operations);}
+struct ALUControlTestTarget {
+    static const circuit::ComponentFamily& family() { return circuit::families::aluControlDecoder(); }
 };
 
 template<typename ComponentT>

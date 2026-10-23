@@ -11,12 +11,12 @@ model. The [older complete workflow](../archive/complete-circuit-workflow.md)
 describes a retired API.
 For finding and running existing coverage, read [running tests and scenarios](tests-and-scenarios.md).
 
-For a small example, trace `Adder<W>` from
-`include/modules/composite/WordDatapath.hpp`, its family/registration in
+For a small example, trace `RippleCarryAdder<W>` from
+`include/modules/composite/RippleCarryAdder.hpp`, its family/registration in
 `src/modules/composite/WordDatapath.cpp` and its structural construction in
-`src/modules/composite/WordIntegerAdder.cpp`. `WordALUTests.cpp` supplies
-width-driven recorded scenarios; `IntegerALUTests.cpp` covers the characterized
-32-bit prefix configuration. Its public reference is
+`src/modules/composite/RippleCarryAdder.cpp`. `WordALUTests.cpp` supplies
+width-driven recorded scenarios; `WordFidelityTests.cpp` compares the compact
+forms with the gates. Its public reference is
 [`site-docs/alu/2.1.md`](../../site-docs/alu/2.1.md).
 
 ## 1. Decide the contract and lower-level design

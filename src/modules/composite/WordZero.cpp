@@ -1,6 +1,6 @@
 #include "components/ComponentBuilder.tpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/WordRecipes.hpp"
 #include "modules/utility/BitAdapter.hpp"
 namespace circuit::word {
 namespace {
@@ -44,5 +44,5 @@ template<size_t W>void zeroWord(IOComponent& root,ComponentBuilder& builder){
     w.finish();
 }
 }
-void buildWordZero(IOComponent& root,ComponentBuilder& b,size_t w,ALUConfig){if(w==8)zeroLegacy8(root,b);else if(w==16)zeroWord<16>(root,b);else zeroWord<32>(root,b);}
+void buildZero(IOComponent& root,ComponentBuilder& b,size_t w){if(w==8)zeroLegacy8(root,b);else if(w==16)zeroWord<16>(root,b);else zeroWord<32>(root,b);}
 }

@@ -4,7 +4,7 @@
 
 // Known-binary rule shared by compact integer ALUs and their parent cores.
 // The instruction oracle remains independent.
-namespace circuit::word::integer_value {
+namespace rv32i::alu_value {
 struct Arithmetic { uint32_t out; bool carry, overflow; };
 template<size_t W> constexpr uint64_t mask = (uint64_t{1} << W) - 1;
 template<size_t W> constexpr uint64_t sign = uint64_t{1} << (W-1);

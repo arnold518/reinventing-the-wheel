@@ -1,4 +1,10 @@
 #include "modules/composite/ParallelPrefixAdder.hpp"
+#include "modules/composite/WordRecipes.hpp"
+#include "modules/composite/HalfAdder.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
+#include "components/ComponentBuilder.tpp"
+#include <array>
 
 #include <stdexcept>
 #include <string>
@@ -87,24 +93,20 @@ template<size_t W>void buildPrefixWord(IOComponent& root,ComponentBuilder& b){
     auto gs=b.addNewComponent<BitSplitter<W>>("GROUP_GENERATES");
     auto ps=b.addNewComponent<BitSplitter<W>>("GROUP_PROPAGATES");
     w.connect(g,gs->template getInputPin<W>("IN")); w.connect(p,ps->template getInputPin<W>("IN"));
-    auto carry=std::static_pointer_cast<PinBase>(root.getInputPin("Cin"));
+    auto carry=std::static_pointer_cast<PinBase>(root.getInputPin("C_IN"));
     for (size_t i=0; i<W; ++i) {
         const auto n=std::to_string(i);
         w.connect(w.binary<XORGate>("SUM_"+n,propagate[i],carry),result->getInputPin("IN_"+n));
         carry=w.either("CARRY_"+n,gs->getOutputPin("OUT_"+n),
-            w.both("CIN_"+n,ps->getOutputPin("OUT_"+n),root.getInputPin("Cin")));
-        if (i==W-2) w.connect(carry,root.getOutputPin("C"+std::to_string(W-1)));
+            w.both("CIN_"+n,ps->getOutputPin("OUT_"+n),root.getInputPin("C_IN")));
+        if (i==W-2) w.connect(carry,root.getOutputPin("C_SIGN"));
     }
-    w.connect(carry,root.getOutputPin("Cout"));
-    w.connect(result->template getOutputPin<W>("OUT"),root.getOutputPin<W>("Sum")); w.finish();
+    w.connect(carry,root.getOutputPin("C_OUT"));
+    w.connect(result->template getOutputPin<W>("OUT"),root.getOutputPin<W>("OUT")); w.finish();
 }
 }
 namespace circuit::word {
-PrefixWord::PrefixWord(std::string n,size_t width):IOComponent(std::move(n),[width](IOComponent*p){
-    if(width!=8 && width!=16 && width!=32)throw std::invalid_argument("Invalid prefix word width");
-    for(auto name:{"A","B"})p->addPinDynamic(name,PinType::INPUT,width);
-    p->addPin("Cin",PinType::INPUT);p->addPinDynamic("Sum",PinType::OUTPUT,width);p->addPin("Cout",PinType::OUTPUT);
-    p->addPin("C"+std::to_string(width-1),PinType::OUTPUT);
-}),width_(width),type_("ParallelPrefixAdder<"+std::to_string(width)+">"){}
-void PrefixWord::buildInternals(ComponentBuilder& b){if(width_==8)buildPrefixWord<8>(*this,b);else if(width_==16)buildPrefixWord<16>(*this,b);else buildPrefixWord<32>(*this,b);}
+void buildPrefixAdder(IOComponent& root,ComponentBuilder& b,size_t w){
+    if(w==8)buildPrefixWord<8>(root,b);else if(w==16)buildPrefixWord<16>(root,b);else buildPrefixWord<32>(root,b);
+}
 }
