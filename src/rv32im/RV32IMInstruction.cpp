@@ -2,6 +2,8 @@
 #include <bit>
 #include <limits>
 #include <stdexcept>
+#include <algorithm>
+#include <cctype>
 namespace rv32im {
 DecodedInstruction decode(uint32_t raw) {
     DecodedInstruction d{rv32i::RV32IDecoder::decode(raw), {}};
@@ -17,6 +19,13 @@ const char* name(MOperation op) {
     case MOperation::REM: return "REM"; case MOperation::REMU: return "REMU";
     }
     throw std::invalid_argument("Invalid RV32IM operation");
+}
+std::string disassemble(uint32_t raw, uint32_t pc) {
+    const auto decoded=decode(raw);
+    if(!decoded.m)return rv32i::RV32IDecoder::disassemble(raw,pc);
+    std::string mnemonic=name(*decoded.m);
+    std::transform(mnemonic.begin(),mnemonic.end(),mnemonic.begin(),[](unsigned char c){return std::tolower(c);});
+    return mnemonic+" x"+std::to_string((raw>>7)&31)+", x"+std::to_string((raw>>15)&31)+", x"+std::to_string((raw>>20)&31);
 }
 uint32_t referenceResult(MOperation op, uint32_t a, uint32_t b) {
     const int64_t sa = std::bit_cast<int32_t>(a), sb = std::bit_cast<int32_t>(b);

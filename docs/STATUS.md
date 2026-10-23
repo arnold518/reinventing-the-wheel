@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-23.
+Updated: 2026-10-24.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -35,7 +35,7 @@ work state changes. Keep dated decisions and validation results in
   capture. The current scenario-view package passes eight live
   reference/simulator routes and 26 exact non-HTML asset hashes. The grouped
   M-unit/execute views and dedicated program playback pass focused browser
-  checks; the live dependency program also passes halt and rewind. Its strict
+  checks; live Fibonacci inspection also passes halt and rewind. Its strict
   preview build passes with the per-build
   timing-cache fix loaded; scoped acceptance is in the completed records below.
   Bring-up/2048 frame-only exports retain their source snapshots.
@@ -92,6 +92,15 @@ work state changes. Keep dated decisions and validation results in
   pass, followed by a two-session floorplan recheck and current 8893 acceptance.
   The standalone MulDiv unit period is now 68 ticks; the core remains 94.
   The complete suites and game campaign were not run.
+- The completed [RV32IM algorithms and inspection fixes](records/2026-10-23-rv32im-program-expansion-and-inspection.md)
+  center EXECUTE in the pipeline, decode M instructions in memory views for
+  structural/compact M machines and number programs 23–27. New fast-doubling
+  Fibonacci and Euclidean GCD programs use real multiply/divide instructions,
+  verify memory arrays and check retired M-operation counts. Eight focused
+  native checks, six static layouts, alias/layout migrations, five WASM
+  program exports and two browser sessions pass. The strict combined site
+  and 8893 preview rebuilds pass, with eight routes and 26 exact asset hashes.
+  No hardware/timing-table change, full suite or game campaign was needed.
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).

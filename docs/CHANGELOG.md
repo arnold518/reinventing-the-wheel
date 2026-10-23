@@ -5,6 +5,31 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-24
+
+### RV32IM algorithms, numbered programs and instruction inspection
+
+- **Fixed:** the core's saved EXECUTE placement still assumed its former
+  tall shape. Refreshed M-core floorplans to align stage centers and widths;
+  unchanged shipped layouts upgrade while custom/manual placements survive.
+- **Instruction memory:** M machines now show all eight M mnemonics in
+  structural and compact views. ISA selection follows the containing
+  machine's contract; I-only contexts retain strict RV32I decoding.
+- **Programs:** number the M scenarios 23–27, preserving existing descriptive
+  aliases and adding numbered URLs. Program 26 computes Fibonacci by fast
+  doubling with 12 MUL and five DIVU instructions. Program 27 computes GCD
+  with REMU/DIVU and a MUL quotient check. Both run loops, store intermediate
+  results and verify commits, registers, memory and M retirement counts.
+- **Checked:** eight focused native tests (19.59 seconds), six static
+  layouts, alias/migration checks, five WASM program exports with decoded
+  memory text, strict combined site and two browser sessions (75.54 seconds).
+  The refreshed 8893 preview passes eight routes, 26 exact asset hashes and
+  live Fibonacci inspection/playback.
+  Details and limits are in the
+  [topic record](records/2026-10-23-rv32im-program-expansion-and-inspection.md).
+- **Limits:** no production circuit/timing-table changes, full suite,
+  benchmark/game campaign, push or published-site deployment.
+
 ## 2026-10-23
 
 ### Grouped RV32IM hardware and dedicated recorded programs

@@ -492,13 +492,22 @@
       "mux-8-w32"
     ],
     "RV32IMArithmeticProgramTest": [
-      "rv32im-program-arithmetic"
+      "rv32im-program-arithmetic",
+      "rv32im-program23"
     ],
     "RV32IMDependenciesProgramTest": [
-      "rv32im-program-dependencies"
+      "rv32im-program-dependencies",
+      "rv32im-program24"
     ],
     "RV32IMDivideEdgesProgramTest": [
-      "rv32im-program-divide-edges"
+      "rv32im-program-divide-edges",
+      "rv32im-program25"
+    ],
+    "RV32IMFibonacciProgramTest": [
+      "rv32im-program26"
+    ],
+    "RV32IMGcdProgramTest": [
+      "rv32im-program27"
     ]
   },
   "components": {
@@ -1293,16 +1302,29 @@
       "root": "RV32IM_DEVICE_SYSTEM_ROOT"
     },
     "RV32IMArithmeticProgramTest": {
-      "title": "All eight M instructions and x0",
-      "group": "rv32im-programs"
+      "title": "23 \u00b7 All eight M instructions and x0",
+      "group": "rv32im-programs",
+      "programNumber": 23
     },
     "RV32IMDependenciesProgramTest": {
-      "title": "M dependencies, loads, stores and branch flush",
-      "group": "rv32im-programs"
+      "title": "24 \u00b7 M dependencies, loads, stores and branch flush",
+      "group": "rv32im-programs",
+      "programNumber": 24
     },
     "RV32IMDivideEdgesProgramTest": {
-      "title": "Division edges and signed high products",
-      "group": "rv32im-programs"
+      "title": "25 \u00b7 Division edges and signed high products",
+      "group": "rv32im-programs",
+      "programNumber": 25
+    },
+    "RV32IMFibonacciProgramTest": {
+      "title": "26 \u00b7 Fibonacci fast doubling with MUL and DIVU",
+      "group": "rv32im-programs",
+      "programNumber": 26
+    },
+    "RV32IMGcdProgramTest": {
+      "title": "27 \u00b7 Euclidean GCD with DIVU, REMU and MUL",
+      "group": "rv32im-programs",
+      "programNumber": 27
     }
   },
   "programs": [

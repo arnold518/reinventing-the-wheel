@@ -17,6 +17,8 @@ def main():
         ('divider-w32', 'DIVIDER_W32_ROOT', {'CONTROL', 'OPERANDS', 'DATAPATH', 'RESULT'}),
         ('rv32im-execute-stage', 'RV32IM_EXECUTE_STAGE_ROOT', {'INTEGER', 'M_OPERANDS', 'M_CONTROL', 'MULDIV', 'RESULT_SELECTION'}),
         ('rv32im-program-dependencies', 'RV32IM_PROGRAM_ROOT', {'CLOCK', 'CORE', 'INSTRUCTION_MEMORY', 'DATA_MEMORY'}),
+        ('rv32im-program26', 'RV32IM_PROGRAM_ROOT', {'CLOCK', 'CORE', 'INSTRUCTION_MEMORY', 'DATA_MEMORY'}),
+        ('rv32im-program27', 'RV32IM_PROGRAM_ROOT', {'CLOCK', 'CORE', 'INSTRUCTION_MEMORY', 'DATA_MEMORY'}),
     ]
     pattern = os.environ.get('CIRCUITSIM_INSPECTION_FILTER')
     if pattern:
@@ -46,6 +48,8 @@ def main():
                 menu = page.locator('#scenario-select').inner_text()
                 for title in ('All eight M instructions', 'M dependencies', 'Division edges'):
                     assert title in menu, title
+                for number in range(23, 28):
+                    assert f'{number} ·' in menu, number
                 checkpoints = page.evaluate('app.checkpoints')
                 assert checkpoints[0]['label'] == 'reset' and checkpoints[-1]['label'] == 'halted'
                 assert any(c['label'] == 'arithmetic-wait' for c in checkpoints)
@@ -55,6 +59,34 @@ def main():
                         [...app.pins.values()].filter(p=>p.componentId===app.rootId).map(p=>[p.name,app.state.pins[p.stateIndex]]));}''', checkpoint)
                     assert pins['HALTED'] == ('1' if checkpoint['label'] == 'halted' else '0')
                     assert pins['TRAPPED'] == '0'
+                # The stage remains centered with the other pipeline blocks
+                # after changes to its own aspect ratio.
+                page.evaluate("id=>smoothlyFocusComponent(id+'.CORE')", expected_root)
+                page.wait_for_function('!app.geometryDirty && !app.cameraAnimation && !app.topologyRequestInFlight && !app.pendingScopeIds.size')
+                centers = page.evaluate('''()=>['FETCH','DECODE','EXECUTE','MEMORY','WRITEBACK'].map(name=>{
+                    const c=app.components.get(app.rootId+'.CORE.'+name);return c.rect.y+c.rect.h/2;})''')
+                assert max(centers)-min(centers) < .01, centers
+                widths = page.evaluate("()=>['FETCH','EXECUTE'].map(n=>app.components.get(app.rootId+'.CORE.'+n).rect.w)")
+                assert widths[1] >= .9*widths[0], widths
+                if screens:
+                    page.screenshot(path=str(screens / (alias + '-core.png')), full_page=True)
+                memory = expected_root + '.INSTRUCTION_MEMORY'
+                page.evaluate('id=>smoothlyFocusComponent(id)', memory)
+                page.wait_for_function('!app.geometryDirty && !app.cameraAnimation && !app.topologyRequestInFlight && !app.pendingScopeIds.size')
+                await_m = page.evaluate('''async id=>{await setMemoryPage(id,0);await setStateIndex(app.checkpoints.at(-1).index);
+                    return memoryRowsForDisplay(app.componentStates.get(id)).map(r=>r.instructionText);}''', memory)
+                assert any(text and text.startswith('mul ') for text in await_m), await_m
+                if alias in ('rv32im-program26', 'rv32im-program27'):
+                    assert any(text and text.startswith('divu ') for text in await_m), await_m
+                    if alias == 'rv32im-program27':
+                        assert any(text and text.startswith('remu ') for text in await_m), await_m
+                painted = page.evaluate('''id=>{
+                    const labels=[],original=ctx.fillText;
+                    ctx.fillText=function(text,...args){labels.push(text);return original.call(this,text,...args)};
+                    try{const c=app.components.get(id);drawMemoryContents(c,componentDrawParts(c));}
+                    finally{ctx.fillText=original;}
+                    return labels;}''', memory)
+                assert any(text.startswith(('mul ', 'divu ', 'remu ')) for text in painted), painted
             actual_children = page.evaluate("()=>app.components.get(app.rootId).childIds.map(id=>app.components.get(id).name)")
             assert expected_children <= set(actual_children), (alias, actual_children)
             if alias in ('multiplier-w32', 'divider-w32'):

@@ -34,6 +34,11 @@ circuit, scrub through time, and open any part to see what it is built from.
 - **Memory inspector**: the contents of a memory, read from its recorded
   history without performing an access.
 
+Instruction-memory views decode for the containing processor: RV32IM
+machines display all eight multiply/divide instructions, while RV32I
+machines continue to mark those encodings as unsupported. Structural and
+compact cores use the same display decoding.
+
 The example tables on component pages are recorded in `unit`, so a scenario
 opened in another profile shows the same values at different times.
 

@@ -44,6 +44,7 @@ private:
     size_t revision_ = size_t(-1);
     std::vector<Edge> edges_;
     std::vector<Access> accesses_;
+    bool rv32im_ = false;
     std::shared_ptr<PinBase> pin(const std::shared_ptr<IOComponent>&, const std::string&) const;
     std::string value(const std::shared_ptr<IOComponent>&, const std::string&, SimulationTime) const;
     void rebuildTransactions();

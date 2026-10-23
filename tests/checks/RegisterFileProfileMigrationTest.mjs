@@ -109,6 +109,17 @@ for (const [test, entry] of Object.entries(catalog.components)) {
   assert.deepEqual(migrated, expectedRoot, alias);
 }
 const layout = JSON.parse(readFileSync(new URL('../../visualizer-v2/layout.json',import.meta.url)));
+const mCore = layout.type_layouts.RV32IMFiveStageCore;
+const formerCore = {children:structuredClone(mCore.automatic_layout_history.at(-1).children)};
+assert.deepEqual(upgradeDefaultLayout(mCore, formerCore).children.EXECUTE, mCore.children.EXECUTE);
+for (const [key, overlay] of Object.entries(layout.root_layouts)) {
+  if (key.split('@')[0] !== 'rv32im-core' || !overlay.automatic_layout_revision) continue;
+  const base = {...mCore,...overlay,children:{...mCore.children,...overlay.children}};
+  const former = {children:structuredClone(mCore.automatic_layout_history.at(-1).children)};
+  assert.deepEqual(upgradeDefaultLayout(base, former).children.EXECUTE, base.children.EXECUTE, key);
+}
+formerCore.children.EXECUTE = {rel_pos:[.42,.21],rel_width:.12};
+assert.deepEqual(upgradeDefaultLayout(mCore, formerCore).children.EXECUTE, formerCore.children.EXECUTE);
 const muldiv = layout.type_layouts['MulDivUnit<32>'];
 assert.equal(muldiv.layout_revision, 'rv32im-groups-v1');
 const formerMuldiv = structuredClone(muldiv.previous_default);

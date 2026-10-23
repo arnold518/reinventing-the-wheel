@@ -70,6 +70,21 @@ int main() {
         contains(inspector.stateJson(0,42),"\"phase\":\"reset\"");
         contains(inspector.stateJson(0,42),"\"activeAddress\":null");
 
+        // The same instruction image is invalid for an I machine and decoded
+        // for an M machine, even when CORE has no visible structural children.
+        const auto decode_work=sim.getPerformanceCounters().effective_pin_changes;
+        memory->loadMemoryBytes(0,{0xb3,0x81,0x20,0x02}); // mul x3,x1,x2
+        contains(inspector.stateJson(0,12,"",0,8),"\"instructionText\":\"invalid ");
+        auto machine=Component::create<Component>("M_MACHINE");
+        auto core=Component::create<Component>("CORE");
+        circuit::ComponentInstanceMetadata metadata;
+        metadata.contract_id="rv32im.core.educational-five-stage";
+        core->setInstanceMetadata(metadata);
+        machine->addChild(core);machine->addChild(memory);
+        circuit::visualizer::MemoryInspector m_inspector(memory,sim);
+        contains(m_inspector.stateJson(0,12,"",0,8),"\"instructionText\":\"mul x3, x1, x2\"");
+        require(sim.getPerformanceCounters().effective_pin_changes==decode_work,"M decoding changed simulation history");
+
         // Zero-wait response is consumed on the same edge; no fake pending state.
         Simulator bypass;
         auto p = [&](const std::string& name) { return memory->getAllInputPins().contains(name) ? memory->getInputPinDynamic(name) : memory->getOutputPinDynamic(name); };

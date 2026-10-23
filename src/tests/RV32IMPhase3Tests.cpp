@@ -19,6 +19,7 @@
 #include "modules/memory/MemoryStorage.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <deque>
+#include <array>
 #include <functional>
 #include <iostream>
 #include <random>
@@ -400,6 +401,14 @@ void tableOnlyTiming(){
 void semantics(){
     using namespace rv32im;const uint32_t raw=0x02000033;
     for(unsigned op=0;op<8;++op){require(decode(raw|(op<<12)).m==MOperation(op),"M decode");require(!rv32i::RV32IDecoder::decode(raw|(op<<12)).legal,"Existing RV32I accepts M");}
+    const std::array<const char*,8> names{"mul","mulh","mulhsu","mulhu","div","divu","rem","remu"};
+    for(unsigned op=0;op<8;++op) {
+        const auto word=raw|(op<<12)|(3<<7)|(1<<15)|(2<<20);
+        require(disassemble(word)==std::string(names[op])+" x3, x1, x2","M display decoding");
+        require(rv32i::RV32IDecoder::disassemble(word).starts_with("invalid"),"I display accepts M");
+    }
+    require(disassemble(0x04000033).starts_with("invalid"),"M display accepts reserved encoding");
+    require(disassemble(0xff900093)=="addi x1, x0, -7","M display lost I fallback");
     require(!decode(0x04000033).legal(),"Reserved funct7 accepted");
     require(referenceResult(MOperation::DIV,0x80000000,0xffffffff)==0x80000000&&referenceResult(MOperation::REM,0x80000000,0xffffffff)==0,"Signed overflow reference");
     for(unsigned op=4;op<8;++op)require(referenceResult(MOperation(op),0x87654321,0)==(op&2?0x87654321:0xffffffff),"Divide-zero reference");

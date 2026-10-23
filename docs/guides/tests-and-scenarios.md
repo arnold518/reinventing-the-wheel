@@ -160,15 +160,21 @@ saved `DUT` profile migration, caught explorer layout errors and visible
 child bounds/overlaps. It always checks the existing `rv32i-core` as one
 additional session; a scenario filter does not skip that core check.
 
-Dedicated RV32IM programs appear in the **RV32IM programs / Recorded
-execution** group: `rv32im-program-arithmetic`, `rv32im-program-dependencies`
-and `rv32im-program-divide-edges`. Their registered tests are
+Dedicated RV32IM programs **23–27** appear in the **RV32IM programs / Recorded
+execution** group. The numbered URLs are `rv32im-program23` through
+`rv32im-program27`; the first three retain their descriptive aliases
+`rv32im-program-arithmetic`, `rv32im-program-dependencies` and
+`rv32im-program-divide-edges`. Their registered tests are
 `RV32IMArithmeticProgramTest`, `RV32IMDependenciesProgramTest` and
-`RV32IMDivideEdgesProgramTest`. They use the shared program fixture with the
+`RV32IMDivideEdgesProgramTest`, followed by `RV32IMFibonacciProgramTest`
+and `RV32IMGcdProgramTest`. They use the shared program fixture with the
 IM core, real memory endpoints and oracle-checked commits, retaining a
 timeline for inspection. `setupCircuit()` builds topology only; recording
 runs through `preparePrecomputedSimulation()` in both native and WASM.
-Run only those three for a small program check:
+The Fibonacci fixture uses fast doubling with MUL/DIVU; GCD uses Euclid's
+loop with REMU/DIVU and a MUL quotient check. Both verify the output arrays
+and actual retired M-operation counts. Run only these five for a small
+program check:
 
 ```sh
 ctest --test-dir build-cleanup -j1 --output-on-failure -L '^recorded-program$'
@@ -179,7 +185,8 @@ signed/unsigned arithmetic boundaries and pause/hold/take/cancel/reset
 transitions. Their concise timelines complement the larger headless sweeps.
 `RV32IMInspectionBrowserTest` is a bounded check of multiplier/divider group
 scopes, execute groups and the dependency program's structural view and
-rewind. `CIRCUITSIM_INSPECTION_FILTER` optionally selects those browser
+rewind, plus the Fibonacci/GCD programs, pipeline alignment and rendered M
+instruction text. `CIRCUITSIM_INSPECTION_FILTER` optionally selects those browser
 sessions by alias regex; report a filtered run's session count separately.
 
 For a bounded browser run, `CIRCUITSIM_BROWSER_SCENARIO_FILTER` selects

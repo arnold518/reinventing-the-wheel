@@ -26,9 +26,10 @@ groups. Separate selectors choose single-cycle, baseline or advanced execution
 and the advanced core's five prediction policies. Every policy/program pair is
 registered; program URLs select their declared program/core configuration.
 
-The **RV32IM programs / Recorded execution** group has three separate
-scenarios for all-eight-M arithmetic, dependencies with memory/branch recovery,
-and division/sign boundaries. Their `recorded-program` CTest label selects
+The **RV32IM programs / Recorded execution** group has programs 23–27:
+all-eight-M arithmetic, dependencies with memory/branch recovery,
+division/sign boundaries, Fibonacci fast doubling and Euclidean GCD.
+Their `recorded-program` CTest label selects
 only these short programs. They share the I program fixture's memory wiring
 with an IM core and compare commits with the independent RV32IM instruction oracle.
 They retain reset, arithmetic-wait, commit and halt history for the visualizer;
@@ -111,6 +112,6 @@ prediction policies, each with 22 programs). After adding program scenarios,
 publish their reviewed layouts with
 `tools/generate-advanced-pipeline-layout.py --program-roots-only` when only
 policy root aliases are missing.
-The three dedicated IM fixtures have their own reviewed roots; static layout
-checks and `RV32IMInspectionBrowserTest` cover their shared hierarchy and the
-dependency program's recorded playback.
+The five dedicated IM fixtures have their own reviewed roots; static layout
+checks and `RV32IMInspectionBrowserTest` cover their shared hierarchy,
+recorded playback, pipeline alignment and instruction-memory text.

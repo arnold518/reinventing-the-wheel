@@ -11,6 +11,8 @@ struct DecodedInstruction {
 };
 DecodedInstruction decode(uint32_t raw);
 const char* name(MOperation);
+// Display decoding; RV32I decoding remains strict about unsupported M code.
+std::string disassemble(uint32_t raw, uint32_t pc = 0);
 // Independent architectural reference, never called by a circuit implementation.
 uint32_t referenceResult(MOperation, uint32_t a, uint32_t b);
 struct InstructionTrace {

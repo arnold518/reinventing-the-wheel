@@ -31,7 +31,7 @@ def render_program(data, scenario, test):
         raise ValueError("Program metadata mismatch")
     if data["coreFidelity"] != "behavioral" or not data["checkpoints"]:
         raise ValueError("Expected behavioral program checkpoints")
-    recorded_m = scenario.startswith("rv32im-program-")
+    recorded_m = scenario.startswith("rv32im-program")
     kind = "recorded execution" if recorded_m else "instruction-attempt"
     html = [
         f'<div class="example-table-block" data-scenario="{escape(scenario)}">',

@@ -112,13 +112,26 @@ for (const [scenario, test] of requestedPrograms) {
   if (filter && !filter.test(test)) continue;
   const bridge = new module.WasmVisualizer();
   try {
-    const recordedM = scenario.startsWith('rv32im-program-');
+    const recordedM = scenario.startsWith('rv32im-program');
     const rootName = recordedM ? 'RV32IM_PROGRAM_ROOT' : 'RV32I_PROGRAM_ROOT';
     bridge.setProfileOverride(`${rootName}.CORE`, 'behavioral');
     const topology = JSON.parse(bridge.loadScenario(test, scenario, 0));
     const core = topology.components.find(c => c.id === `${rootName}.CORE`);
     assert.equal(core?.fidelity, 'behavioral');
     assert(topology.checkpoints.length > 0);
+    if (recordedM) {
+      const image = JSON.parse(bridge.componentStateJson(topology.checkpoints.at(-1).index, `${rootName}.INSTRUCTION_MEMORY`));
+      assert.equal(image.memoryRole, 'instruction');
+      const names = ['mul','mulh','mulhsu','mulhu','div','divu','rem','remu'];
+      let decodedM = 0;
+      for (const row of image.windowWords) {
+        const word = Number.parseInt(row.hex, 16);
+        if ((word & 0xfe00007f) !== 0x02000033) continue;
+        assert.equal(row.instructionText, `${names[word >>> 12 & 7]} x${word >>> 7 & 31}, x${word >>> 15 & 31}, x${word >>> 20 & 31}`);
+        ++decodedM;
+      }
+      assert(decodedM > 0, `${scenario}: instruction-memory view has no decoded M instructions`);
+    }
     const pins = new Map(topology.pins.filter(p => p.componentId === topology.rootId).map(p => [p.name, p]));
     for (const [index, checkpoint] of topology.checkpoints.entries()) {
       assert.equal(checkpoint.rowIndex, index);

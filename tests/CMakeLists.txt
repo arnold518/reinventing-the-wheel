@@ -685,7 +685,8 @@ foreach(test_name ${RV32IM_PHASE3_TESTS})
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
-foreach(test_name RV32IMArithmeticProgramTest RV32IMDependenciesProgramTest RV32IMDivideEdgesProgramTest)
+foreach(test_name RV32IMArithmeticProgramTest RV32IMDependenciesProgramTest RV32IMDivideEdgesProgramTest
+    RV32IMFibonacciProgramTest RV32IMGcdProgramTest)
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;program;recorded-program")
     list(APPEND SIMULATION_TESTS ${test_name})

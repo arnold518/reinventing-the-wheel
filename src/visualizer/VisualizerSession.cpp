@@ -15,6 +15,7 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "rv32i/RV32IDecoder.hpp"
+#include "rv32im/RV32IMInstruction.hpp"
 #include "simulator/SimulationTest.hpp"
 #include "simulator/Simulator.hpp"
 #include "tests/TestRegistry.hpp"
@@ -353,7 +354,7 @@ std::string rewireJson(const std::shared_ptr<Component>& component) {
 std::string memoryWordJson(
     uint32_t address,
     const std::vector<LogicValue>& word,
-    bool decode_instruction) {
+    bool decode_instruction, bool decode_m = false) {
     const auto bits = logicVectorValue(word);
     const auto hex = hexValue(bits);
     std::ostringstream address_stream;
@@ -368,7 +369,8 @@ std::string memoryWordJson(
     if (decode_instruction) {
         uint64_t raw = 0;
         if (binaryValue(bits, raw)) {
-            object.string("instructionText", rv32i::RV32IDecoder::disassemble(static_cast<uint32_t>(raw), address));
+            object.string("instructionText", decode_m ? rv32im::disassemble(static_cast<uint32_t>(raw), address)
+                : rv32i::RV32IDecoder::disassemble(static_cast<uint32_t>(raw), address));
         }
     }
     object.end();
@@ -393,6 +395,13 @@ std::vector<SimulationTime> memoryActivityTimestamps(const std::shared_ptr<Compo
 MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Simulator& simulator)
     : component_(std::dynamic_pointer_cast<IOComponent>(component)), simulator_(simulator) {
     if (!component_) throw std::invalid_argument("Memory inspection requires an IO component");
+    // Inspect the containing machine, including a compact CORE sibling.
+    // ISA display is independent of the selected hardware fidelity.
+    for(auto scope=component;scope;scope=scope->getParent()) {
+        if(scope->getContractId().starts_with("rv32im."))rv32im_=true;
+        for(const auto& child:scope->getChildren())
+            if(child->getName()=="CORE" && child->getContractId().starts_with("rv32im."))rv32im_=true;
+    }
     // A visible native MEMORY inherits its enclosing endpoint's bus context.
     for (auto current = component; current; current = current->getParent()) {
         auto io = std::dynamic_pointer_cast<IOComponent>(current);
@@ -590,7 +599,7 @@ std::string MemoryInspector::stateJson(size_t index, SimulationTime time, const 
     object.number("pageSize", count); object.boolean("manualPage", address >= 0);
     object.boolean("hasPreviousPage", page_address > 0);
     object.boolean("hasNextPage", page_address + page_count * word_bytes < memory.capacityBytes());
-    const auto render = [&](const auto& word) { return memoryWordJson(word.first, word.second, role == "instruction"); };
+    const auto render = [&](const auto& word) { return memoryWordJson(word.first, word.second, role == "instruction", rv32im_); };
     object.raw("touchedWords", arrayJson(touched, render));
     object.raw("windowWords", arrayJson(memory.getWordsAtTime(time, page_address, page_count), render));
     object.raw("transaction", transaction);
@@ -613,7 +622,7 @@ std::string MemoryInspector::stateJson(size_t index, SimulationTime time, const 
             const size_t words = std::min(page_words, size_t((memory.capacityBytes() - page) / word_bytes));
             panel.raw("words", latest || !data
                 ? arrayJson(memory.getWordsAtTime(time, uint32_t(page), words),
-                            [&](const auto& word) { return memoryWordJson(word.first, word.second, !data); })
+                            [&](const auto& word) { return memoryWordJson(word.first, word.second, !data, rv32im_); })
                 : std::string("[]"));
             panel.end();
             return part;

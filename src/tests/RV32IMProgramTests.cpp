@@ -19,12 +19,93 @@ uint32_t m(unsigned op,unsigned rd,unsigned rs1,unsigned rs2) {
     return 0x02000033u|(rs2<<20)|(rs1<<15)|(op<<12)|(rd<<7);
 }
 uint32_t addi(unsigned rd,int value) { return (uint32_t(value)&0xfff)<<20|(rd<<7)|0x13; }
+uint32_t immediate(unsigned rd,unsigned rs1,int value,unsigned funct3=0) {
+    return (uint32_t(value)&0xfff)<<20|(rs1<<15)|(funct3<<12)|(rd<<7)|0x13;
+}
+uint32_t integer(unsigned rd,unsigned rs1,unsigned rs2,unsigned funct3=0,unsigned funct7=0) {
+    return (funct7<<25)|(rs2<<20)|(rs1<<15)|(funct3<<12)|(rd<<7)|0x33;
+}
+uint32_t store(unsigned value,unsigned base,unsigned offset=0) {
+    return ((offset>>5)<<25)|(value<<20)|(base<<15)|(2<<12)|((offset&31)<<7)|0x23;
+}
+// Labels keep loop/branch targets tied to the actual instruction image.
+class Assembly {
+    struct Fixup { size_t index;std::string label;unsigned rs1,rs2,funct3;bool jump; };
+    std::vector<uint32_t> words_;
+    std::map<std::string,size_t> labels_;
+    std::vector<Fixup> fixups_;
+public:
+    void emit(uint32_t word){words_.push_back(word);}
+    void label(const std::string& name){require(labels_.emplace(name,words_.size()).second,"Duplicate assembly label");}
+    void branch(const std::string& target,unsigned rs1,unsigned rs2,unsigned funct3=0) {
+        fixups_.push_back({words_.size(),target,rs1,rs2,funct3,false});emit(0);
+    }
+    void jump(const std::string& target){fixups_.push_back({words_.size(),target,0,0,0,true});emit(0);}
+    std::vector<uint32_t> finish() {
+        for(const auto& f:fixups_) {
+            const int32_t offset=4*(int32_t(labels_.at(f.label))-int32_t(f.index));
+            require(offset%2==0&&offset>=(f.jump?-1048576:-4096)&&offset<=(f.jump?1048574:4094),"Assembly target out of range");
+            const uint32_t bits=uint32_t(offset);
+            words_[f.index]=f.jump?((bits>>20&1)<<31)|((bits>>1&1023)<<21)|((bits>>11&1)<<20)|(bits&0xff000)|0x6f:
+                ((bits>>12&1)<<31)|((bits>>5&63)<<25)|(f.rs2<<20)|(f.rs1<<15)|(f.funct3<<12)|((bits>>1&15)<<8)|((bits>>11&1)<<7)|0x63;
+        }
+        return words_;
+    }
+};
 struct Program {
     const char* test; const char* id;
     std::vector<uint32_t> words;
     std::map<unsigned,uint32_t> registers;
     std::map<uint32_t,uint32_t> memory;
+    size_t max_cycles=1200;
+    std::array<size_t,8> m_counts{};
 };
+Program fibonacci() {
+    Assembly a;
+    a.emit(addi(1,10)); a.emit(addi(5,2));
+    a.emit(m(5,15,1,5));                    // half = n / 2
+    a.emit(addi(2,1));
+    a.label("highest-bit");
+    a.branch("start",15,2,6);              // bltu half, mask
+    a.emit(immediate(2,2,1,1)); a.jump("highest-bit");
+    a.label("start");
+    a.emit(addi(3,0)); a.emit(addi(4,1)); a.emit(addi(13,256));
+    a.label("double");
+    a.emit(immediate(6,4,1,1));
+    a.emit(integer(6,6,3,0,0x20));         // 2*b - a
+    a.emit(m(0,7,3,6));                    // c = a * (2*b-a)
+    a.emit(m(0,9,3,3)); a.emit(m(0,10,4,4));
+    a.emit(integer(11,9,10));              // d = a*a + b*b
+    a.emit(integer(12,1,2,7));             // n & mask
+    a.branch("even",12,0);
+    a.emit(immediate(3,11,0)); a.emit(integer(4,7,11)); a.jump("record");
+    a.label("even");
+    a.emit(immediate(3,7,0)); a.emit(immediate(4,11,0));
+    a.label("record");
+    a.emit(store(3,13)); a.emit(store(4,13,4)); a.emit(immediate(13,13,8));
+    a.emit(m(5,2,2,5));                    // mask /= 2
+    a.branch("double",2,0,1); a.emit(0x00100073);
+    Program p{"RV32IMFibonacciProgramTest","fibonacci",a.finish(),
+        {{0,0},{1,10},{2,0},{3,55},{4,89},{13,288},{15,5}},
+        {{256,1},{260,1},{264,1},{268,2},{272,5},{276,8},{280,55},{284,89}},2500};
+    p.m_counts[0]=12;p.m_counts[5]=5;return p;
+}
+Program gcd() {
+    Assembly a;
+    a.emit(addi(1,1071));a.emit(addi(2,462));a.emit(addi(3,256));
+    a.label("euclid"); a.branch("done",2,0);
+    a.emit(m(7,4,1,2)); a.emit(m(5,5,1,2)); a.emit(m(0,6,5,2));
+    a.emit(integer(6,6,4));                // q*b+r must equal a
+    a.branch("failed",6,1,1);
+    a.emit(store(4,3));a.emit(store(5,3,4));a.emit(immediate(3,3,8));
+    a.emit(immediate(1,2,0));a.emit(immediate(2,4,0));a.jump("euclid");
+    a.label("done");a.emit(store(1,3));a.emit(addi(10,0));a.emit(0x00100073);
+    a.label("failed");a.emit(addi(10,1));a.emit(0x00100073);
+    Program p{"RV32IMGcdProgramTest","gcd",a.finish(),
+        {{0,0},{1,21},{2,0},{3,280},{4,0},{5,7},{6,147},{10,0}},
+        {{256,147},{260,2},{264,21},{268,3},{272,0},{276,7},{280,21}},1800};
+    p.m_counts[0]=3;p.m_counts[5]=3;p.m_counts[7]=3;return p;
+}
 Program programCase(size_t number) {
     switch(number) {
     case 0: {
@@ -46,6 +127,8 @@ Program programCase(size_t number) {
              addi(7,-7),addi(8,3),m(4,9,7,8),m(6,10,7,8),m(1,11,1,2),m(2,12,1,2),0x00100073},
             {{0,0},{3,0x80000000},{4,0},{5,0xffffffff},{6,0x80000000},{9,0xfffffffe},
              {10,0xffffffff},{11,0},{12,0x80000000}}, {}};
+    case 3:return fibonacci();
+    case 4:return gcd();
     default: throw std::invalid_argument("Unknown RV32IM recorded program");
     }
 }
@@ -112,7 +195,8 @@ void RV32IMProgramTest::preparePrecomputedSimulation() {
     sim->advanceAndRecord(first_edge+1);
     checkpoints_.push_back({first_edge+1,"reset", "Reset released; instruction memory contains the program."+stateDetail(0,false),0});
     bool recorded_wait=false;
-    for(size_t cycle=1;cycle<=1200;++cycle) {
+    std::array<size_t,8> m_counts{};
+    for(size_t cycle=1;cycle<=test.max_cycles;++cycle) {
         const auto edge=first_edge+cycle*period_;
         sim->advanceAndRecord(edge-1);
         const bool commit=core_->getOutputPin("COMMIT_VALID")->getValue()==LogicValue::HIGH;
@@ -124,6 +208,7 @@ void RV32IMProgramTest::preparePrecomputedSimulation() {
         if(commit) {
             const auto actual=retirement->pendingRetirement();
             expected=rv32im::step(reference,instructions,data);
+            if(expected.m)++m_counts.at(size_t(*expected.m));
             require(actual.pc==expected.base.pc_before&&actual.instruction==expected.base.raw_instruction,
                     "RV32IM retirement differs from oracle at PC "+std::to_string(expected.base.pc_before));
             require(actual.memory.kind==expected.base.memory.kind&&actual.memory.fault==expected.base.memory.fault,
@@ -154,6 +239,8 @@ void RV32IMProgramTest::preparePrecomputedSimulation() {
             require(arithmetic_stalls_>0,"Recorded program never exercised M stalls");
             for(auto [reg,value]:test.registers)require(reference.x.at(reg)==value,"Independent expected register mismatch: x"+std::to_string(reg));
             for(auto [address,value]:test.memory)require(data.readU32(address)==value,"Independent expected store mismatch");
+            for(size_t op=0;op<m_counts.size();++op)if(test.m_counts[op])
+                require(m_counts[op]==test.m_counts[op],"Program did not execute the expected M operations");
             require(fixture_->readDataBytes(0,1024)==data.readBytes(0,1024),"Hardware final memory differs from oracle");
             require(BasicComponent::setupViolations()==0,"RV32IM program violated setup timing");
             duration_=edge+period_/2-1;
@@ -162,7 +249,7 @@ void RV32IMProgramTest::preparePrecomputedSimulation() {
             precomputed_=true; return;
         }
     }
-    throw std::runtime_error("Recorded RV32IM program exceeded 1200 cycles");
+    throw std::runtime_error("Recorded RV32IM program exceeded "+std::to_string(test.max_cycles)+" cycles");
 }
 bool RV32IMProgramTest::run() {
     try { setupCircuit();preparePrecomputedSimulation();
@@ -178,9 +265,9 @@ std::vector<SimulationTest::PerformanceMetric> RV32IMProgramTest::getPerformance
     return metrics;
 }
 void appendRV32IMProgramTests(std::vector<TestRegistryEntry>& entries) {
-    for(size_t number=0;number<3;++number) {
+    for(size_t number=0;number<5;++number) {
         const auto p=programCase(number);
-        entries.push_back({p.test,"RV32IMProgramTest",RegisteredTestKind::Program,{},p.id,
+        entries.push_back({p.test,"RV32IMProgramTest",RegisteredTestKind::Program,{},"program-"+std::to_string(23+number),
             {"simulation","program","rv32im","recorded-program"},
             [number]{return std::make_unique<RV32IMProgramTest>(number);},true});
     }
