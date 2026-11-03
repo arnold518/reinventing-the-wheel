@@ -16,7 +16,7 @@ import recalculate_layouts as refresh
 class SingleCycleLayoutTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.root = server.circuit_backend.create_layout_topology("RV32ISingleCycleCoreTest")
+        cls.root = server.scenario_topology("RV32ISingleCycleCoreTest")
         cls.manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         cls.children = list(cls.root.get_children())
 

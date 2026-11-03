@@ -159,6 +159,12 @@ void Component::addChild(const std::shared_ptr<Component>& child)
     child->parent = shared_from_this();
 }
 
+void Component::removeChild(const std::shared_ptr<Component>& child)
+{
+    children.erase(std::remove(children.begin(), children.end(), child), children.end());
+    if (child && child->parent.lock().get() == this) child->parent.reset();
+}
+
 void Component::addWire(const std::shared_ptr<WireBase>& wire)
 {
     if (!wire) return;

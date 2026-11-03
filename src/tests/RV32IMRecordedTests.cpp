@@ -1,12 +1,15 @@
-#include "RV32IMScenarioProfile.hpp"
 #include "tests/RV32IMRecordedTests.hpp"
 #include "tests/TestRegistry.hpp"
+#include "tests/GuestScenarioTests.hpp"
+#include "RV32IMScenarioProfile.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "runtime/RecordedGuestFixtures.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "components/BasicComponent.hpp"
 #include <algorithm>
 #include <functional>
+#include <tuple>
 #include <iostream>
 #include <stdexcept>
 
@@ -33,8 +36,11 @@ void checkSystem(unsigned configuration){
     {
         circuit::runtime::RecordedGuestOptions o;o.max_cycles=16000;o.max_instructions=1000;o.max_frames=2;
         o.machine.caches=configuration==1||configuration==2;o.machine.dram=configuration==2;
+        if(configuration==5)o.system="games-machine-two-bus";
+        if(configuration==6)o.system="games-machine-registered-bridge";
+        if(configuration==7)o.system="games-machine-checked";
         if(configuration>=3){o.start_time=(SimulationTime{1}<<(configuration==3?54:63))+123;o.reset_release=checkedTimeAdd(o.start_time,2000);o.origin=checkedTimeAdd(o.start_time,3000);}
-        std::cout<<"Device system configuration "<<configuration<<std::endl;
+        std::cout<<"Computer system configuration "<<configuration<<" ("<<o.system<<")"<<std::endl;
         const auto result=circuit::runtime::runRecordedGuest(elf,{},o);
         require(result.console=="A"&&result.frames.size()==1,"System console/presentation mismatch");
         const auto& pixels=result.frames[0].pixels;
@@ -94,6 +100,11 @@ void lockstep(){
     options.quantum_events=97;compare(runRecordedGuest(elf,{},options),true);
     options.expanded_core=true;compare(runRecordedGuest(elf,{},options),false);
     options.compact_children=false;compare(runRecordedGuest(elf,{},options),false);
+    options.fidelity_profile="visual";
+    auto visual=runRecordedGuest(elf,{},options);compare(visual,false);
+    require(visual.profile_name=="fidelity-visual-v1" && visual.fidelity_profile=="visual" &&
+        visual.build_manifest.find("device.framebuffer")!=std::string::npos,
+        "Visual run did not record its named profile and actual selections");
 }
 void validation(){
     const auto elf=tinyElf();
@@ -102,6 +113,11 @@ void validation(){
     };
     rejected({{3000,1,0,true}});rejected({{4500,1,0,true}});rejected({{4501,1,32,true}});
     rejected({{4501,1,0,true},{4501,2,1,true}});rejected({{4501,2,0,true},{5501,1,1,true}});
+    circuit::runtime::RecordedGuestOptions paced;
+    paced.presentation_inputs={{{1,true}}};
+    rejected({{4501,1,1,true}},paced); // Absolute and paced input cannot mix.
+    paced.presentation_inputs={{{32,true}}};rejected({},paced);
+    paced.presentation_inputs={std::vector<circuit::runtime::ButtonTransition>(8,{1,true})};rejected({},paced);
     circuit::runtime::RecordedGuestOptions o;o.quantum_events=0;rejected({},o);
     o={};o.machine.timer_divisor=0;rejected({},o);
     o={};o.machine.width=1;o.machine.height=1;o.machine.video_bytes=4;rejected({},o);
@@ -165,11 +181,15 @@ void faults(){
         require(BasicComponent::setupViolations()==0,"Fault run observed setup violations");
     }
 }
-circuit::test::ComponentTestSpec recordedSpec(){
+// The games machine's structure without a program: reset, disabled, one
+// queued input. Quick to open in any profile (the machine scenarios run a
+// program and are best in Compact).
+circuit::test::ComponentTestSpec structureSpec(){
     using namespace circuit::test;
-    ComponentTestSpec spec{"RV32IMDeviceSystemScenarioTest","rv32im.system.devices","RV32IM_DEVICE_SYSTEM_ROOT",{{"width","4"},{"height","4"}},{{"contract",{},{},{}}}};
+    ComponentTestSpec spec{"ComputerSystemStructureScenarioTest","system.computer","COMPUTER_SYSTEM_ROOT",
+                           {{"machine","games-machine"},{"width","4"},{"height","4"}},{{"contract",{},{},{}}}};
     NamedValues inputs,expected;
-    for(const auto&p:circuit::builtinComponentCatalog().contract(spec.contract_id).pins)
+    for(const auto&p:circuit::builtinComponentCatalog().contract(spec.contract_id).pinsFor(spec.parameters))
         if(p.direction==PinType::INPUT)inputs[p.name]=logicBits(p.width,0);
     inputs["TX_READY"]=logicBits(1,1);inputs["RST"]=logicBits(1,1);
     for(auto p:{"HALTED","TRAPPED","TX_VALID","PRESENT"})expected[p]=logicBits(1,0);
@@ -187,27 +207,25 @@ public:Check(std::string name,std::function<void()> check):name_(std::move(name)
 };
 }
 void appendRV32IMRecordedTests(std::vector<TestRegistryEntry>& entries){
-    auto add=[&](const std::string& name,std::function<void()> check){entries.push_back({name,name,RegisteredTestKind::Integration,name=="RV32IMDeviceSystemTest"?std::vector<std::string>{"rv32im.system.devices"}:std::vector<std::string>{},{},{"simulation","rv32im","device","phase4"},[name,check]{return std::make_unique<Check>(name,check);},false});};
-    add("RV32IMDeviceSystemTest",[]{checkSystem(0);});
-    add("RV32IMDeviceSystemCachedFFTest",[]{checkSystem(1);});
-    add("RV32IMDeviceSystemCachedDRAMTest",[]{checkSystem(2);});
-    add("RV32IMDeviceSystemWideTimeTest",[]{checkSystem(3);});
-    add("RV32IMDeviceSystemUnsignedTimeTest",[]{checkSystem(4);});
-    add("RV32IMDeviceSystemLockstepTest",lockstep);
+    auto add=[&](const std::string& name,std::function<void()> check){entries.push_back({name,name,RegisteredTestKind::Integration,name=="ComputerSystemTest"?std::vector<std::string>{"system.computer"}:std::vector<std::string>{},{},{"simulation","rv32im","device","phase4"},[name,check]{return std::make_unique<Check>(name,check);},false});};
+    add("ComputerSystemTest",[]{checkSystem(0);});
+    add("ComputerSystemCachedFFTest",[]{checkSystem(1);});
+    add("ComputerSystemCachedDRAMTest",[]{checkSystem(2);});
+    add("ComputerSystemWideTimeTest",[]{checkSystem(3);});
+    add("ComputerSystemUnsignedTimeTest",[]{checkSystem(4);});
+    add("ComputerSystemTwoBusTest",[]{checkSystem(5);});
+    add("ComputerSystemRegisteredBridgeTest",[]{checkSystem(6);});
+    add("ComputerSystemPortCheckTest",[]{checkSystem(7);});
+    add("ComputerSystemLockstepTest",lockstep);
     add("RV32IMLargerDisplayTest",largerDisplay);
     add("RV32IMRecordedInputValidationTest",validation);
     add("RV32IMRecordedEvidenceBudgetTest",evidenceBudgets);
-    add("RV32IMDeviceSystemFaultTest",faults);
-    add("RV32IMRecordedBringupTest",[]{auto f=circuit::runtime::recordedGuestFixture("bringup");const auto r=circuit::runtime::runRecordedGuest(f.elf,f.input,f.options);
-        require(r.console=="hello-device\n"&&r.frames.size()==2&&word(r.report,3)==0x101&&word(r.report,4)==2,"Bring-up output mismatch");});
-    for(const auto& name:std::vector<std::string>{"2048","sokoban","snake","pong","tetris"}){
-        const auto test="RV32IMRecordedGame_"+name+"_Test";
-        add(test,[name]{auto f=circuit::runtime::recordedGuestFixture(name);const auto r=circuit::runtime::runRecordedGuest(f.elf,f.input,f.options);
-            require(r.frames.size()==4&&r.console=="CircuitSim RV32IM game\ndone\n","Game frame or console count mismatch");
-            require(word(r.report,0)==0x4353474d&&word(r.report,1)==1&&word(r.report,3)==3&&word(r.report,8)==0,"Game report or input loss mismatch");});
-        entries.back().kind=RegisteredTestKind::Program;entries.back().labels.push_back("games");entries.back().labels.push_back("phase5");
-    }
+    add("ComputerSystemFaultTest",faults);
+    // The bring-up program on each machine and the short games run as
+    // visualizer scenarios with every check (GuestScenarioTests).
+    appendGuestScenarioTests(entries);
     const auto profile=circuit::test::rv32imInspectionProfile();
-    entries.push_back({"RV32IMDeviceSystemScenarioTest","RV32IMDeviceSystemTest",RegisteredTestKind::Sequential,{"rv32im.system.devices"},"contract",{"simulation","rv32im","phase4-scenario"},
-        [profile]{return std::make_unique<circuit::test::ComponentScenarioTest>(recordedSpec(),"contract",profile);},true});
+    entries.push_back({"ComputerSystemStructureScenarioTest","ComputerSystemTest",RegisteredTestKind::Sequential,{"system.computer"},"contract",
+        {"simulation","rv32im","phase4-scenario"},
+        [profile]{return std::make_unique<circuit::test::ComponentScenarioTest>(structureSpec(),"contract",profile);},true});
 }

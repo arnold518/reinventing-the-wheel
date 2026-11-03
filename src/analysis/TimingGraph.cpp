@@ -447,10 +447,26 @@ class Builder {
             }
         }
         if (!request_.check_clocks) return;
+        // A zero-delay Rewire whose outputs drive nothing (a part's clock
+        // pass-through left unconnected by its parent) does not use the clock.
+        std::set<const PinBase*> driving;
+        for (const auto& [sink, source] : driver_) driving.insert(source.get());
+        const auto deadPassThrough = [&](const PinBase* sink) {
+            for (const auto& leaf : leaves_) {
+                if (sink->getOwner() != leaf.component || !leaf.builtin_rules || typeid(*leaf.component) != typeid(Rewire)
+                    || delayOf(*leaf.component) != 0)
+                    continue;
+                const auto io = std::dynamic_pointer_cast<IOComponent>(leaf.component);
+                for (const auto& [name, out] : io->getAllOutputPins())
+                    if (driving.contains(out.get())) return false;
+                return true;
+            }
+            return false;
+        };
         for (const auto& [sink, source] : driver_)
             if ((clock_roots_.contains(source.get()) || clock_carriers_.contains(source.get()))
-                && !clock_sinks_.contains(sink) && !clock_outputs_.contains(sink))
-                fail(source->getID() + ": clock used as data");
+                && !clock_sinks_.contains(sink) && !clock_outputs_.contains(sink) && !deadPassThrough(sink))
+                fail(source->getID() + ": clock used as data (by " + sink->getID() + ")");
     }
 
 public:

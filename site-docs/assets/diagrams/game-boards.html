@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The short games: first and last frame</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="game-boards">
+<div class="diagram-viewport" role="region" aria-label="The short games: first and last frame" tabindex="0">
+<svg viewBox="0 0 640 648" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="game-boards-title game-boards-desc">
+<title id="game-boards-title">The short games: first and last frame</title>
+<desc id="game-boards-desc">For each short game, its first presented frame and its last, as the circuit drew them on the 32 by 24 screen: 2048 merges a row, Sokoban pushes a crate onto its goal, Snake eats, Pong bounces, Tetris clears a line, and the LED Snake runs into the wall.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="game-boards-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="game-boards-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="game-boards-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="648" fill="var(--dg-paper)"/>
+<text x="40" y="46" class="dg-name" text-anchor="start">2048</text>
+<text x="40" y="70" class="dg-small" text-anchor="start">LEFT: four 2s merge into two 4s</text>
+<rect x="328" y="28" width="96" height="72" fill="#000000"/>
+<rect x="328" y="28" width="3" height="3" fill="#ff0000"/>
+<rect x="331" y="28" width="9" height="3" fill="#ffffff"/>
+<rect x="340" y="28" width="15" height="3" fill="#ff0000"/>
+<rect x="355" y="28" width="9" height="3" fill="#ffffff"/>
+<rect x="364" y="28" width="15" height="3" fill="#ff0000"/>
+<rect x="379" y="28" width="9" height="3" fill="#ffffff"/>
+<rect x="388" y="28" width="15" height="3" fill="#ff0000"/>
+<rect x="403" y="28" width="9" height="3" fill="#ffffff"/>
+<rect x="412" y="28" width="12" height="3" fill="#ff0000"/>
+<rect x="328" y="31" width="9" height="3" fill="#ff0000"/>
+<rect x="337" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="340" y="31" width="21" height="3" fill="#ff0000"/>
+<rect x="361" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="364" y="31" width="21" height="3" fill="#ff0000"/>
+<rect x="385" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="388" y="31" width="21" height="3" fill="#ff0000"/>
+<rect x="409" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="412" y="31" width="12" height="3" fill="#ff0000"/>
+<rect x="328" y="34" width="3" height="3" fill="#ff0000"/>
+<rect x="331" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="340" y="34" width="15" height="3" fill="#ff0000"/>
+<rect x="355" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="364" y="34" width="15" height="3" fill="#ff0000"/>
+<rect x="379" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="388" y="34" width="15" height="3" fill="#ff0000"/>
+<rect x="403" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="412" y="34" width="12" height="3" fill="#ff0000"/>
+<rect x="328" y="37" width="3" height="3" fill="#ff0000"/>
+<rect x="331" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="334" y="37" width="21" height="3" fill="#ff0000"/>
+<rect x="355" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="358" y="37" width="21" height="3" fill="#ff0000"/>
+<rect x="379" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="382" y="37" width="21" height="3" fill="#ff0000"/>
+<rect x="403" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="406" y="37" width="18" height="3" fill="#ff0000"/>
+<rect x="328" y="40" width="3" height="3" fill="#ff0000"/>
+<rect x="331" y="40" width="9" height="3" fill="#ffffff"/>
+<rect x="340" y="40" width="15" height="3" fill="#ff0000"/>
+<rect x="355" y="40" width="9" height="3" fill="#ffffff"/>
+<rect x="364" y="40" width="15" height="3" fill="#ff0000"/>
+<rect x="379" y="40" width="9" height="3" fill="#ffffff"/>
+<rect x="388" y="40" width="15" height="3" fill="#ff0000"/>
+<rect x="403" y="40" width="9" height="3" fill="#ffffff"/>
+<rect x="412" y="40" width="12" height="3" fill="#ff0000"/>
+<rect x="328" y="43" width="96" height="3" fill="#ff0000"/>
+<path class="dg-edge" d="M 432 64 L 456 64" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="28" width="96" height="72" fill="#000000"/>
+<rect x="464" y="28" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="28" width="3" height="3" fill="#ffffff"/>
+<rect x="470" y="28" width="3" height="3" fill="#00ff00"/>
+<rect x="473" y="28" width="3" height="3" fill="#ffffff"/>
+<rect x="476" y="28" width="15" height="3" fill="#00ff00"/>
+<rect x="491" y="28" width="3" height="3" fill="#ffffff"/>
+<rect x="494" y="28" width="3" height="3" fill="#00ff00"/>
+<rect x="497" y="28" width="3" height="3" fill="#ffffff"/>
+<rect x="500" y="28" width="12" height="3" fill="#00ff00"/>
+<rect x="464" y="31" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="470" y="31" width="3" height="3" fill="#00ff00"/>
+<rect x="473" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="476" y="31" width="15" height="3" fill="#00ff00"/>
+<rect x="491" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="494" y="31" width="3" height="3" fill="#00ff00"/>
+<rect x="497" y="31" width="3" height="3" fill="#ffffff"/>
+<rect x="500" y="31" width="12" height="3" fill="#00ff00"/>
+<rect x="464" y="34" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="476" y="34" width="15" height="3" fill="#00ff00"/>
+<rect x="491" y="34" width="9" height="3" fill="#ffffff"/>
+<rect x="500" y="34" width="12" height="3" fill="#00ff00"/>
+<rect x="464" y="37" width="9" height="3" fill="#00ff00"/>
+<rect x="473" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="476" y="37" width="21" height="3" fill="#00ff00"/>
+<rect x="497" y="37" width="3" height="3" fill="#ffffff"/>
+<rect x="500" y="37" width="12" height="3" fill="#00ff00"/>
+<rect x="464" y="40" width="9" height="3" fill="#00ff00"/>
+<rect x="473" y="40" width="3" height="3" fill="#ffffff"/>
+<rect x="476" y="40" width="21" height="3" fill="#00ff00"/>
+<rect x="497" y="40" width="3" height="3" fill="#ffffff"/>
+<rect x="500" y="40" width="12" height="3" fill="#00ff00"/>
+<rect x="464" y="43" width="48" height="3" fill="#00ff00"/>
+<rect x="464" y="64" width="3" height="3" fill="#ff0000"/>
+<rect x="467" y="64" width="9" height="3" fill="#ffffff"/>
+<rect x="476" y="64" width="12" height="3" fill="#ff0000"/>
+<rect x="464" y="67" width="9" height="3" fill="#ff0000"/>
+<rect x="473" y="67" width="3" height="3" fill="#ffffff"/>
+<rect x="476" y="67" width="12" height="3" fill="#ff0000"/>
+<rect x="464" y="70" width="3" height="3" fill="#ff0000"/>
+<rect x="467" y="70" width="9" height="3" fill="#ffffff"/>
+<rect x="476" y="70" width="12" height="3" fill="#ff0000"/>
+<rect x="464" y="73" width="3" height="3" fill="#ff0000"/>
+<rect x="467" y="73" width="3" height="3" fill="#ffffff"/>
+<rect x="470" y="73" width="18" height="3" fill="#ff0000"/>
+<rect x="464" y="76" width="3" height="3" fill="#ff0000"/>
+<rect x="467" y="76" width="9" height="3" fill="#ffffff"/>
+<rect x="476" y="76" width="12" height="3" fill="#ff0000"/>
+<rect x="464" y="79" width="24" height="3" fill="#ff0000"/>
+<text x="40" y="150" class="dg-name" text-anchor="start">Sokoban</text>
+<text x="40" y="174" class="dg-small" text-anchor="start">RIGHT: the crate reaches its goal</text>
+<rect x="328" y="132" width="96" height="72" fill="#000000"/>
+<rect x="328" y="132" width="72" height="3" fill="#ff0000"/>
+<rect x="328" y="135" width="72" height="3" fill="#ff0000"/>
+<rect x="328" y="138" width="72" height="3" fill="#ff0000"/>
+<rect x="328" y="141" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="141" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="144" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="144" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="147" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="147" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="150" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="150" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="153" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="153" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="156" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="156" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="159" width="9" height="3" fill="#ff0000"/>
+<rect x="346" y="159" width="9" height="3" fill="#ff00ff"/>
+<rect x="355" y="159" width="9" height="3" fill="#00ff00"/>
+<rect x="364" y="159" width="9" height="3" fill="#0000ff"/>
+<rect x="391" y="159" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="162" width="9" height="3" fill="#ff0000"/>
+<rect x="346" y="162" width="9" height="3" fill="#ff00ff"/>
+<rect x="355" y="162" width="9" height="3" fill="#00ff00"/>
+<rect x="364" y="162" width="9" height="3" fill="#0000ff"/>
+<rect x="391" y="162" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="165" width="9" height="3" fill="#ff0000"/>
+<rect x="346" y="165" width="9" height="3" fill="#ff00ff"/>
+<rect x="355" y="165" width="9" height="3" fill="#00ff00"/>
+<rect x="364" y="165" width="9" height="3" fill="#0000ff"/>
+<rect x="391" y="165" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="168" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="168" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="171" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="171" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="174" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="174" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="177" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="177" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="180" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="180" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="183" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="183" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="186" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="186" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="189" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="189" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="192" width="9" height="3" fill="#ff0000"/>
+<rect x="391" y="192" width="9" height="3" fill="#ff0000"/>
+<rect x="328" y="195" width="72" height="3" fill="#ff0000"/>
+<rect x="328" y="198" width="72" height="3" fill="#ff0000"/>
+<rect x="328" y="201" width="72" height="3" fill="#ff0000"/>
+<path class="dg-edge" d="M 432 168 L 456 168" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="132" width="96" height="72" fill="#000000"/>
+<rect x="464" y="132" width="72" height="3" fill="#ff0000"/>
+<rect x="464" y="135" width="72" height="3" fill="#ff0000"/>
+<rect x="464" y="138" width="72" height="3" fill="#ff0000"/>
+<rect x="464" y="141" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="141" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="144" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="144" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="147" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="147" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="150" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="150" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="153" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="153" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="156" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="156" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="159" width="9" height="3" fill="#ff0000"/>
+<rect x="491" y="159" width="9" height="3" fill="#ff00ff"/>
+<rect x="500" y="159" width="9" height="3" fill="#ffff00"/>
+<rect x="527" y="159" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="162" width="9" height="3" fill="#ff0000"/>
+<rect x="491" y="162" width="9" height="3" fill="#ff00ff"/>
+<rect x="500" y="162" width="9" height="3" fill="#ffff00"/>
+<rect x="527" y="162" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="165" width="9" height="3" fill="#ff0000"/>
+<rect x="491" y="165" width="9" height="3" fill="#ff00ff"/>
+<rect x="500" y="165" width="9" height="3" fill="#ffff00"/>
+<rect x="527" y="165" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="168" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="168" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="171" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="171" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="174" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="174" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="177" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="177" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="180" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="180" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="183" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="183" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="186" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="186" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="189" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="189" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="192" width="9" height="3" fill="#ff0000"/>
+<rect x="527" y="192" width="9" height="3" fill="#ff0000"/>
+<rect x="464" y="195" width="72" height="3" fill="#ff0000"/>
+<rect x="464" y="198" width="72" height="3" fill="#ff0000"/>
+<rect x="464" y="201" width="72" height="3" fill="#ff0000"/>
+<text x="40" y="254" class="dg-name" text-anchor="start">Snake</text>
+<text x="40" y="278" class="dg-small" text-anchor="start">two updates: the snake eats</text>
+<rect x="328" y="236" width="96" height="72" fill="#000000"/>
+<rect x="337" y="263" width="18" height="3" fill="#00ff00"/>
+<rect x="355" y="263" width="9" height="3" fill="#ff0000"/>
+<rect x="373" y="263" width="9" height="3" fill="#0000ff"/>
+<rect x="337" y="266" width="18" height="3" fill="#00ff00"/>
+<rect x="355" y="266" width="9" height="3" fill="#ff0000"/>
+<rect x="373" y="266" width="9" height="3" fill="#0000ff"/>
+<rect x="337" y="269" width="18" height="3" fill="#00ff00"/>
+<rect x="355" y="269" width="9" height="3" fill="#ff0000"/>
+<rect x="373" y="269" width="9" height="3" fill="#0000ff"/>
+<path class="dg-edge" d="M 432 272 L 456 272" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="236" width="96" height="72" fill="#000000"/>
+<rect x="482" y="263" width="27" height="3" fill="#00ff00"/>
+<rect x="509" y="263" width="9" height="3" fill="#ff0000"/>
+<rect x="482" y="266" width="27" height="3" fill="#00ff00"/>
+<rect x="509" y="266" width="9" height="3" fill="#ff0000"/>
+<rect x="482" y="269" width="27" height="3" fill="#00ff00"/>
+<rect x="509" y="269" width="9" height="3" fill="#ff0000"/>
+<rect x="491" y="272" width="9" height="3" fill="#0000ff"/>
+<rect x="491" y="275" width="9" height="3" fill="#0000ff"/>
+<rect x="491" y="278" width="9" height="3" fill="#0000ff"/>
+<text x="40" y="358" class="dg-name" text-anchor="start">Pong</text>
+<text x="40" y="382" class="dg-small" text-anchor="start">two updates: a paddle bounce</text>
+<rect x="328" y="340" width="96" height="72" fill="#000000"/>
+<rect x="331" y="355" width="3" height="3" fill="#ff0000"/>
+<rect x="415" y="355" width="3" height="3" fill="#0000ff"/>
+<rect x="418" y="355" width="3" height="3" fill="#00ff00"/>
+<rect x="331" y="358" width="3" height="3" fill="#ff0000"/>
+<rect x="418" y="358" width="3" height="3" fill="#00ff00"/>
+<rect x="331" y="361" width="3" height="3" fill="#ff0000"/>
+<rect x="418" y="361" width="3" height="3" fill="#00ff00"/>
+<rect x="331" y="364" width="3" height="3" fill="#ff0000"/>
+<rect x="418" y="364" width="3" height="3" fill="#00ff00"/>
+<path class="dg-edge" d="M 432 376 L 456 376" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="340" width="96" height="72" fill="#000000"/>
+<rect x="467" y="355" width="3" height="3" fill="#ff0000"/>
+<rect x="554" y="355" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="358" width="3" height="3" fill="#ff0000"/>
+<rect x="554" y="358" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="361" width="3" height="3" fill="#ff0000"/>
+<rect x="548" y="361" width="3" height="3" fill="#0000ff"/>
+<rect x="554" y="361" width="3" height="3" fill="#00ff00"/>
+<rect x="467" y="364" width="3" height="3" fill="#ff0000"/>
+<rect x="554" y="364" width="3" height="3" fill="#00ff00"/>
+<text x="40" y="462" class="dg-name" text-anchor="start">Tetris</text>
+<text x="40" y="486" class="dg-small" text-anchor="start">hard drop: the bottom line clears</text>
+<rect x="328" y="444" width="96" height="72" fill="#000000"/>
+<rect x="352" y="468" width="24" height="3" fill="#ff0000"/>
+<rect x="328" y="489" width="24" height="3" fill="#ff0000"/>
+<path class="dg-edge" d="M 432 480 L 456 480" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="444" width="96" height="72" fill="#000000"/>
+<rect x="476" y="444" width="18" height="3" fill="#6dff00"/>
+<rect x="476" y="447" width="6" height="3" fill="#6dff00"/>
+<text x="40" y="566" class="dg-name" text-anchor="start">Snake with LEDs</text>
+<text x="40" y="590" class="dg-small" text-anchor="start">two updates: into the wall</text>
+<rect x="328" y="548" width="96" height="72" fill="#000000"/>
+<rect x="328" y="548" width="9" height="3" fill="#0000ff"/>
+<rect x="328" y="551" width="9" height="3" fill="#0000ff"/>
+<rect x="328" y="554" width="9" height="3" fill="#0000ff"/>
+<rect x="364" y="575" width="18" height="3" fill="#00ff00"/>
+<rect x="382" y="575" width="9" height="3" fill="#ff0000"/>
+<rect x="364" y="578" width="18" height="3" fill="#00ff00"/>
+<rect x="382" y="578" width="9" height="3" fill="#ff0000"/>
+<rect x="364" y="581" width="18" height="3" fill="#00ff00"/>
+<rect x="382" y="581" width="9" height="3" fill="#ff0000"/>
+<path class="dg-edge" d="M 432 584 L 456 584" marker-end="url(#game-boards-arrow)"/>
+<rect x="464" y="548" width="96" height="72" fill="#000000"/>
+<rect x="464" y="548" width="9" height="3" fill="#0000ff"/>
+<rect x="464" y="551" width="9" height="3" fill="#0000ff"/>
+<rect x="464" y="554" width="9" height="3" fill="#0000ff"/>
+<rect x="509" y="575" width="18" height="3" fill="#00ff00"/>
+<rect x="527" y="575" width="9" height="3" fill="#ff0000"/>
+<rect x="509" y="578" width="18" height="3" fill="#00ff00"/>
+<rect x="527" y="578" width="9" height="3" fill="#ff0000"/>
+<rect x="509" y="581" width="18" height="3" fill="#00ff00"/>
+<rect x="527" y="581" width="9" height="3" fill="#ff0000"/>
+</svg>
+</div>
+<figcaption><strong>First and last frame of each short version, pixel for pixel.</strong> Drawn from the host run of the same program, whose frames the circuit tests compare byte for byte.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

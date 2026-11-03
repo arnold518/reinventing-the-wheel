@@ -12,7 +12,7 @@
 #include <string>
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
-#include "modules/memory/TwoPortMemoryArbiter.hpp"
+#include "system/MemorySubsystem.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
@@ -39,7 +39,7 @@ void drive(
     const std::shared_ptr<Wire<Width>>& wire,
     uint64_t value) {
     simulator.scheduleEvent(
-        std::make_shared<WireUpdateEvent<Width>>(
+        std::make_shared<WireUpdateEvent>(
             time, wire, value));
 }
 
@@ -102,62 +102,50 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
     const bool fixed_cycle=core_family_.id()=="rv32i.core.educational-single-cycle" || core_family_.id()=="rv32i.core.baseline-pipeline";
     if(fixed_cycle&&(instruction_config_.technology!=circuit::memory::Technology::FF || data_config_.technology!=circuit::memory::Technology::FF))
         throw std::invalid_argument("Fixed-cycle cores require zero-wait FF endpoints");
+    circuit::detail::StructuralWiring cache_wiring(builder);
+    std::shared_ptr<IOComponent> instruction_port, data_port;
+    const std::string instruction_prefix, data_prefix;
     if (unified_memory_) {
-        data_memory_ = rv32i::buildMemory(builder, *this, "SHARED_MEMORY", data_config_);
-        instruction_memory_ = data_memory_;
+        // One memory behind both ports: the memory subsystem (§ 5.3) with
+        // this arrangement's caches and shared cache.
+        circuit::system::MemorySubsystemConfig config;
+        config.memory = data_config_;
+        config.instruction_cache = instruction_cache_config_;
+        config.data_cache = data_cache_config_;
+        config.shared_cache = shared_cache_config_;
+        auto memory = builder.addNewComponent<circuit::system::MemorySubsystem>("MEMORY", config);
+        // The clock and reset reach the core and the subsystem in this one
+        // wiring pass (a source pin carries one wire, so a second pass over
+        // the same sources would cut these off).
+        for (const auto& part : {core_, std::static_pointer_cast<IOComponent>(memory)}) {
+            cache_wiring.connect(clock_->getOutputPin("CLK_OUT"), part->getInputPin("CLK"));
+            cache_wiring.connect(getInputPin("RST"), part->getInputPin("RST"));
+        }
+        for (const auto& [port, prefix] : {std::pair{"IMEM_", "I_"}, {"DMEM_", "D_"}}) {
+            for (auto name : {"REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK", "RSP_READY"})
+                cache_wiring.connect(core_->getOutputPinDynamic(std::string(port) + name), memory->getInputPinDynamic(std::string(prefix) + name));
+            for (auto name : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
+                cache_wiring.connect(memory->getOutputPinDynamic(std::string(prefix) + name), core_->getInputPinDynamic(std::string(port) + name));
+        }
+        data_memory_ = instruction_memory_ = memory->memoryEndpoint();
     } else {
         instruction_memory_ = rv32i::buildMemory(builder, *this, "INSTRUCTION_MEMORY", instruction_config_);
         data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
-    }
-    auto instruction_port = instruction_memory_;
-    auto data_port = data_memory_;
-    circuit::detail::StructuralWiring cache_wiring(builder);
-    auto make_cache = [&](const std::string& name, const circuit::memory::CacheConfig& config) {
-        auto cache = builder.addNewComponent<circuit::memory::Cache<32>>(name, config);
-        cache_wiring.connect(cache_wiring.constant(name + "_NO_INVALIDATION", false),
-                             cache->getInputPin("INV_VALID"));
-        return std::static_pointer_cast<IOComponent>(cache);
-    };
-    auto connect_backing = [&](const std::shared_ptr<IOComponent>& requester,
-                               const std::shared_ptr<IOComponent>& backing,
-                               const std::string& requester_prefix) {
-        for (const auto& [pin_name, pin] : backing->getAllInputPins())
-            cache_wiring.connect(requester->getOutputPinDynamic(requester_prefix + pin_name), pin);
-        for (const auto& [pin_name, pin] : backing->getAllOutputPins())
-            cache_wiring.connect(pin, requester->getInputPinDynamic(requester_prefix + pin_name));
-    };
-    std::string instruction_prefix, data_prefix;
-    if (instruction_cache_config_)
-        instruction_port = make_cache("INSTRUCTION_CACHE", *instruction_cache_config_);
-    if (data_cache_config_)
-        data_port = make_cache("DATA_CACHE", *data_cache_config_);
-    if (unified_memory_) {
-        // Each side reaches the arbiter through its cache, or directly; below
-        // the arbiter the shared cache, if any, then the one memory.
-        auto arbiter = builder.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("MEMORY_ARBITER");
-        const auto link = [&](const std::shared_ptr<IOComponent>& upper, const std::string& up,
-                              const std::shared_ptr<IOComponent>& lower, const std::string& down) {
-            for (auto name : {"CLK", "RST", "REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK", "RSP_READY"})
-                cache_wiring.connect(upper->getOutputPinDynamic(up + name), lower->getInputPinDynamic(down + name));
-            for (auto name : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
-                cache_wiring.connect(lower->getOutputPinDynamic(down + name), upper->getInputPinDynamic(up + name));
+        instruction_port = instruction_memory_;
+        data_port = data_memory_;
+        // Separate memories may each have their own cache.
+        const auto make_cache = [&](const std::string& name, const circuit::memory::CacheConfig& config,
+                                    const std::shared_ptr<IOComponent>& backing) {
+            auto cache = builder.addNewComponent<circuit::memory::Cache<32>>(name, config);
+            cache_wiring.connect(cache_wiring.constant(name + "_NO_INVALIDATION", false), cache->getInputPin("INV_VALID"));
+            for (const auto& [pin_name, pin] : backing->getAllInputPins())
+                cache_wiring.connect(cache->getOutputPinDynamic("MEM_" + pin_name), pin);
+            for (const auto& [pin_name, pin] : backing->getAllOutputPins())
+                cache_wiring.connect(pin, cache->getInputPinDynamic("MEM_" + pin_name));
+            return std::static_pointer_cast<IOComponent>(cache);
         };
-        for (auto [port, prefix, cached] : {std::tuple{&instruction_port, &instruction_prefix, bool(instruction_cache_config_)},
-                                            std::tuple{&data_port, &data_prefix, bool(data_cache_config_)}}) {
-            const std::string side = port == &instruction_port ? "I_" : "D_";
-            if (cached) link(*port, "MEM_", arbiter, side);
-            else { *port = arbiter; *prefix = side; }
-        }
-        std::shared_ptr<IOComponent> above_memory = arbiter;
-        if (shared_cache_config_) {
-            auto shared = make_cache("SHARED_CACHE", *shared_cache_config_);
-            link(arbiter, "MEM_", shared, "");
-            above_memory = shared;
-        }
-        connect_backing(above_memory, data_memory_, "MEM_");
-    } else {
-        if (instruction_cache_config_) connect_backing(instruction_port, instruction_memory_, "MEM_");
-        if (data_cache_config_) connect_backing(data_port, data_memory_, "MEM_");
+        if (instruction_cache_config_) instruction_port = make_cache("INSTRUCTION_CACHE", *instruction_cache_config_, instruction_memory_);
+        if (data_cache_config_) data_port = make_cache("DATA_CACHE", *data_cache_config_, data_memory_);
     }
     cache_wiring.finish();
     state_view_ = std::dynamic_pointer_cast<RV32IStateView>(core_);
@@ -173,8 +161,9 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
         instruction_memory_ != nullptr && data_memory_ != nullptr,
         "memories");
 
-    rv32i::wireMemorySystem(builder, core_, instruction_port, data_port,
-        clock_->getOutputPin("CLK_OUT"), getInputPin("RST"), instruction_prefix, data_prefix);
+    if (!unified_memory_)
+        rv32i::wireMemorySystem(builder, core_, instruction_port, data_port,
+            clock_->getOutputPin("CLK_OUT"), getInputPin("RST"), instruction_prefix, data_prefix);
     builder.addNewWire(
         "ENABLE",
         getInputPin("ENABLE"),

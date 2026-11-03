@@ -8,7 +8,7 @@ component and simulator reference for readers of CircuitSim.
 | --- | --- |
 | Components | [Fidelity profiles](unified-component-profiles.md), [timing analyzer](circuit-timing-analyzer.md) |
 | Tests and benchmarks | [Test organization](test-organization.md), [benchmark system](benchmark-system.md) |
-| RV32IM and devices | [Foundation contracts](rv32im-device-foundation.md) |
+| Computer system (RV32IM machine, buses, devices) | [Computer system contracts](computer-system.md) |
 | RV32I | [Memory integration](rv32i-memory-integration.md), [single-cycle stages](rv32i-single-cycle-stages.md), [supporting core notes](rv32i-single-cycle-documentation-notes.md) |
 | Visualizer | [Profile explorer](visualizer-v2-profile-explorer.md), [recorded circuit checkpoints](recorded-circuit-checkpoints.md) |
 

@@ -1,5 +1,6 @@
 #include "RegisterFileBehavioral.hpp"
 #include "simulator/Simulator.hpp"
+#include "simulator/SignalTrace.hpp"
 #include <algorithm>
 
 namespace circuit::storage {
@@ -25,6 +26,7 @@ void RegisterFileBehavioral::evaluate(SimulationTime time,Simulator& sim) {
     register_values::step(registers_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),getInputValue("REG_WRITE"),
                          getInputPinDynamic("RD_ADDR")->getValueAsVector(),getInputPinDynamic("WRITE_DATA")->getValueAsVector(),config_.hardwire_zero);
     if(registers_!=before) {
+        if(auto* trace=SignalTraceSubscription::observer(sim))trace->registersChanged(time,shared_from_this(),registers_);
         if(!sim.isHistoryRecordingEnabled())history_.clear();else record(time);
     }
     for(auto port:{"RS1","RS2"})

@@ -2,20 +2,20 @@
   "schema": 1,
   "latency_core": "advanced",
   "profiles": [
-    {"name": "unit", "description": "Every gate and memory primitive one tick; the splitter one tick. The timing of all results before realistic profiles.", "tick_picoseconds": 0,
-     "gates": {"NOT": 1, "NAND": 1, "NOR": 1, "AND": 1, "OR": 1, "XOR": 1, "splitter": 1, "memory primitive": 1},
+    {"name": "unit", "description": "Every gate and memory primitive one tick; wiring (the splitter) no delay.", "tick_picoseconds": 0,
+     "gates": {"NOT": 1, "NAND": 1, "NOR": 1, "AND": 1, "OR": 1, "XOR": 1, "splitter": 0, "memory primitive": 1},
      "flip_flop": {"setup": 6, "hold": 1, "clock_to_output_minimum": 3, "clock_to_output_maximum": 4, "minimum_high": 2, "minimum_low": 6},
      "sram_cell": {"earliest": 2, "latest": 3, "minimum_spacing": 2},
      "memory_intervals": {"sram_settle": 32, "sram_precharge": 32, "sram_bitline_base": 64, "sram_bitline_per_row": 0, "sram_wire_per_side": 2, "rom_settle": 32, "rom_column_base": 96, "rom_column_per_row": 0, "dram_wordline": 32, "dram_sense_base": 32, "dram_sense_per_row": 0, "dram_restore": 32, "dram_read": 32, "dram_write_on": 32, "dram_write_off": 32, "dram_write_recovery": 32, "dram_close": 32, "dram_precharge": 32, "dram_equalize": 32, "dram_refresh_restore": 0, "dram_refresh_extra": 0, "dram_refresh_interval": 0, "dram_device_retention": 100000, "nor_read": 96, "nor_read_per_row": 0, "nor_pulse_end": 32, "nor_recovery": 32, "nor_program": 128, "nor_erase": 256},
      "dram_row_words": 2,
-     "certified_periods": {"single": 166, "baseline": 80, "advanced": 94},
-     "period_ticks": 94, "accesses": [
+     "certified_periods": {"single": 142, "baseline": 68, "advanced": 80},
+     "period_ticks": 80, "accesses": [
       {"memory": "ff", "operation": "write", "simulated": true, "cycles": 0},
       {"memory": "ff", "operation": "read", "simulated": true, "cycles": 0},
       {"memory": "sram", "operation": "write", "simulated": true, "cycles": 5, "note": "access_cycles 4"},
       {"memory": "sram", "operation": "read", "simulated": true, "cycles": 5, "note": "access_cycles 4"},
-      {"memory": "sram-clocked", "operation": "write", "simulated": true, "cycles": 5, "note": "access_cycles 4"},
-      {"memory": "sram-clocked", "operation": "read", "simulated": true, "cycles": 5, "note": "access_cycles 4"},
+      {"memory": "sram-clocked", "operation": "write", "simulated": true, "cycles": 6, "note": "access_cycles 5"},
+      {"memory": "sram-clocked", "operation": "read", "simulated": true, "cycles": 6, "note": "access_cycles 5"},
       {"memory": "rom", "operation": "read", "simulated": true, "cycles": 3, "note": "access_cycles 2"},
       {"memory": "dram", "operation": "read, row closed", "simulated": true, "cycles": 7, "note": "2-word rows"},
       {"memory": "dram", "operation": "read, row open (hit)", "simulated": true, "cycles": 4, "note": "2-word rows"},
@@ -23,7 +23,7 @@
       {"memory": "dram", "operation": "write, row open (hit)", "simulated": true, "cycles": 5, "note": "2-word rows"},
       {"memory": "nor", "operation": "read", "simulated": true, "cycles": 6},
       {"memory": "nor", "operation": "program one word", "simulated": true, "cycles": 8},
-      {"memory": "nor", "operation": "erase block", "simulated": true, "cycles": 9}
+      {"memory": "nor", "operation": "erase block", "simulated": true, "cycles": 10}
     ]},
     {"name": "embedded", "description": "65 nm microcontroller-class logic; 1 tick = 1 ps", "tick_picoseconds": 1,
      "gates": {"NOT": 30, "NAND": 41, "NOR": 47, "AND": 50, "OR": 52, "XOR": 120, "splitter": 0, "memory primitive": 30},

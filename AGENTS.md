@@ -51,7 +51,7 @@ build-cleanup/tests/SimulationTestRunner --list
 
 ### Engine
 
-- `include/basic`: `Pin<W>` and `Wire<W>` are width-templated and four-state (0, 1, X, Z). Supported widths are 1, 2, 3, 4, 5, 8, 16 and 32.
+- `include/basic`: a pin or wire holds one four-state (0, 1, X, Z) value of 1 to 64 bits, packed in two words (`PackedLogic`). `Pin<W>` and `Wire<W>` are typed handles on `PinBase`/`WireBase` for a width fixed at compile time; any width from 1 to 64 works. Which widths a component family offers is that family's contract choice.
 - `include/simulator`: a priority queue ordered by time, then wire updates before component evaluations, then scheduling order. Wire and pin history is recorded for time scrubbing and can be disabled for headless runs.
 - Each pin has an external wire (parent scope) and an internal wire (child scope). A component input cannot be wired directly to its own output; a zero-delay `Rewire` bridges it.
 
@@ -88,7 +88,7 @@ Component
 ### Visualizer
 
 - `visualizer-v2/`: `server.py` (native backend and layout computation) and `static/` (canvas app). The same UI runs without a server through `src/wasm/WasmBindings.cpp` and `VisualizerSession`.
-- `visualizer-v2/static/scenarios.json` defines menu titles and groups; `layout.json` holds saved layouts keyed by type, by profile fingerprint and by scenario root.
+- `visualizer-v2/static/scenarios.json` defines menu titles, groups and the fidelity profile each scenario opens in (`gate`, `logic`, `visual` or `compact`; there is no scenario-defined profile in the visualizer); `layout.json` holds saved layouts keyed by type, by profile fingerprint and by scenario root, so a scenario's layouts belong to its chosen profile.
 - `visualizer/` is the older Pygame viewer.
 
 ## Documentation and automatic recording

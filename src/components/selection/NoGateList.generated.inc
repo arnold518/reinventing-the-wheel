@@ -19,9 +19,9 @@
 "memory.nor-flash.endpoint.32", // more than one clock, or a part that times itself
 "memory.nor-flash.endpoint.8", // more than one clock, or a part that times itself
 "memory.nor-flash.row", // more than one clock, or a part that times itself
-"rv32i.core.baseline-pipeline", // 105121 gate nodes
-"rv32i.core.educational-five-stage", // 121327 gate nodes
-"rv32i.core.educational-single-cycle", // 82765 gate nodes
+"rv32i.core.baseline-pipeline", // 115237 gate nodes
+"rv32i.core.educational-five-stage", // 136367 gate nodes
+"rv32i.core.educational-single-cycle", // 91789 gate nodes
 "rv32i.register-file", // no gain: the same shares on its table (DelayRuleTest), and its large gate list made gate-level core runs 21% slower
 "rv32i.system.educational-single-cycle", // a leaf with a clock that is not a flip-flop
-"rv32im.core.educational-five-stage", // 170612 gate nodes
+"rv32im.core.educational-five-stage", // 189899 gate nodes

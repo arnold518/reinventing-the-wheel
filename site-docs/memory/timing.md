@@ -2,7 +2,7 @@
 
 How long a memory access takes, where that time comes from, and how the
 controller turns it into clock cycles. The general rules for delays and
-profiles are in [§ 1 Time and Delay](../timing.md); this page applies them to
+profiles are in [§ 1 Time and Delay](../basic/1.2.md); this page applies them to
 memories.
 
 ## Where an access spends its time

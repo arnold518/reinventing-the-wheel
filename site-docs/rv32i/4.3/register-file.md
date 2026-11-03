@@ -2,7 +2,7 @@
 
 `RegisterFile32x32` provides the RV32I core's two source-register reads and one destination-register write. It uses the [whole-word FF register](register.md), with register-address decoding and two read selectors around a shared bank. Its words are registers, not byte-masked memory words, because a register is only ever written whole ([storage and memory](register.md#storage-and-memory)). It is not a transaction memory endpoint: register operands are read directly, without requests, responses, or a memory controller.
 
-`RegisterFile<W,Count>` declares word width, register count and a hardwired-zero policy. W is 8/16/32; Count is 2/4/8/16/32. It has two asynchronous reads and one clocked write. RV32I selects W=32, Count=32 and `hardwire_zero=true`, which resolves to the `rv32i.register-file` family and concrete type `RegisterFile32x32`. Other geometries are reusable hardware configurations, not changes to the RV32I ISA. The [generic API](../../components/word-components.md#registerfilewcount) specifies construction; this page defines the CPU configuration.
+`RegisterFile<W,Count>` declares word width, register count and a hardwired-zero policy. W is 8/16/32; Count is 2/4/8/16/32. It has two asynchronous reads and one clocked write. RV32I selects W=32, Count=32 and `hardwire_zero=true`, which resolves to the `rv32i.register-file` family and concrete type `RegisterFile32x32`. Other geometries are reusable hardware configurations, not changes to the RV32I ISA. [Other geometries](#other-geometries) gives the generic construction; the rest of this page defines the CPU configuration.
 
 The storage path composes [flip-flop cells](../../memory/technologies/flip-flop.md)
 inside [whole-word registers](register.md), then adds destination decoding and
@@ -203,3 +203,25 @@ The sequence resets the file, attempts writes to x0, writes and reads every writ
 | `RegisterTest`, `RegisterWidthsTest`, `FlipFlopCellTest` | Reused lower-level storage contracts |
 
 The CPU configuration uses the `rv32i.register-file` family and its register-state capability. `WidthComponentsTest` checks the supported generic geometries, both zero-register policies and every data bit. Behavioral selection is available for the characterized 32×32 hardwired-zero family; other geometries are structural.
+
+## Other geometries
+
+`RegisterFile<W,Count>` (`modules/storage/RegisterFile.hpp`) has two
+asynchronous read ports and one enabled rising-edge write port. W is 8, 16
+or 32; Count is a power of two from 2 through 32. `RegisterFileConfig`
+chooses whether register zero is hardwired to zero; the default is true.
+
+| Pin | Direction | Width |
+| --- | --- | --- |
+| `CLK`, `RST`, `REG_WRITE` | Input | 1 each |
+| `RS1_ADDR`, `RS2_ADDR`, `RD_ADDR` | Input | log₂(Count) each |
+| `WRITE_DATA` | Input | W |
+| `RS1_DATA`, `RS2_DATA` | Output | W each |
+
+The circuit composes a [`Decoder<log₂(Count)>`](../../basic/1.5.md#152-decodern),
+two balanced [`Mux<Count,W>`](../../basic/1.5.md#151-muxnw) read trees and a
+bank of `Register<W>` words. Reset and unknown control behavior come from
+those storage cells. A hardwired zero has no storage and ignores writes. The
+32×32 hardwired-zero configuration is the `RegisterFile32x32` above, with
+contract `rv32i.register-file`, built by the same recipe. Register inspection
+uses `RegisterStateView`. `WidthComponentsTest` checks the other geometries.

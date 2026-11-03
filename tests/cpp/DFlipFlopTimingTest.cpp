@@ -37,9 +37,9 @@ struct Bench {
         SimulationTest::scheduleInitialEventsForTree(root, sim, 0);
     }
     void set(const std::shared_ptr<Wire<>>& wire, bool value, size_t at) {
-        sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(at, wire, value ? LogicValue::HIGH : LogicValue::LOW));
+        sim.scheduleEvent(std::make_shared<WireUpdateEvent>(at, wire, value ? LogicValue::HIGH : LogicValue::LOW));
     }
-    void data(LogicValue value, size_t at) { sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(at, d, value)); }
+    void data(LogicValue value, size_t at) { sim.scheduleEvent(std::make_shared<WireUpdateEvent>(at, d, value)); }
     bool high(const std::shared_ptr<Wire<>>& wire) const { return wire->getValueVector()[0] == LogicValue::HIGH; }
     // Leave the flip-flop holding `stored`, with the clock low and D at `data`.
     void prepare(bool stored, LogicValue resting) {

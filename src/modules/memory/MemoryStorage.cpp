@@ -1,4 +1,5 @@
 #include "modules/memory/MemoryStorage.hpp"
+#include "simulator/SignalTrace.hpp"
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
@@ -117,7 +118,10 @@ void MemoryStorage::writeLogic(SimulationTime time, uint32_t address,
             if (bit == LogicValue::HIGH) value.value |= 1u << b;
         }
         const auto at = static_cast<uint32_t>(address + i);
+        auto* trace=SignalTraceSubscription::memoryObserver();
+        const bool changed=trace&&currentByte(at)!=value;
         setByte(at, value);
+        if(changed)trace->memoryByteChanged(time,*this,at,value.value,value.known);
         record(time, at);
         if (bus_write && history_enabled_) { reserveHistory(sizeof(BusWrite) * 2); bus_writes_.push_back({time, at, value}); }
     }
@@ -135,6 +139,7 @@ void MemoryStorage::fill(SimulationTime time, LogicValue value) {
     live_fill_ = byte;
     pages_.clear();
     std::fill(bytes_.begin(), bytes_.end(), byte);
+    if(auto* trace=SignalTraceSubscription::memoryObserver())trace->memoryFilled(time,*this,value);
     if (!history_enabled_) return;
     reserveHistory(sizeof(Entry) * 2);
     if (!resets_.empty() && time < resets_.back().time) resets_.clear();

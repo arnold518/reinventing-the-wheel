@@ -24,7 +24,7 @@ The [FF memory controller](../controllers.md) connects this native device to the
 - `S_BAR` and `R_BAR` are active-low. The other components' `RST` is active-high and asynchronous: asserting it clears state without waiting for a clock edge, after gate propagation.
 - State is not guaranteed to start at zero. Establish a known state with set/reset before relying on it. Every recorded scenario below starts with reset.
 - Behavior tables describe settled outputs. A rising edge means `CLK` changes from `0` to `1`; a sustained high level is not another edge. Keep data and control inputs stable around the edge and allow propagation to finish.
-- These are digital models, not analog metastability or transistor-voltage models. Their delays come from the [timing profile](../../timing.md); the flip-flop's setup, hold and clock-to-output times are measured on its gates in each profile ([3.3.1.3](#3313-dflipflop)).
+- These are digital models, not analog metastability or transistor-voltage models. Their delays come from the [timing profile](../../basic/1.2.md); the flip-flop's setup, hold and clock-to-output times are measured on its gates in each profile ([3.3.1.3](#3313-dflipflop)).
 
 The simplified **C++ examples** describe binary behavior, not the simulator implementation. They assume reset has already established zero storage and, for clocked components, `CLK = 0`. Call `update` for each input change, including falling clock edges. They omit propagation delays and `X`/`Z` handling and can be compiled together in the order shown.
 
@@ -517,7 +517,7 @@ The structural/behavioral equivalence guarantee is for known-binary controls at 
 | `BitJoiner<W>` | 1 | `OUTPUT` packs the stored bits into `Q` |
 | `ConstantValue<1>` | 1 | `ZERO` is a retained compatibility node; it does not drive FF storage |
 
-Input splitters take the profile's splitter delay (one tick in `unit`, none in the realistic profiles). Output packing is wiring with no delay. This grouping adds no pipeline stage. Structural words may contain behavioral cells without changing the word's pins.
+Input splitters and output packing are wiring with no delay in every profile. This grouping adds no pipeline stage. Structural words may contain behavioral cells without changing the word's pins.
 
 #### Behavioral implementation
 
@@ -759,7 +759,7 @@ The shared equivalence contract is settled binary behavior, not all four-state h
 | `MemoryAddressDecoder` | `WORD_ADDR` → `IN_RANGE`, `VALID_n`, `SELECT_b` | Validate the full 32-bit index, identify each valid word, and supply read-mux address bits |
 | `MemoryAccessControl` | `IN_RANGE`, `VALID_n`, `WE`, `READ_EN` → `WRITE_n`, `READ_VALID`, `FAULT` | Gate each word write enable, permit valid reads, and flag active out-of-range accesses |
 | `FFStorageBank<W>` | Shared data/mask/clock/reset and `WRITE_n` → `WORD_n` | Hold exactly N words as specified in §3.3.1.6 |
-| `MemoryReadSelector<W>` | `WORD_n`, `SELECT_b`, `READ_VALID` → `READ_DATA` | Select the addressed word through mux trees and gate the result |
+| `MemoryReadSelector<W>` | `WORD_n`, `SELECT_b`, `READ_VALID` → `READ_DATA` | Select the addressed word through a tree of 2:1 word muxes (`READ_l_i`, `Mux<2,W>`) and gate the result with one word AND (`ENABLE`) |
 
 The decoder checks high address bits as well as the bits used for selection: an invalid index must not alias a valid word. Non-power-of-two depths have no extra storage cells; missing read-mux leaves are zero. A one-word device needs range checking but no word-selection decoder gates or read-selection muxes. These three address/control/read helper blocks are structural only; the bank's word/cell children remain selectable.
 

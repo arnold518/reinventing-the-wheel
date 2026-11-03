@@ -1,0 +1,38 @@
+{
+ "version": 2,
+ "paced": true,
+ "player": "pong-smoke",
+ "metrics": {
+  "updates": 2,
+  "episodes": 1,
+  "totalScore": 0,
+  "finalStatus": 0,
+  "finalFingerprint": 3635447931
+ },
+ "batches": [
+  [
+   [
+    2,
+    true
+   ],
+   [
+    8,
+    true
+   ],
+   [
+    6,
+    true
+   ]
+  ],
+  [
+   [
+    6,
+    false
+   ],
+   [
+    6,
+    true
+   ]
+  ]
+ ]
+}

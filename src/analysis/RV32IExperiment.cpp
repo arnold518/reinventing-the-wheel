@@ -1,5 +1,6 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
+#include "system/MemorySubsystem.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "MemoryTimingState.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
@@ -47,7 +48,7 @@ uint64_t binaryTraceValue(const std::shared_ptr<PinBase>& pin,size_t cycle,uint6
     return value;
 }
 void drive(Simulator& sim,SimulationTime t,const std::shared_ptr<Wire<>>& wire,bool value) {
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(t,wire,value?LogicValue::HIGH:LogicValue::LOW));
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,wire,value?LogicValue::HIGH:LogicValue::LOW));
 }
 void compare(const rv32i::RV32IState& a,const rv32i::RV32IState& b,size_t attempt) {
     require(a.pc==b.pc && a.x==b.x && a.halted==b.halted && a.trapped==b.trapped && a.trap_cause==b.trap_cause,
@@ -101,7 +102,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     profile=circuit::withProfileOverrides(std::move(profile),{
         circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.IMEM"),"shared memory macro"),
         circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.DMEM"),"shared memory macro"),
-        circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.MEM"),"shared memory macro")});
+        circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.MEMORY.RAM"),"shared memory macro")});
     auto manifest=std::make_shared<circuit::BuildManifest>(profile.name(),profile.fingerprint());
     auto context=circuit::BuildContext::rootScope(catalog,std::make_shared<const circuit::BuildProfile>(profile),manifest)->child("EXPERIMENT",std::nullopt);
     // FLUSH_L1/FLUSH_L2: the caches' invalidation (a write-back cache writes
@@ -154,45 +155,37 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         dmem=rv32i::buildMemory(b,*root,"DMEM",memory_config);
         rv32i::wireMemorySystem(b,core,imem,dmem,root->getInputPin("CLK"),root->getInputPin("RST"));
     } else {
-        imem=dmem=rv32i::buildMemory(b,*root,"MEM",memory_config);
-        circuit::detail::StructuralWiring w(b);
-        // Upper's requests (`up` prefix, outputs REQ_*, RSP_READY) to lower's
-        // inputs (`down` prefix), and back.
-        const auto link=[&](const std::shared_ptr<IOComponent>& upper,const std::string& up,
-                            const std::shared_ptr<IOComponent>& lower,const std::string& down) {
-            for(auto name:{"REQ_VALID","REQ_OP","REQ_ADDR","REQ_WRITE_DATA","REQ_WRITE_MASK","RSP_READY"})
-                w.connect(upper->getOutputPinDynamic(up+name),lower->getInputPinDynamic(down+name));
-            for(auto name:{"REQ_READY","RSP_VALID","RSP_READ_DATA","RSP_STATUS"})
-                w.connect(lower->getOutputPinDynamic(down+name),upper->getInputPinDynamic(up+name));
-        };
-        const auto clocked=[&](const std::shared_ptr<IOComponent>& part,const std::string& prefix) {
-            w.connect(root->getInputPin("CLK"),part->getInputPin(prefix+"CLK"));
-            w.connect(root->getInputPin("RST"),part->getInputPin(prefix+"RST"));
-        };
-        const auto cache=[&](const std::string& name,const circuit::memory::CacheConfig& settings,bool burst_backing) {
-            auto c=settings;c.burst_fill=c.burst_fill&&burst_backing;
-            auto part=b.addNewComponent<circuit::memory::Cache<32>>(name,c);
-            w.connect(root->getInputPin(name=="L2"?"FLUSH_L2":"FLUSH_L1"),part->getInputPin("INV_VALID"));
-            clocked(part,"");
-            boundaries.push_back({name,part,"MEM_"});
-            return std::static_pointer_cast<IOComponent>(part);
-        };
-        w.connect(root->getInputPin("CLK"),core->getInputPin("CLK"));
-        w.connect(root->getInputPin("RST"),core->getInputPin("RST"));
-        arbiter=b.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("ARBITER",config.l2.block_bytes/4);
-        clocked(arbiter,"I_");clocked(arbiter,"D_");
-        boundaries.push_back({"ARBITER",arbiter,"MEM_"});
-        // An L1 under which a cache answers bursts fills with bursts.
+        // One memory behind both ports: the memory subsystem (§ 5.3) with this
+        // arrangement's caches. An L1 under which a cache answers bursts
+        // fills with bursts; the L2 bursts when the memory does.
         const bool lower_bursts=bursts||l2;
-        for(const auto& [port,prefix,settings]:{std::tuple{"IMEM_","I_",config.instruction_l1},{"DMEM_","D_",config.data_l1}}) {
-            if(l1s) {
-                auto l1=cache(prefix==std::string("I_")?"IL1":"DL1",settings,lower_bursts);
-                link(core,port,l1,"");link(l1,"MEM_",arbiter,prefix);
-            } else link(core,port,arbiter,prefix);
+        const auto with_bursts=[](circuit::memory::CacheConfig c,bool backing){c.burst_fill=c.burst_fill&&backing;return c;};
+        circuit::system::MemorySubsystemConfig subsystem;
+        subsystem.memory=memory_config;
+        subsystem.arbiter_block_words=config.l2.block_bytes/4;
+        subsystem.invalidation_inputs=true;
+        if(l1s){subsystem.instruction_cache=with_bursts(config.instruction_l1,lower_bursts);subsystem.data_cache=with_bursts(config.data_l1,lower_bursts);}
+        if(l2)subsystem.shared_cache=with_bursts(config.l2,bursts);
+        auto memory=b.addNewComponent<circuit::system::MemorySubsystem>("MEMORY",subsystem);
+        imem=dmem=memory->memoryEndpoint();
+        arbiter=memory->arbiter();
+        // Request boundaries keep their published names.
+        boundaries.push_back({"ARBITER",arbiter,"MEM_"});
+        if(l1s){boundaries.push_back({"IL1",memory->instructionCache(),"MEM_"});boundaries.push_back({"DL1",memory->dataCache(),"MEM_"});}
+        if(l2)boundaries.push_back({"L2",memory->sharedCache(),"MEM_"});
+        circuit::detail::StructuralWiring w(b);
+        for(const auto& part:{core,std::static_pointer_cast<IOComponent>(memory)}) {
+            w.connect(root->getInputPin("CLK"),part->getInputPin("CLK"));
+            w.connect(root->getInputPin("RST"),part->getInputPin("RST"));
         }
-        std::shared_ptr<IOComponent> above_memory=arbiter;
-        if(l2) {auto shared_l2=cache("L2",config.l2,bursts);link(arbiter,"MEM_",shared_l2,"");above_memory=shared_l2;}
-        link(above_memory,"MEM_",imem,"");clocked(imem,"");
+        w.connect(root->getInputPin("FLUSH_L1"),memory->getInputPin("INV_L1"));
+        w.connect(root->getInputPin("FLUSH_L2"),memory->getInputPin("INV_L2"));
+        for(const auto& [port,prefix]:{std::pair{"IMEM_","I_"},{"DMEM_","D_"}}) {
+            for(auto name:{"REQ_VALID","REQ_OP","REQ_ADDR","REQ_WRITE_DATA","REQ_WRITE_MASK","RSP_READY"})
+                w.connect(core->getOutputPinDynamic(std::string(port)+name),memory->getInputPinDynamic(std::string(prefix)+name));
+            for(auto name:{"REQ_READY","RSP_VALID","RSP_READ_DATA","RSP_STATUS"})
+                w.connect(memory->getOutputPinDynamic(std::string(prefix)+name),core->getInputPinDynamic(std::string(port)+name));
+        }
         w.finish();
     }
     auto clk=b.addNewWire("CLOCK",nullptr,{root->getInputPin("CLK")});

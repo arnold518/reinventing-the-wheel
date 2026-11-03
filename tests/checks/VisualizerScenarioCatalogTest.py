@@ -13,6 +13,56 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class VisualizerScenarioCatalogTest(unittest.TestCase):
+    def test_overall_component_learning_order(self):
+        options = server.SCENARIO_OPTIONS
+        groups = list(dict.fromkeys(option['group'] for option in options))
+        self.assertEqual(groups, ['logic', 'wiring', 'alu', 'memory-helpers',
+            'ff', 'sram', 'dram', 'rom', 'flash', 'memory-interface', 'memory-cache',
+            'registers', 'rv32i-alu', 'rv32i-blocks', 'single', 'baseline',
+            'prediction', 'advanced', 'memory-systems', 'examples', 'faults',
+            'performance', 'rv32im', 'rv32im-programs', 'system', 'games', 'developer'])
+        def aliases(group):
+            return [option['key'] for option in options if option['group'] == group]
+        def classes(group):
+            return [option['className'] for option in options if option['group'] == group]
+        self.assertEqual(classes('ff'), ['FFWordTest', 'FFStorageBankTest',
+            'FFMemoryTest', 'NativeMemoryDeviceTest'])
+        self.assertEqual([name for name in classes('wiring') if name.startswith('Mux')],
+            ['Mux2Width1Test', 'Mux2Width4Test', 'Mux2Width32Test',
+             'Mux4Width1Test', 'Mux4Width32Test', 'Mux8Width1Test',
+             'Mux8Width8Test', 'Mux8Width32Test', 'Mux32Width1Test', 'Mux32Width32Test'])
+        self.assertEqual(classes('single'), [f'RV32ISingleCycle{stage}StageTest'
+            for stage in ('Fetch', 'Decode', 'Execute', 'Memory', 'Writeback', 'NextPC')]
+            + ['RV32ISingleCycleCoreTest'])
+        self.assertEqual(classes('baseline')[-1], 'RV32IBaselinePipelineCoreTest')
+        self.assertEqual(classes('advanced')[-1], 'RV32IFiveStageCoreTest')
+        self.assertEqual(aliases('rv32im'), ['multiply-step', 'divide-step', 'multiplier-w32',
+            'divider-w32', 'muldiv-w32', 'rv32im-decode-control', 'rv32im-decode-stage',
+            'rv32im-execute-stage', 'rv32im-coordinator', 'rv32im-core'])
+        self.assertEqual(aliases('rv32im-programs'), ['rv32im-program-arithmetic',
+            'rv32im-program-dependencies', 'rv32im-program-divide-edges', 'rv32im-program26', 'rv32im-program27'])
+        self.assertEqual(aliases('system'), ['bus-router', 'bus-interconnect', 'bus-bridge', 'bus-port-checker',
+            'memory-subsystem', 'device-register-port-w32', 'clocked-counter', 'synchronous-fifo', 'console-device',
+            'timer-device', 'button-device', 'framebuffer-display', 'led-panel', 'computer-system-structure',
+            'computer-system', 'computer-system-two-bus', 'computer-system-registered-bridge', 'computer-system-leds',
+            'computer-system-checked'])
+        self.assertEqual(aliases('games'), ['game-2048', 'game-sokoban', 'game-snake', 'game-pong',
+            'game-tetris', 'game-snake-leds'])
+
+    def test_explicit_ranks_are_complete_and_registry_order_independent(self):
+        groups = [group['id'] for group in catalog.CATALOG['groups']]
+        self.assertEqual(len(groups), len(set(groups)))
+        for group in groups:
+            rows = [row for row in catalog.CATALOG['components'].values() if row['group'] == group]
+            ranks = [row['order'] for row in rows]
+            self.assertTrue(all(type(rank) is int for rank in ranks), group)
+            self.assertEqual(sorted(ranks), list(range(len(rows))), group)
+        for program in catalog.CATALOG['programs']:
+            self.assertEqual(program['order'], int(program['id'].split('-')[1]))
+        visible = set(server.visualizable_test_names())
+        descriptors = [d for d in backend.get_registered_test_descriptors() if d['name'] in visible]
+        self.assertEqual(catalog.scenario_options(descriptors[::-1]), server.SCENARIO_OPTIONS)
+
     def test_no_empty_or_retired_scenarios_and_complete_presentation(self):
         descriptors = backend.get_registered_test_descriptors()
         visible = set(server.visualizable_test_names())
@@ -33,7 +83,7 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
         # Build only; do not precompute CPU programs or run verification suites.
         for name in catalog.CATALOG['components']:
             with self.subTest(name=name):
-                root = backend.create_layout_topology(name)
+                root = server.scenario_topology(name)
                 pins = len(root.get_input_pins()) + len(root.get_output_pins())
                 self.assertTrue(pins or root.get_children() or root.get_wires())
                 del root
@@ -65,7 +115,11 @@ import {scenarioOptions, menuOptions, findScenario, resolveProgram, aliasesFor, 
   from './visualizer-v2/static/scenario_catalog.mjs';
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 const options = scenarioOptions(input.descriptors, input.catalog);
-const menu = menuOptions(options, input.catalog.groups).flatMap(g => g.options);
+assert.deepEqual(scenarioOptions([...input.descriptors].reverse(), input.catalog), options);
+const groups = menuOptions(options, input.catalog.groups);
+assert.deepEqual(groups.map(g => g.id), input.catalog.groups.map(g => g.id));
+const menu = groups.flatMap(g => g.options);
+assert.deepEqual(menu, options.filter(o => !o.workload || o.core === 'single'));
 assert.equal(menu.filter(o => o.workload).length, 22);
 assert.equal(new Set(menu.map(o => o.key)).size, menu.length);
 for (const o of options) {
@@ -107,7 +161,7 @@ process.stdout.write(JSON.stringify(options));
             ('RV32IBranchPredictorTest', ']'),
         ):
             with self.subTest(name=name):
-                root = backend.create_layout_topology(name)
+                root = server.scenario_topology(name)
                 expected = {}
                 stack = [root]
                 while stack:

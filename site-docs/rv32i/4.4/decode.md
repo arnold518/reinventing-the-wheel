@@ -88,7 +88,7 @@ Real simulator x1–x31 start unknown until reset; the simplified array is only 
 
 #### Structural implementation
 
-`CONTROL` is `RV32IDecodeControlUnit`; `REGISTER_FILE` is the W=32, Count=32, hardwired-zero configuration of [RegisterFile&lt;W,Count&gt;](../../components/word-components.md#registerfilewcount), exposed as `RegisterFile32x32`. Raw addresses connect to the register file, `WB_VALUE` to its write-data input, and `REGISTER_WRITE` to its write enable. The register file reuses the FF bank/word/cell hierarchy from chapter 3. No second copy of its storage is kept in the stage.
+`CONTROL` is `RV32IDecodeControlUnit`; `REGISTER_FILE` is the W=32, Count=32, hardwired-zero configuration of [RegisterFile&lt;W,Count&gt;](../4.3/register-file.md#other-geometries), exposed as `RegisterFile32x32`. Raw addresses connect to the register file, `WB_VALUE` to its write-data input, and `REGISTER_WRITE` to its write enable. The register file reuses the FF bank/word/cell hierarchy from chapter 3. No second copy of its storage is kept in the stage.
 
 #### Behavioral implementation
 

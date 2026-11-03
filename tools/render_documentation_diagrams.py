@@ -106,6 +106,24 @@ class Figure:
         d = " ".join(("M" if i == 0 else "L") + f" {x} {y}" for i, (x, y) in enumerate(points))
         self.parts.append(f'<path class="dg-{kind}" d="{d}"{marker}/>')
 
+    def pixels(self, x, y, width, height, data, scale):
+        """A screen, pixel for pixel: `data` holds width x height RGB332 bytes.
+        Black is the screen itself; each run of one other color is one rectangle."""
+        def color(v):
+            return f"#{(v >> 5) * 255 // 7:02x}{((v >> 2) & 7) * 255 // 7:02x}{(v & 3) * 255 // 3:02x}"
+        self.parts.append(f'<rect x="{x}" y="{y}" width="{width * scale}" height="{height * scale}" fill="#000000"/>')
+        for row in range(height):
+            column = 0
+            while column < width:
+                v = data[row * width + column]
+                end = column + 1
+                while end < width and data[row * width + end] == v:
+                    end += 1
+                if v:
+                    self.parts.append(f'<rect x="{x + column * scale}" y="{y + row * scale}" width="{(end - column) * scale}" '
+                                      f'height="{scale}" fill="{color(v)}"/>')
+                column = end
+
     def box(self, key, x, y, width, height, title, subtitle=None, kind="box"):
         self.rect(x, y, width, height, kind, node=key)
         cy = y + height / 2
@@ -594,38 +612,39 @@ def memory_latency():
 
 def cache_topologies():
     f = Figure("cache-topologies", "Five memory arrangements over one DRAM",
-               "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 360,
+               "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 372,
                "<strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
                "C-ID adds an instruction and a data L1 above the arbiter; D-0 puts a shared L2 below it; D-ID has both.")
     xs = [40, 160, 280, 400, 520]
     names = ["A", "B", "C-ID", "D-0", "D-ID"]
+    # Small boxes are 32 high: a 14 px label keeps a 4 px inset with the web font.
     for x, name in zip(xs, names):
         f.text(x + 40, 32, name, "name", "middle")
-        f.rect(x, 48, 36, 28, "box", radius=4); f.text(x + 18, 67, "I", "code", "middle")
-        f.rect(x + 44, 48, 36, 28, "box", radius=4); f.text(x + 62, 67, "D", "code", "middle")
-        y = 76
+        f.rect(x, 48, 36, 32, "box", radius=4); f.text(x + 18, 69, "I", "code", "middle")
+        f.rect(x + 44, 48, 36, 32, "box", radius=4); f.text(x + 62, 69, "D", "code", "middle")
+        y = 80
         if name == "A":
-            f.line(x + 18, 76, x + 18, 252, True); f.line(x + 62, 76, x + 62, 252, True)
+            f.line(x + 18, 80, x + 18, 264, True); f.line(x + 62, 80, x + 62, 264, True)
             # Each port's own DRAM, wide enough for its label.
-            f.rect(x - 8, 252, 48, 40, "store", radius=4); f.text(x + 16, 276, "DRAM", "code", "middle")
-            f.rect(x + 44, 252, 48, 40, "store", radius=4); f.text(x + 68, 276, "DRAM", "code", "middle")
+            f.rect(x - 8, 264, 48, 40, "store", radius=4); f.text(x + 16, 288, "DRAM", "code", "middle")
+            f.rect(x + 44, 264, 48, 40, "store", radius=4); f.text(x + 68, 288, "DRAM", "code", "middle")
             continue
         if name in ("C-ID", "D-ID"):
-            f.line(x + 18, 76, x + 18, 100, True); f.line(x + 62, 76, x + 62, 100, True)
-            f.rect(x, 100, 36, 28, "focus", radius=4); f.text(x + 18, 119, "L1", "code", "middle")
-            f.rect(x + 44, 100, 36, 28, "focus", radius=4); f.text(x + 62, 119, "L1", "code", "middle")
-            y = 128
-        f.line(x + 18, y, x + 18, 152, True); f.line(x + 62, y, x + 62, 152, True)
-        f.rect(x, 152, 80, 28, "box", radius=4); f.text(x + 40, 171, "ARB", "code", "middle")
-        y = 180
+            f.line(x + 18, 80, x + 18, 104, True); f.line(x + 62, 80, x + 62, 104, True)
+            f.rect(x, 104, 36, 32, "focus", radius=4); f.text(x + 18, 125, "L1", "code", "middle")
+            f.rect(x + 44, 104, 36, 32, "focus", radius=4); f.text(x + 62, 125, "L1", "code", "middle")
+            y = 136
+        f.line(x + 18, y, x + 18, 160, True); f.line(x + 62, y, x + 62, 160, True)
+        f.rect(x, 160, 80, 32, "box", radius=4); f.text(x + 40, 181, "ARB", "code", "middle")
+        y = 192
         if name in ("D-0", "D-ID"):
-            f.line(x + 40, 180, x + 40, 204, True)
-            f.rect(x, 204, 80, 28, "focus", radius=4); f.text(x + 40, 223, "L2", "code", "middle")
-            y = 232
-        f.line(x + 40, y, x + 40, 252, True)
-        f.rect(x, 252, 80, 40, "store", radius=4); f.text(x + 40, 276, "DRAM", "code", "middle")
-    f.text(40, 320, "I, D: instruction and data ports. ARB: two-port arbiter.", "small")
-    f.text(40, 342, "A: each DRAM holds the whole image.", "small")
+            f.line(x + 40, 192, x + 40, 216, True)
+            f.rect(x, 216, 80, 32, "focus", radius=4); f.text(x + 40, 237, "L2", "code", "middle")
+            y = 248
+        f.line(x + 40, y, x + 40, 264, True)
+        f.rect(x, 264, 80, 40, "store", radius=4); f.text(x + 40, 288, "DRAM", "code", "middle")
+    f.text(40, 332, "I, D: instruction and data ports. ARB: two-port arbiter.", "small")
+    f.text(40, 354, "A: each DRAM holds the whole image.", "small")
     return f
 
 
@@ -657,6 +676,140 @@ def memory_arbiter():
     f.text(400, 144, "REQ", "tag", "middle")
     f.text(492, 260, "RESPONSE", "tag")
     f.text(100, 220, "RSP", "tag")
+    return f
+
+
+def system_overview():
+    f = Figure("system-overview", "A computer as parts on a bus",
+               "The RV32IM core is two masters on the bus: an instruction port and a data port. The bus sends each request by its address to main memory, to video memory, or to one of the device register windows; devices also have pins to the outside world.",
+               414,
+               "<strong>Everything talks through one kind of port.</strong> The core's two ports are masters; memory and devices are targets. "
+               "The bus looks at each request's address and passes it to the target whose window holds it. Devices connect to the outside "
+               "(a host console, keys, a screen, lights) through their own pins, not through the bus.")
+    f.box("core", 40, 32, 560, 56, "RV32IM core", "IMEM_ fetch port · DMEM_ data port", "focus")
+    f.line(200, 88, 200, 136, True); f.line(440, 88, 440, 136, True)
+    f.text(212, 116, "CPU_I", "tag"); f.text(452, 116, "CPU_D", "tag")
+    f.box("bus", 40, 136, 560, 64, "BUS", "one router per master, an arbiter per shared target")
+    xs = [40, 152, 264, 376, 488]
+    labels = [("MEMORY", "I_, D_ ports"), ("CONSOLE", "0x1000_0000"), ("TIMER", "0x1000_1000"), ("BUTTONS", "0x1000_2000"), ("DISPLAY", "0x1000_3000")]
+    for x, (name, sub) in zip(xs, labels):
+        f.line(x + 56, 200, x + 56, 240, True)
+        f.box(name.lower(), x, 240, 112, 56, name, sub, "store" if name == "MEMORY" else "box")
+    for x, text in zip(xs[1:], ["host text", "", "keys", "screen"]):
+        if text:
+            f.line(x + 56, 296, x + 56, 320, True); f.text(x + 56, 340, text, "small", "middle")
+    # Address notes below the drawing, clear of every connector.
+    f.text(40, 372, "MEMORY: RAM from 0x0.", "small")
+    f.text(40, 394, "DISPLAY: registers at 0x1000_3000, video memory at 0x2000_0000.", "small")
+    return f
+
+
+def bus_structure():
+    f = Figure("bus-structure", "Inside the bus",
+               "Each master has its own router, which decodes the address and either answers an error itself or passes the request to one target port. A target port reached by two masters gets a two-port arbiter; a port reached by one master is a straight connection.",
+               336,
+               "<strong>Per master a router, per shared target an arbiter.</strong> A router holds one request at a time, finds the region its "
+               "address falls in and offers the request on that target's port, with the address made local to the window. An address in no "
+               "region, or a fetch from a window that is not executable, is answered by the router with a Range status. When two masters "
+               "reach one port, the two-port arbiter of § 3 takes turns.")
+    f.box("m0", 40, 32, 160, 48, "master A", None)
+    f.box("m1", 440, 32, 160, 48, "master B", None)
+    f.line(120, 80, 120, 112, True); f.line(520, 80, 520, 112, True)
+    f.box("r0", 40, 112, 160, 56, "A_ROUTER", "decode · errors", "focus")
+    f.box("r1", 440, 112, 160, 56, "B_ROUTER", "decode · errors", "focus")
+    f.box("arb", 240, 208, 160, 48, "X_ARBITER", None)
+    f.path([(160, 168), (160, 232), (240, 232)], arrow=True)
+    f.path([(480, 168), (480, 232), (400, 232)], arrow=True)
+    f.line(320, 256, 320, 288, True)
+    f.box("x", 240, 288, 160, 40, "target X", None, "store")
+    f.line(80, 168, 80, 288, True)
+    f.box("y", 24, 288, 112, 40, "target Y", None, "store")
+    f.line(560, 168, 560, 288, True)
+    f.box("z", 504, 288, 112, 40, "target Z", None, "store")
+    f.text(92, 264, "only A", "tag"); f.text(572, 264, "only B", "tag")
+    return f
+
+
+def bus_layers():
+    f = Figure("bus-layers", "One bus and two buses",
+               "Left: one bus connects the core to memory, video memory and the four devices. Right: a system bus connects the core to memory, video memory and a bridge; behind the bridge a peripheral bus connects the four devices.",
+               360,
+               "<strong>The same parts, one or two buses.</strong> In the two-bus machine (right) the system bus carries the fast traffic "
+               "(memory, video) and passes the whole peripheral window, 0x1000_0000 to 0x1FFF_FFFF, to a bridge. Behind the bridge the "
+               "peripheral bus routes the same addresses to the devices, so software sees the same map. The bridge can pass a transfer "
+               "straight through or register it for one cycle each way.")
+    # left: one bus
+    f.box("core1", 24, 32, 264, 40, "CORE", None, "focus")
+    f.line(156, 72, 156, 104, True)
+    f.box("bus1", 24, 104, 264, 40, "BUS", None)
+    for i, name in enumerate(["MEM", "VIDEO", "CON", "TIM", "BTN", "DSP"]):
+        x = 24 + i * 44
+        f.line(x + 20, 144, x + 20, 184, True)
+        f.rect(x, 184, 40, 32, "store" if name in ("MEM", "VIDEO") else "box", radius=4)
+        f.text(x + 20, 205, name[:3], "code", "middle")
+    f.text(24, 252, "one bus: every target on one router", "small")
+    # right: two buses
+    f.box("core2", 352, 32, 264, 40, "CORE", None, "focus")
+    f.line(484, 72, 484, 104, True)
+    f.box("sys", 352, 104, 264, 40, "SYSTEM_BUS", None)
+    for i, name in enumerate(["MEM", "VID"]):
+        x = 352 + i * 56
+        f.line(x + 24, 144, x + 24, 184, True)
+        f.rect(x, 184, 48, 32, "store", radius=4); f.text(x + 24, 205, name, "code", "middle")
+    f.line(560, 144, 560, 176, True)
+    f.box("bridge", 512, 176, 96, 40, "BRIDGE", None, "focus")
+    f.line(560, 216, 560, 240, True)
+    f.box("per", 352, 240, 264, 40, "PERIPHERAL_BUS", None)
+    for i, name in enumerate(["CON", "TIM", "BTN", "DSP"]):
+        x = 360 + i * 64
+        f.line(x + 24, 280, x + 24, 304, True)
+        f.rect(x, 304, 48, 32, "box", radius=4); f.text(x + 24, 325, name, "code", "middle")
+    return f
+
+
+def device_shape():
+    f = Figure("device-shape", "The shape of a register device",
+               "A request arrives on the device's bus port, the register port turns it into one register access, the register front end built from the device's register table decodes the offset and checks the access, and the device core does the work and drives the outside pins.",
+               288,
+               "<strong>Port, registers, core.</strong> The register port (shared by every device) holds a request and its response. The front "
+               "end is generated from the device's register table: it decodes the offset, answers wrong accesses with a status, selects the value "
+               "a read returns and raises one strobe per writable register. The core (a queue, a counter, a frame counter, LEDs) is the only "
+               "part that differs from device to device.")
+    f.box("bus", 40, 40, 112, 56, "bus port", "REQ / RSP")
+    f.line(152, 68, 192, 68, True)
+    f.box("port", 192, 40, 128, 56, "PORT", "one access")
+    f.line(320, 68, 360, 68, True)
+    f.box("regs", 360, 40, 240, 56, "REGISTERS", "front end from the table", "focus")
+    f.line(480, 96, 480, 136, True); f.line(440, 136, 440, 96, True)
+    f.text(492, 124, "strobes", "tag"); f.text(388, 124, "values", "tag")
+    f.box("core", 360, 136, 240, 56, "device core", "queue · counter · state", "store")
+    f.line(480, 192, 480, 232, True)
+    f.text(480, 256, "outside pins", "small", "middle")
+    f.rect(40, 136, 280, 120, "zone", radius=6)
+    f.text(56, 164, "register table", "name")
+    for i, row in enumerate(["0x0  TX      write-only data", "0x4  STATUS  read-only", "0x8  COUNT   read-only"]):
+        f.text(56, 192 + 22 * i, row, "code")
+    return f
+
+
+def led_panel():
+    f = Figure("led-panel", "LED panel",
+               "The LED panel's register front end stores LEDS and BLINK; a free-running counter and a 32-to-1 multiplexer pick the blink phase; sixteen AND gates drive the LED pins.",
+               232,
+               "<strong>Two registers and a counter.</strong> LEDS and BLINK live in the front end, built from the two-row table. "
+               "When BLINK is k > 0, counter bit k picks whether the lit LEDs show: on for 2<sup>k</sup> cycles, off for 2<sup>k</sup>.")
+    f.box("port", 24, 40, 112, 56, "PORT", None)
+    f.line(136, 68, 168, 68, True)
+    f.box("regs", 168, 40, 152, 56, "REGISTERS", "LEDS · BLINK", "focus")
+    f.box("count", 168, 136, 152, 56, "BLINK_COUNTER", "32 bits", "store")
+    f.box("mux", 360, 136, 104, 56, "PHASE", "32 : 1")
+    f.line(320, 164, 360, 164, True)
+    f.path([(296, 96), (296, 116), (412, 116), (412, 136)], arrow=True)
+    f.box("and", 504, 40, 112, 56, "LIGHTS", "16 × AND")
+    f.line(320, 60, 504, 60, True)
+    f.path([(464, 164), (560, 164), (560, 96)], arrow=True)
+    f.line(616, 68, 632, 68, True)
+    f.text(424, 52, "LEDS", "tag"); f.text(420, 130, "BLINK", "tag")
     return f
 
 
@@ -731,13 +884,75 @@ def cache_speedup():
     return f
 
 
+def game_versions():
+    f = Figure("game-versions", "One game program, two versions",
+               "A short version starts from a prepared board, takes one or two button presses queued at fixed cycles, runs on a 32 by 24 screen and opens as a live scenario. A long version is a computer player's whole session: one batch of button changes after each frame, on the 64 by 48 screen, published as a recording with one checkpoint per frame.",
+               300,
+               "<strong>Same machine, same program source, two sizes of run.</strong> Both run on <code>games-machine</code> in Compact "
+               "with embedded timing and a 4.5 ns clock, and both are checked instruction by instruction. The short version keeps every "
+               "wire's history in the visualizer; the long version keeps the machine's state at each frame.")
+    f.text(40, 28, "SHORT · SCENARIO", "tag")
+    f.box("s-board", 40, 40, 128, 64, "Board", "prepared")
+    f.line(168, 72, 184, 72, True)
+    f.box("s-input", 184, 40, 128, 64, "Presses", "1–2, queued")
+    f.line(312, 72, 328, 72, True)
+    f.box("s-machine", 328, 40, 128, 64, "Machine", "32 × 24 screen", "focus")
+    f.line(456, 72, 472, 72, True)
+    f.box("s-view", 472, 40, 128, 64, "Scenario", "every wire")
+    f.text(40, 160, "LONG · RECORDING", "tag")
+    f.box("l-player", 40, 172, 128, 64, "Player", "the C rules")
+    f.line(168, 204, 184, 204, True)
+    f.box("l-input", 184, 172, 128, 64, "Batches", "one per frame")
+    f.line(312, 204, 328, 204, True)
+    f.box("l-machine", 328, 172, 128, 64, "Machine", "64 × 48 screen", "focus")
+    f.line(456, 204, 472, 204, True)
+    f.box("l-view", 472, 172, 128, 64, "Recording", "every frame", "store")
+    f.text(40, 276, "Both: Compact parts on their proven delays, embedded timing, a 4.5 ns clock.", "small")
+    return f
+
+
+SHORT_GAMES = (("2048-short", "2048", "LEFT: four 2s merge into two 4s"),
+               ("sokoban-short", "Sokoban", "RIGHT: the crate reaches its goal"),
+               ("snake-short", "Snake", "two updates: the snake eats"),
+               ("pong-short", "Pong", "two updates: a paddle bounce"),
+               ("tetris-short", "Tetris", "hard drop: the bottom line clears"),
+               ("snake-leds-short", "Snake with LEDs", "two updates: into the wall"))
+
+
+def game_boards():
+    import sys
+    sys.path.insert(0, str(ROOT / "tools/rv32im"))
+    from long_gameplay.reference import fixture, host_reference
+    rows = []
+    for name, title, action in SHORT_GAMES:
+        row = fixture(name)
+        frames = [bytes.fromhex(frame) for frame in host_reference(row)["frames"]]
+        rows.append((title, action, row["width"], row["height"], frames[0], frames[-1]))
+    scale, height = 3, 104
+    f = Figure("game-boards", "The short games: first and last frame",
+               "For each short game, its first presented frame and its last, as the circuit drew them on the 32 by 24 screen: 2048 merges a row, Sokoban pushes a crate onto its goal, Snake eats, Pong bounces, Tetris clears a line, and the LED Snake runs into the wall.",
+               24 + len(rows) * height,
+               "<strong>First and last frame of each short version, pixel for pixel.</strong> Drawn from the host run of the same "
+               "program, whose frames the circuit tests compare byte for byte.")
+    for i, (title, action, width, screen_height, first, last) in enumerate(rows):
+        y = 24 + i * height
+        f.text(40, y + 22, title, "name")
+        f.text(40, y + 46, action, "small")
+        f.pixels(328, y + 4, width, screen_height, first, scale)
+        f.line(432, y + 40, 456, y + 40, True)
+        f.pixels(464, y + 4, width, screen_height, last, scale)
+    return f
+
+
 def figures():
     return [fn() for fn in (memory_storage, memory_endpoints, ff_memory, register32,
                             register_file, memory_access, core_stages, core_writeback,
                             core_next_pc, core_completion, baseline_pipeline, advanced_prediction,
                             timing_profile_gates, sram_access_chain, dram_commands, transaction_handshake,
                             sram_device, alu_datapath, memory_latency, cache_topologies,
-                            cache_access_patterns, cache_speedup, memory_arbiter)]
+                            cache_access_patterns, cache_speedup, memory_arbiter,
+                            system_overview, bus_structure, bus_layers, device_shape, led_panel,
+                            game_versions, game_boards)]
 
 
 def main():

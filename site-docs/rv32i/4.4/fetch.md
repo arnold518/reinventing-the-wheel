@@ -76,7 +76,7 @@ Equivalence checks cover binary operation after reset. Instruction/fault bits ar
 
 #### Structural implementation
 
-`PC_STATE` is Register<32>, `PC_PLUS_4_ADD` is a structural `Incrementer<32,4>`, and `ALIGNMENT` checks the byte PC. The incrementer passes bits 1:0 through and uses a parallel carry-prefix network for bits 31:2; it needs no general second operand, carry-in, or unused carry-out. `MEMORY_PORT` is a zero-delay Rewire: it drops the address's two low bits for word indexing and forwards data, fault, and enable. The only architectural storage is PC_STATE. There is no REQUEST child.
+`PC_STATE` is Register<32>, `PC_PLUS_4_ADD` is a structural `Incrementer<32,4>`, and `ALIGNMENT` checks the byte PC. The incrementer passes bits 1:0 through and uses a parallel carry-prefix network for bits 31:2: each prefix level is one word AND (`PREFIX_1`, `PREFIX_2`, …), bit 2 is inverted and the sum bits above it are one word XOR (`INCREMENT`); it needs no general second operand, carry-in, or unused carry-out. `Incrementer<W,Step>` (`modules/composite/Incrementer.hpp`, W = 8, 16 or 32) computes A + Step modulo 2^W for any constant step below 2^W: a power-of-two step uses this prefix network, another step a constant carry chain, and a zero step passes A through. `MEMORY_PORT` is a zero-delay Rewire: it drops the address's two low bits for word indexing and forwards data, fault, and enable. The only architectural storage is PC_STATE. There is no REQUEST child.
 
 #### Behavioral implementation
 

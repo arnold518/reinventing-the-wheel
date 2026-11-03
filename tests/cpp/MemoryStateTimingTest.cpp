@@ -57,7 +57,7 @@ struct Fixture {
     }
     void drive(const std::string& n,SimulationTime t,const Bits& v) {
         const auto& w=inputs.at(n);
-        auto add=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t,std::dynamic_pointer_cast<Wire<W>>(w),v));};
+        auto add=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,std::dynamic_pointer_cast<Wire<W>>(w),v));};
         switch(v.size()){case 1:add.template operator()<1>();break;case 3:add.template operator()<3>();break;
             case 4:add.template operator()<4>();break;case 32:add.template operator()<32>();break;default:throw std::runtime_error("Bad width");}
     }

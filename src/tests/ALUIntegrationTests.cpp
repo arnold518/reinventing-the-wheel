@@ -54,16 +54,18 @@ void checkHierarchy(const std::shared_ptr<Component>& root,
     std::map<std::string, std::string> actual;
     for (const auto& child : root->getChildren()) actual[child->getName()] = child->getTypeName();
     if (actual != expected) throw std::runtime_error(root->getName() + ": ALU must expose its named functional blocks");
-    unsigned count = 0, prefixes = 0, half_adders = 0, add_sub_units = 0;
+    unsigned count = 0, prefixes = 0, half_adders = 0, add_sub_units = 0, generate_words = 0;
     std::function<void(const std::shared_ptr<Component>&)> visit = [&](const auto& component) {
         if (std::string(component->getTypeName()) == "FullAdder") ++count;
+        // The prefix adder's bit stage is one GENERATE word gate (and a PROPAGATE XOR).
+        if (component->getName() == "GENERATE" && std::string(component->getTypeName()).rfind("ANDGate<", 0) == 0) ++generate_words;
         if (std::string(component->getTypeName()) == "HalfAdder") ++half_adders;
         if (std::string(component->getTypeName()) == prefix_type) ++prefixes;
         if (std::string(component->getTypeName()) == add_sub_type) ++add_sub_units;
         for (const auto& child : component->getChildren()) visit(child);
     };
     visit(root);
-    if (count != 0 || prefixes != 1 || half_adders != width || add_sub_units != 1)
+    if (count != 0 || prefixes != 1 || half_adders != 0 || generate_words != 1 || add_sub_units != 1)
         throw std::runtime_error(root->getName() + ": arithmetic must share one prefix add/subtract unit");
 }
 } // namespace

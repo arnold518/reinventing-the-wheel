@@ -106,7 +106,7 @@ uint32_t encodeShiftI(uint8_t funct7, uint8_t shamt, uint8_t rs1, uint8_t funct3
 }
 
 void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, value ? LogicValue::HIGH : LogicValue::LOW));
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(time, wire, value ? LogicValue::HIGH : LogicValue::LOW));
 }
 
 void scheduleClockCycle(Simulator& sim, SimulationTime cycle_start_time, const std::shared_ptr<Wire<>>& clk_wire) {

@@ -1,6 +1,8 @@
 #include "tests/WordALUTests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
+#include "tests/ArithmeticSweepTests.hpp"
+#include "tests/RV32IALUTests.hpp"
 #include "modules/composite/ALU.hpp"
 #include "modules/composite/RippleCarryAdder.hpp"
 #include "modules/composite/ParallelPrefixAdder.hpp"
@@ -10,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <random>
 
 namespace {
 using namespace circuit::test;
@@ -107,6 +110,27 @@ template<size_t W> void checkConfiguration() {
         for(unsigned op=0;op<32;++op) for(bool cin:{false,true}) checkBinary(a,b,op,cin);
     for(unsigned n=0;n<W;++n) for(unsigned op=16;op<=20;++op) for(bool cin:{false,true})
         checkBinary(sign|1,n,op,cin);
+    size_t sweep_rows=0;
+    if constexpr (W>=16) {
+        // The 16/32-bit sub-units have no standalone test: drive them through the
+        // gate-level ALU with an edge grid on every arithmetic and compare
+        // operation, then seeded random vectors over all 32 codes.
+        // Only ADD/SUB with carry (codes 1 and 3) read C_IN; the rest use C_IN = 0.
+        const std::array<uint64_t,5> edges{0,1,sign-1,sign,mask};
+        for(unsigned op:{0u,1u,2u,3u,4u,5u,6u,21u,22u,23u,24u,25u,26u,27u})
+            for(auto a:edges) for(auto b:edges) for(bool cin:{false,true}) {
+                if(cin && op!=1 && op!=3) continue;
+                checkBinary(a,b,op,cin); ++sweep_rows;
+            }
+        std::mt19937_64 rng(0xA1D0000+W);
+        for(size_t i=0;i<128;++i) {
+            const uint64_t a=rng()&mask;
+            const uint64_t b=rng()&mask;
+            const auto op=unsigned(rng()%32);
+            const bool cin=(rng()&1)!=0;
+            checkBinary(a,b,op,cin); ++sweep_rows;
+        }
+    }
     for(auto unknown:{LogicValue::UNKNOWN,LogicValue::HIGH_Z}) {
         for(unsigned op:{0u,1u,2u,8u,16u,21u,26u,28u,30u,31u}) {
             auto in=inputs(W,mask,1,op,true);
@@ -118,7 +142,9 @@ template<size_t W> void checkConfiguration() {
             gates.check(in,modeled<W>(in));
         }
     }
-    std::cout<<"ALU<"<<W<<">: binary reference, all shift distances and targeted four-state rules agree\n";
+    std::cout<<"ALU<"<<W<<">: binary reference, all shift distances and targeted four-state rules agree";
+    if(sweep_rows) std::cout<<"; "<<sweep_rows<<" edge-grid and random vectors";
+    std::cout<<'\n';
 }
 
 class ALUWidthContractTest final : public StandaloneVerificationTest {
@@ -172,4 +198,11 @@ void appendWordALUTests(std::vector<TestRegistryEntry>& entries) {
         entries.push_back({name,"ALUWidthContractTest",RegisteredTestKind::TruthTable,{contract},"contract",{"simulation","alu","width"},
             [name,family]{return std::make_unique<ComponentScenarioTest>(adderSpec(name,*family),"contract",circuit::strictAllStructural());},true});
     }
+    // Headless sweeps against independent integer references. Logical
+    // ownership stays with the existing contract tests; the catalog names these
+    // sweeps as verification evidence instead.
+    entries.push_back({"AdderWidthSweepTest","AdderWidthSweepTest",RegisteredTestKind::Integration,{},
+        {},{"simulation","alu","width"},[]{return std::make_unique<AdderWidthSweepTest>();},false});
+    entries.push_back({"RV32IALUSweepTest","RV32IALUSweepTest",RegisteredTestKind::Integration,{},
+        {},{"simulation","alu","rv32i"},[]{return std::make_unique<RV32IALUSweepTest>();},false});
 }

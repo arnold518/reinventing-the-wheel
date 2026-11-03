@@ -55,4 +55,4 @@ The direct implementation evaluates the displayed predicate after inputs settle.
 
 ## Tests
 
-`RV32IHazardDetectionUnitTest` checks both fidelities. The shared program cases include a load-use chain and load-to-branch dependencies. `RV32IAdvancedExamplesTest` checks the exact C++ example against every detector row.
+`RV32IHazardDetectionUnitTest` checks both fidelities. `RV32IPipelineControlSweepTest` enumerates the unit (2,358 vectors, including every one-bit register difference) against an independent load-use rule on both forms. The shared program cases include a load-use chain and load-to-branch dependencies. `RV32IAdvancedExamplesTest` checks the exact C++ example against every detector row.

@@ -92,7 +92,9 @@ def on_page_markdown(markdown, *, page, config, files, **kwargs):
 
     if not MARKER.search(markdown):
         return markdown
-    path = Path(os.environ.get("CIRCUITSIM_EXAMPLE_ROWS", DEFAULT_DATA))
+    simulator_dir = config["extra"].get("preview_simulator_dir")
+    default_data = REPOSITORY / simulator_dir / "example-rows.json" if simulator_dir else DEFAULT_DATA
+    path = Path(os.environ.get("CIRCUITSIM_EXAMPLE_ROWS", default_data))
     try:
         # Read each build, including live reload. Do not retain a stale cache.
         bundle = json.loads(path.read_text())

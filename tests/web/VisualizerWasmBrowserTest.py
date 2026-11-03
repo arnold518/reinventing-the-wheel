@@ -647,14 +647,19 @@ def main() -> None:
         )
         assert "Arithmetic Components" in embed_page.locator("h1").inner_text()
         check_component_documentation_pattern(embed_page, (
-            ("HalfAdder", False), ("FullAdder", False), ("RippleCarryAdder<8>", True),
+            # Every § 2 part has a compact form (the one-bit adders and ALU<W>
+            # only on request, as the gate-list form).
+            ("HalfAdder", True), ("FullAdder", True), ("RippleCarryAdder<8>", True),
             ("ParallelPrefixAdder<16>", True), ("AddSub<8>", True), ("ArithmeticUnit<8>", True)))
         assert embed_page.locator(".simulator-embed iframe").count() == 6
         chapter_embeds = {}
         example_row_count = 0
+        # Prefix adder, AddSub and ArithmeticUnit counts include the word
+        # gates and their one-bit gates (Chapter 2 word gates, 2026-10-27);
+        # each scenario opens in the Gate profile (2026-11-02).
         for scenario, component_count in (("half-adder", 3), ("full-adder", 8),
-                                           ("ripple-carry-adder-w8", 68), ("parallel-prefix-adder-w16", 320),
-                                           ("add-sub-w8", 156), ("arithmetic-unit-w8", 897)):
+                                           ("ripple-carry-adder-w8", 68), ("parallel-prefix-adder-w16", 319),
+                                           ("add-sub-w8", 167), ("arithmetic-unit-w8", 911)):
             # Each iframe is lazy-loaded below its own component tables.
             selector = (f".simulator-embed iframe[src$='scenario={scenario}'], "
                         f".simulator-embed iframe[src*='scenario={scenario}&']")
@@ -673,8 +678,8 @@ def main() -> None:
             if scenario == "ripple-carry-adder-w8":
                 embed_page.screenshot(path="/tmp/circuitsim-embed-compact.png")
             chapter_embeds[scenario] = stats
-            example_row_count += check_example_table(embed_page, chapter_embed, scenario,
-                behavioral=scenario not in {"half-adder", "full-adder"})
+            # The one-bit adders also offer the gate-list compact form.
+            example_row_count += check_example_table(embed_page, chapter_embed, scenario)
             link = embed_page.locator(f"a.md-button[href$='scenario={scenario}']")
             assert link.count() == 1
 
@@ -695,7 +700,7 @@ def main() -> None:
             embed_page.goto(urljoin(sys.argv[1], f"../alu/{section}/"),
                             wait_until="domcontentloaded", timeout=30_000)
             assert title in embed_page.locator("h1").inner_text()
-            check_component_documentation_pattern(embed_page, tuple((kind, not kind.startswith("ALU<")) for _, kind, _ in scenarios))
+            check_component_documentation_pattern(embed_page, tuple((kind, True) for _, kind, _ in scenarios))
             assert embed_page.locator(".simulator-embed iframe").count() == len(scenarios)
             for scenario, component_type, rows in scenarios:
                 selector = (f".simulator-embed iframe[src$='scenario={scenario}'], "
@@ -713,8 +718,8 @@ def main() -> None:
                 check_compact_panels(chapter_embed)
                 assert embed_page.locator(f"a.md-button[href$='scenario={scenario}']").count() == 1
                 chapter_embeds[scenario] = model
-                example_row_count += check_example_table(embed_page, chapter_embed, scenario,
-                    behavioral=not component_type.startswith("ALU<"))
+                # ALU<W> also offers the gate-list compact form on request.
+                example_row_count += check_example_table(embed_page, chapter_embed, scenario)
         assert example_row_count == 731  # All six arithmetic embeds and the remaining Chapter 2 rows.
         static_context = browser.new_context(java_script_enabled=False)
         static_page = static_context.new_page()

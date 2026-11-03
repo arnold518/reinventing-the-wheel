@@ -32,14 +32,13 @@ std::vector<StructuralWiring::PinPtr> rowDecodeLines(
     StructuralWiring::PinPtr enable) {
     size_t row_bits = 0;
     while ((size_t{1} << row_bits) < rows) ++row_bits;
-    std::vector<StructuralWiring::PinPtr> positive, negative;
-    for (size_t bit = first_bit; bit < first_bit + row_bits; ++bit) {
-        positive.push_back(address_bit(bit));
-        negative.push_back(wiring.invert("NOT_" + std::to_string(bit), positive.back()));
-    }
-    std::vector<StructuralWiring::PinPtr> high_zero;
-    for (size_t bit = first_bit + row_bits; bit < 32; ++bit)
-        high_zero.push_back(wiring.invert("NOT_" + std::to_string(bit), address_bit(bit)));
+    // Bits first_bit..31 are inverted by one word NOT (NOT_ADDRESS).
+    std::vector<StructuralWiring::PinPtr> positive, all;
+    for (size_t bit = first_bit; bit < 32; ++bit) all.push_back(address_bit(bit));
+    const auto inverted = wiring.invertBits("NOT_ADDRESS", all);
+    positive.assign(all.begin(), all.begin() + row_bits);
+    std::vector<StructuralWiring::PinPtr> negative(inverted.begin(), inverted.begin() + row_bits);
+    std::vector<StructuralWiring::PinPtr> high_zero(inverted.begin() + row_bits, inverted.end());
     auto valid_high = wiring.reduce("HIGH_ADDRESS_VALID", std::move(high_zero), true);
     auto enabled = wiring.both("VALID_AND_ENABLED", valid_high, std::move(enable));
     std::vector<StructuralWiring::PinPtr> lines;

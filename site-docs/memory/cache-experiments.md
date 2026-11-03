@@ -3,7 +3,7 @@
 What does a cache do for memory accesses on its own, and what does a second
 level add? A test driver reads a fixed stream of addresses, one request at a
 time, with no processor, using the real gate-level caches over DRAM main
-memory in both realistic [timing profiles](../timing.md#timing-profiles).
+memory in both realistic [timing profiles](../basic/1.2.md#timing-profiles).
 How caches serve a processor, in five arrangements and four cache behaviors,
 is in [§ 4.8](../rv32i/experiments.md#memory-systems).
 

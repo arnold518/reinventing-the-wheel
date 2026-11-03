@@ -137,6 +137,7 @@ ProfileDecision BuildProfile::decide(const std::string& path, size_t depth,
         winner->fidelity,
         winner->reason.empty() ? winner->serialize() : winner->reason,
         true,
+        winner->selector.exact_path.has_value(),
     };
 }
 

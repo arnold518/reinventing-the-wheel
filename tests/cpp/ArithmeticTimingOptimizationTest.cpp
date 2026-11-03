@@ -41,8 +41,8 @@ struct Comparison {
     void row(const Bits& a,const Bits& b,LogicValue carry) {
         for(const auto& [name,value]:std::map<std::string,Bits>{{"A",a},{"B",b},{"C_IN",{carry}}}) {
             auto wire=inputs.at(name);
-            if(value.size()==1)sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(time,std::dynamic_pointer_cast<Wire<1>>(wire),value));
-            else sim.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(time,std::dynamic_pointer_cast<Wire<32>>(wire),value));
+            if(value.size()==1)sim.scheduleEvent(std::make_shared<WireUpdateEvent>(time,std::dynamic_pointer_cast<Wire<1>>(wire),value));
+            else sim.scheduleEvent(std::make_shared<WireUpdateEvent>(time,std::dynamic_pointer_cast<Wire<32>>(wire),value));
         }
         sim.runAndRecord(time+300);
         check(!sim.hasPendingEvents(),"Arithmetic did not settle");
@@ -85,13 +85,13 @@ void incrementByFour() {
     Simulator simulator;
     simulator.setHistoryRecordingEnabled(false);
     SimulationTest::scheduleInitialEventsForTree(root,simulator,0);
-    simulator.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(0,four,bits(4)));
-    simulator.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(0,zero,Bits{LogicValue::LOW}));
+    simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(0,four,bits(4)));
+    simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(0,zero,Bits{LogicValue::LOW}));
     std::mt19937 random(0x20260930);
     SimulationTime time=0;
     for (size_t row=0;row<256;++row) {
         uint32_t value=row<32?((uint32_t{1}<<row)-4):random();
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(time,input,bits(value)));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(time,input,bits(value)));
         simulator.runAndRecord(time+300);
         check(actual->getValueVector()==expected->getValueVector(),
             "PC increment mismatch at row "+std::to_string(row));
@@ -117,13 +117,13 @@ template<size_t W>void incrementConfigurations() {
         for(uint64_t value:{uint64_t{0},uint64_t{1},mask,mask-1,mask>>1,uint64_t{1}<<(W-1)}) {
             Bits stimulus(W),expected(W);
             for(size_t bit=0;bit<W;++bit){stimulus[bit]=(value>>bit)&1?LogicValue::HIGH:LogicValue::LOW;expected[bit]=((value+step)>>bit)&1?LogicValue::HIGH:LogicValue::LOW;}
-            simulator.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(time,input,stimulus));
+            simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(time,input,stimulus));
             simulator.runAndRecord(time+300);time+=400;
             check(output->getValueVector()==expected,"Generic incrementer binary result");
             check(circuit::word::incrementWord(stimulus,step)==expected,"Generic compact increment binary result");
             for(auto unknown:{LogicValue::UNKNOWN,LogicValue::HIGH_Z}) {
                 stimulus[0]=unknown;stimulus[W/2]=unknown;
-                simulator.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(time,input,stimulus));
+                simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(time,input,stimulus));
                 simulator.runAndRecord(time+300);time+=400;
                 check(output->getValueVector()==circuit::word::incrementWord(stimulus,step),"Generic incrementer gate/value four-state equivalence");
             }

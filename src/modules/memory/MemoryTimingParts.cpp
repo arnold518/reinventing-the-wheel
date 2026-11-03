@@ -30,7 +30,7 @@ void MemoryDelayLine::evaluate(SimulationTime time, Simulator& simulator) {
     if (!wire) return;
     if (wire->getValueVector()[0] == in) return;
     const SimulationTime at = checkedTimeAdd(time, in == LogicValue::HIGH ? delay : fall_delay_);
-    std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent<>>(at, wire, in);
+    std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent>(at, wire, in);
     pending_.push_back(event);
     simulator.scheduleEvent(std::move(event));
 }
@@ -75,8 +75,8 @@ void PowerOnReset::scheduleInitialEvents(Simulator& simulator, SimulationTime ti
     auto pin = getOutputPin("OUT");
     pin->setBit(0, LogicValue::HIGH);
     if (auto wire = pin->getExternalWire()) {
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, LogicValue::HIGH));
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(checkedTimeAdd(time, width_), wire, LogicValue::LOW));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(time, wire, LogicValue::HIGH));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(checkedTimeAdd(time, width_), wire, LogicValue::LOW));
     }
     pin->setBit(0, LogicValue::LOW);
 }

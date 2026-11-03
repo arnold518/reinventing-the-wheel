@@ -217,13 +217,15 @@ void ALUContractTest::verifyResults() {
     Harness alu(Component::create<ALU<8>>("ALU"), &circuit::word::family(Unit::ALU,8));
     if (alu.root->getInputPinDynamic("OP")->getWidth()!=5) throw std::runtime_error("ALU<8> opcode width");
     std::map<std::string,size_t> type_counts;
+    size_t generate_words = 0;  // the prefix adder's bit stage: one GENERATE word gate
     std::function<void(std::shared_ptr<Component>)> visit = [&](auto c) {
         ++type_counts[c->getTypeName()];
+        if (c->getName() == "GENERATE" && std::string(c->getTypeName()) == "ANDGate<8>") ++generate_words;
         for (const auto& child : c->getChildren()) visit(child);
     };
     visit(alu.root);
     if (type_counts["AddSub<8>"] != 1 || type_counts["ParallelPrefixAdder<8>"] != 1
-        || type_counts["HalfAdder"] != 8 || type_counts["FullAdder"] != 0)
+        || type_counts["HalfAdder"] != 0 || generate_words != 1 || type_counts["FullAdder"] != 0)
         throw std::runtime_error("ALU<8> must share one eight-bit parallel-prefix adder");
     constexpr std::array<unsigned,9> edges{0,1,2,7,15,127,128,254,255};
     for (unsigned op=0; op<32; ++op) for (auto a : edges) for (auto b : edges)

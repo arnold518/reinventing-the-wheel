@@ -15,7 +15,7 @@ from playwright.sync_api import sync_playwright
 
 
 PAGES = {
-    "timing/": 1,
+    "basic/1.2/": 1,
     "memory/cache-experiments/": 1,
     "rv32i/memory-systems/": 1,
     "rv32i/experiments/": 1,
@@ -31,6 +31,13 @@ PAGES = {
     "rv32i/4.3/memory-access/": 1,
     "rv32i/4.4/": 4,
     "rv32i/4.5/": 1,
+    "rv32i/4.6/": 1,
+    "system/": 1,
+    "system/5.2/bus/": 1,
+    "system/5.2/bridge/": 1,
+    "system/5.4/": 1,
+    "system/5.4/leds/": 1,
+    "system/5.6/": 2,
 }
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8893/").rstrip("/") + "/"
 SCREENSHOTS = Path(sys.argv[2]) if len(sys.argv) > 2 else None
@@ -183,4 +190,4 @@ with sync_playwright() as playwright:
     context.close()
 
     browser.close()
-    print("PASS: 11 figures; light/dark; desktop/tablet/mobile; label/connector geometry; keyboard scrolling; stage order; site navigation; JavaScript and web fonts disabled", flush=True)
+    print(f"PASS: {sum(PAGES.values())} figures; light/dark; desktop/tablet/mobile; label/connector geometry; keyboard scrolling; stage order; site navigation; JavaScript and web fonts disabled", flush=True)

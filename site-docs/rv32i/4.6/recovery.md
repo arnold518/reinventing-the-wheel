@@ -33,7 +33,7 @@ MISPREDICT is a request to the coordinator, so it is deliberately **not** gated 
 
 ### Implementation
 
-Two structural XOR/reduction networks compare the saved prediction with fallthrough and target in parallel. `TAKEN` selects the one-bit mismatch. Thus branch resolution does not first wait for a 32-bit next-PC mux and then a comparison. Qualification gates generate the outputs. The behavioral implementation selects the same address predicate. This component stores nothing. If target equals fallthrough, a direction difference alone causes no recovery.
+Two structural XOR/reduction networks compare the saved prediction with fallthrough and target in parallel: each is one word XOR (`FALLTHROUGH_DIFFERENT`, `TARGET_DIFFERENT`, `XORGate<32>`) and an OR tree. `TAKEN` selects the one-bit mismatch. Thus branch resolution does not first wait for a 32-bit next-PC mux and then a comparison. Qualification gates generate the outputs. The behavioral implementation selects the same address predicate. This component stores nothing. If target equals fallthrough, a direction difference alone causes no recovery.
 
 ### Examples
 

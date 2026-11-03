@@ -16,7 +16,7 @@ The earlier candidate clock, `2 * (D + floor(D / 4) + 2)` over a longest-path es
 
 ## Certified clocks
 
-The analysis runs in the active [timing profile](../../timing.md#timing-profiles)
+The analysis runs in the active [timing profile](../../basic/1.2.md#timing-profiles)
 (`CIRCUITSIM_TIMING_PROFILE`), on every gate or on the proven table of every
 compact part. The certified periods of the three cores with flip-flop memory,
 as stored in `CERTIFIED_CORE_PERIODS` (`include/analysis/ExperimentClock.hpp`)

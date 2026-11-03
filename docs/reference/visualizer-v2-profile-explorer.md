@@ -2,19 +2,46 @@
 
 ## User model
 
-The component explorer uses the same visual action as a folder tree:
+The explorer tree is the planned fidelity (owner decision, 2026-10-28; it
+replaces an interim model in which the arrow was a view-only fold and the
+badge switched fidelity):
 
-- expanded means “build and show this component structurally”;
-- collapsed means “build this component behaviorally”;
-- a dot and `fixed` label mean that only one implementation exists.
-
-There is no separate structural/behavioral switch. The arrow is the fidelity
-control. Changing an arrow edits a draft; `Apply & Run` rebuilds and runs the
-scenario. `Revert` discards unapplied edits.
+- Expanded (▾) requests structural, collapsed (▸) behavioral, for a part that
+  offers both; a dot marks a part with one form. Changing an arrow edits a
+  draft (the row turns italic, "N unapplied changes"); `Apply & Run` rebuilds
+  and runs the scenario to match; `Revert` discards unapplied edits.
+- The S/B badge is read-only: the fidelity built and simulated now.
+  Component outlines use the same solid style for both fidelities.
+- The canvas follows the draft at once for parts that exist: a part planned
+  behavioral but still built structurally is drawn closed (visual
+  abstraction or `▸` box) with live pin values; a part planned structural but
+  built behavioral stays a block titled "Apply to build". The explorer lists
+  the parts it would have in gray, without badges, from a build-only preview
+  (`POST /api/circuit/preview` in the worker →
+  `VisualizerSession::previewComponentsJson`: the same profile as a session,
+  `setupCircuit()` only, nothing simulated); their arrows edit the same
+  draft, and Apply accepts choices for previewed parts. A placeholder row
+  shows until the preview arrives or if it fails.
+- Choices for parts inside a collapsed one are kept by path and apply again
+  when it is built from its parts. A recording's fidelity is fixed, so its
+  arrows are disabled.
 
 Clicking the rest of a row selects the component and smoothly moves the canvas
 camera to it. The camera target accounts for the explorer and inspector, so
 the selected block stays visible instead of moving underneath a panel.
+
+`Device View` is an independent canvas toggle, initially off. When enabled,
+each branch shows its outermost existing visual abstraction, regardless of
+built or planned fidelity: device panels (including buses), gate symbols,
+register values, register-file tables, memory arrays and cell values. Its
+children and internal wires stay hidden, including when a descendant is
+selected in the explorer: selection and camera focus use the outermost
+abstraction instead. Its boundary pins remain selectable. Components without
+an abstraction retain the usual fidelity/tree view. Turning the toggle off
+restores that view, including the visual abstractions of behavioral parts.
+Those abstractions also remain while a behavioral part is pending a structural
+rebuild. The session, timestamp, profile draft and layout are
+preserved; fixed recorded circuits support the toggle too.
 
 The camera fits the component into the actual unobstructed canvas rectangle:
 below the top toolbar, above the bottom toolbar, right of an overlaid explorer,
@@ -34,7 +61,7 @@ world offset and zoom.
 ## Data flow
 
 ```text
-scenario base BuildProfile
+the scenario's fidelity preset (its catalog profile, or the one chosen)
           +
 profiles.json exact-path overrides
           |
@@ -55,7 +82,7 @@ only a sparse map such as:
 {
   "schema_version": 1,
   "scenarios": {
-    "rv32i-program9": {
+    "rv32i-program9::logic": {
       "revision": 1,
       "exact_overrides": {
         "RV32I_PROGRAM_ROOT.CORE.ALU": "behavioral"
@@ -64,6 +91,11 @@ only a sparse map such as:
   }
 }
 ```
+
+Entries are keyed `<scenario>::<preset>`: each fidelity preset of a scenario
+keeps its own overrides. An entry saved under the bare scenario name (before
+every scenario had a named default profile) moves to the scenario's default
+profile when the store is loaded.
 
 The real navigation tree always comes from the circuit that C++ actually
 built. This prevents a stale JSON tree from disagreeing with the simulator.
@@ -153,6 +185,29 @@ styled slider hides the browser's datalist ticks. In compact view, captions
 and some button labels are hidden; every icon-only button keeps an
 `aria-label` and a `title`.
 
+## Where layouts and choices are saved
+
+| Runtime | Save Layout | Fidelity choices (Apply & Run) |
+| --- | --- | --- |
+| Serverless WASM (GitHub Pages, 8893 preview) | browser IndexedDB `circuitsim-visualizer-v2`, key `layout` | same database, key `profiles` |
+| Recorded replay | browser `localStorage`, one key per recording | fixed by the capture |
+| Native (`server.py`, port 8765) | retired by the owner (2026-10-28); its Save Layout rewrote `layout.json` | `visualizer-v2/profiles.json` |
+
+The running visualizer never writes `layout.json` (owner rule, 2026-10-28):
+it changes only through the repository's layout tools and commits. The
+published site ships that file, and a visitor's saves stay in that browser.
+The explorer tree is the fidelity profile, so it is saved by Apply & Run;
+published defaults are the scenarios' default profiles. The serverless save stores only the
+edits, as differences from the shipped layout
+(`visualizer-v2/static/layout_changes.mjs`, record format
+`layout-changes-v1`): changed fields per entry and changed child placements
+by name, plus the entry's revision fields so revision upgrades still apply.
+Entries a visitor never edited therefore follow each new release. A field the
+viewer removed cannot be expressed and is not stored. A full snapshot saved
+before this format still loads; the next save replaces it with changes, and
+values it froze stay as edits. `VisualizerLayoutChangesTest` (Node) and
+`VisualizerLayoutStorageBrowserTest` cover this.
+
 ## Main files
 
 - `visualizer-v2/static/explorer.js`: profile draft and virtual tree
@@ -185,7 +240,17 @@ browser console errors: 0
 The live screenshot pass also checked draft collapse, a successful rebuild,
 returning to the inherited profile, and smooth focus on `FlipFlopCell.STATE`.
 
-Behavioral state overlays follow the selected implementation. FlipFlopCell value
-badges, register-file tables, and large-memory tables render only when their
-component fidelity is `behavioral`. Structural versions show their child
-circuits without the behavioral overlay or its additional state requests.
+With Device View off, state overlays follow the built implementation:
+FlipFlopCell value badges, register-file tables and large-memory tables appear
+for behavioral parts. Structural forms show their child circuits; terminal
+DRAM/NOR cells retain their pin-value badges. Closed device components and
+gate symbols follow the fidelity draft as described above.
+
+With Device View on, structural forms can use those same overlays. Additional
+state requests cover only the outermost device, register-file and memory
+abstractions; register and cell values use recorded boundary pins. A view
+change invalidates outstanding overlay requests, so late responses cannot
+overwrite the newer view's state. Seeking refreshes the visible overlays at
+the selected timestamp. Missing retained memory/register-file data is labeled
+"State not recorded". This is an observational rendering choice and does not
+change simulation fidelity or synthesize missing recording data.

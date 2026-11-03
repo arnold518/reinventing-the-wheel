@@ -20,8 +20,8 @@ namespace circuit::timing {
 
 enum class Leaf {
     Not, And, Nand, Or, Nor, Xor,
-    // A bus splitter is wiring. It has carried one tick of delay since it was
-    // written, and "unit" keeps that; realistic profiles set it to zero.
+    // A bus splitter is wiring and has no delay in any profile ("unit" charged
+    // it one tick until 2026-10-27).
     Splitter,
     // The symbolic memory primitives that stand for electrical behavior
     // (cell access, bitlines, sense amplifiers, read columns, output buffers,

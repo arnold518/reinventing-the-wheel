@@ -69,6 +69,7 @@ const ui = {
   programCore: document.getElementById('program-core'),
   programPolicy: document.getElementById('program-policy'),
   timing: document.getElementById('timing-select'),
+  fidelity: document.getElementById('fidelity-select'),
   slider: document.getElementById("time-slider"),
   checkpointMarks: document.getElementById("checkpoint-marks"),
   checkpointTicks: document.getElementById("checkpoint-ticks"),
@@ -93,6 +94,7 @@ const ui = {
   explorerToggle: document.getElementById("toggle-explorer"),
   explorerClose: document.getElementById("explorer-close"),
   inspectorToggle: document.getElementById("toggle-inspector"),
+  deviceViews: document.getElementById("toggle-device-views"),
   explorerPanel: document.getElementById("component-explorer"),
   explorerViewport: document.getElementById("explorer-viewport"),
   explorerSpacer: document.getElementById("explorer-spacer"),
@@ -116,7 +118,6 @@ const ui = {
   selectionInfo: document.getElementById("selection-info"),
   componentPinsSection: document.getElementById("component-pins-section"),
   componentPins: document.getElementById("component-pins"),
-  deviceViews: document.getElementById("toggle-device-views"),
   deviceSection: document.getElementById("device-inspector-section"),
   devicePreview: document.getElementById("device-preview"),
   deviceSummary: document.getElementById("device-summary"),
@@ -149,6 +150,7 @@ const app = {
   layoutKey: null,
   rootId: null,
   timestamps: [0],
+  timestampCount: 1,
   checkpoints: [],
   layout: null,
   savedLayout: null,
@@ -171,6 +173,7 @@ const app = {
   currentIndex: 0,
   requestedIndex: 0,
   stateRequestId: 0,
+  componentStateRequestId: 0,
   stateRequestInFlight: false,
   camera: { offset: { x: 0, y: 0 }, zoom: 1 },
   cameraAnimation: null,
@@ -403,6 +406,7 @@ function structureKeyed(type, layoutKey) {
   if (layoutKey.startsWith(`${type}[config-`)) return true;
   return type.startsWith("Cache") || type.startsWith("SRAM<") || type.startsWith("FFMemory")
     || type.startsWith("RV32IPredictionTable<") || type.startsWith("MemoryTimer<") || type.startsWith("ClockedCounter<")
+    || type.startsWith("DRAMCommandControl<") || type.startsWith("NORFlashCommandControl<")
     || type === "RV32IPredictionEntry" || type === "RV32IBranchPredictor";
 }
 
@@ -869,14 +873,128 @@ function buildWirePaths(wire) {
   }
 }
 
-function deviceAbstraction(component) {
-  return ui.deviceViews.getAttribute("aria-pressed") === "true" && CircuitDeviceView.supports(component);
+// The explorer tree is the planned fidelity: expanded means structural,
+// collapsed means behavioral, and Apply & Run rebuilds to match. The canvas
+// follows the plan at once for parts that exist: a part planned collapsed is
+// drawn closed (its visual abstraction, such as a word gate's symbol or a
+// device view, or a closed box) even before Apply. A part planned expanded
+// but still built as one block stays a block until Apply builds its parts.
+function hasChildren(component) {
+  return (component?.childIds?.length ?? 0) > 0;
 }
 
-ui.deviceViews.addEventListener("click", () => {
-  ui.deviceViews.setAttribute("aria-pressed", String(ui.deviceViews.getAttribute("aria-pressed") !== "true"));
-  app.geometryDirty = true; requestRender();
-});
+function plannedFidelity(component) {
+  return app.explorer ? app.explorer.modeFor(component) : component?.fidelity;
+}
+
+// Built behavioral, and Apply & Run will build it from its parts.
+function pendingStructural(component) {
+  return component?.fidelity === "behavioral" && plannedFidelity(component) === "structural";
+}
+
+// Parts that exist only after Apply & Run are listed by a build-only preview
+// of the draft (no simulation) and shown in gray in the explorer.
+let previewRequest = 0;
+let previewTimer = null;
+function schedulePreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => refreshPreview().catch((error) => {
+    console.warn("Preview unavailable", error);
+    app.explorer?.setPreview(null);
+  }), 150);
+}
+
+async function refreshPreview() {
+  const request = ++previewRequest;
+  const needed = [...app.components.values()].some(pendingStructural);
+  if (!needed || !app.explorer?.profile.editable) {
+    app.explorer?.setPreview(null);
+    return;
+  }
+  const response = await visualizerRequest(apiUrl("api/circuit/preview"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      scenario: app.scenario,
+      fidelity: app.profile?.fidelityPreset || scenarioFidelity(app.scenario),
+      exactOverrides: { ...app.explorer.draftOverrides },
+    }),
+  });
+  if (!response.ok) throw new Error(await response.text());
+  const payload = await response.json();
+  if (request === previewRequest) app.explorer.setPreview(payload.components);
+}
+
+// Something selected lies inside this part, so it must be open to show it.
+// Its own boundary pins are drawn even when it is closed.
+function selectionInside(component) {
+  const selection = app.selection;
+  if (!selection || !app.selectionPath.has(component.id)) return false;
+  if (selection.type === "component") return selection.id !== component.id;
+  if (selection.type === "pin") return app.pins.get(selection.id)?.componentId !== component.id;
+  return true;
+}
+
+function deviceViewsEnabled() {
+  return ui.deviceViews.getAttribute("aria-pressed") === "true";
+}
+
+// Existing canvas pictures, independent of the implementation being run.
+function canvasAbstractionKind(component) {
+  if (!component) return null;
+  if (CircuitDeviceView.supports(component)) return "device";
+  if (CircuitMemoryCellView.supports(component.type, "behavioral")) return "cell";
+  if (component.visualAbstraction === "register" || /^Register<\d+>$/.test(component.type)) return "register";
+  if (component.visualAbstraction === "register-file" || component.registerView || component.type === "RegisterFile32x32") return "register-file";
+  if (component.visualAbstraction === "memory" || isMemoryArrayType(component.type)) return "memory";
+  return basicLogicGateKind(component) ? "gate" : null;
+}
+
+function outermostAbstraction(component) {
+  let outermost = null;
+  for (let current = component; current; current = app.components.get(current.parentId)) {
+    if (canvasAbstractionKind(current)) outermost = current;
+  }
+  return outermost;
+}
+
+function deviceViewComponent(component) {
+  return deviceViewsEnabled() && Boolean(canvasAbstractionKind(component))
+    && outermostAbstraction(component) === component;
+}
+
+async function toggleDeviceViews() {
+  ui.deviceViews.setAttribute("aria-pressed", String(!deviceViewsEnabled()));
+  app.hover = null;
+  app.memoryScrollControls = [];
+  tooltip.style.display = "none";
+  // Selecting a hidden child keeps the camera/inspector on its visible owner.
+  if (app.selection) setSelection(app.selection.type, app.selection.id);
+  requestRender();
+  if (app.sessionId) {
+    await refreshComponentStates(app.currentIndex, app.stateRequestId);
+    updateInspector();
+  }
+}
+
+// Closed by the plan (or built as one block), independent of zoom.
+function componentClosedByView(component) {
+  if (deviceViewComponent(component)) return true;
+  if (component?.fidelity === "behavioral") return true;
+  return plannedFidelity(component) === "behavioral" && !selectionInside(component);
+}
+
+function componentOpen(component) {
+  return hasChildren(component) && componentCanDescend(component) && !componentClosedByView(component);
+}
+
+// Drawn on the canvas: every enclosing part is open.
+function componentDrawn(component) {
+  for (let parent = app.components.get(component?.parentId); parent; parent = app.components.get(parent.parentId)) {
+    if (!componentOpen(parent)) return false;
+  }
+  return Boolean(component);
+}
 
 function componentCanDescend(component) {
   if (!component || !component.rect) return false;
@@ -904,7 +1022,7 @@ function visibleGeometryComponents() {
       return;
     }
     visible.push(component);
-    if (!componentCanDescend(component) || deviceAbstraction(component)) return;
+    if (!componentOpen(component)) return;
     for (const childId of component.childIds) {
       walk(app.components.get(childId));
     }
@@ -918,23 +1036,22 @@ function rebuildSpatialIndexes() {
   app.pinIndex = new SpatialHash(180);
   app.wireIndex = new SpatialHash(260);
 
-  const geometryComponents = visibleGeometryComponents();
-  const hiddenByDevice = ownerId => {
-    let component = app.components.get(ownerId);
-    while (component?.parentId) {
-      component = app.components.get(component.parentId);
-      if (component && deviceAbstraction(component)) return true;
-    }
-    return false;
+  // Index every part, pin and wire once, independent of the camera and of
+  // what is open; hover and click accept only what is drawn at that moment
+  // (componentDrawn and friends), so panning, zooming, opening and closing
+  // need no rebuild. z is depth-first order: children above their parent.
+  let z = 0;
+  const walk = (component) => {
+    if (!component) return;
+    if (component.rect) app.componentIndex.insert({ id: component.id, z: z++ }, component.rect);
+    for (const childId of component.childIds || []) walk(app.components.get(childId));
   };
-  geometryComponents.forEach((component, index) => {
-    if (component.rect) app.componentIndex.insert({ id: component.id, z: index }, component.rect);
-  });
+  walk(app.components.get(app.rootId));
   app.pinOrder.forEach((pin, index) => {
-    if (pin.rect && !hiddenByDevice(pin.componentId)) app.pinIndex.insert({ id: pin.id, z: index }, pin.rect);
+    if (pin.rect) app.pinIndex.insert({ id: pin.id, z: index }, pin.rect);
   });
   app.wireOrder.forEach((wire, index) => {
-    if (!wire.bbox || hiddenByDevice(wire.ownerId)) return;
+    if (!wire.bbox) return;
     const padded = { x: wire.bbox.x - 8, y: wire.bbox.y - 8, w: wire.bbox.w + 16, h: wire.bbox.h + 16 };
     app.wireIndex.insert({ id: wire.id, z: index }, padded);
   });
@@ -1457,8 +1574,30 @@ const BASIC_LOGIC_GATE_VISUALS = {
   NOTGate: "not",
 };
 
+// Word gates (ANDGate<32>, NOTGate<8>, ...) use the one-bit gate's symbol.
+const WORD_GATE_TYPE = /^(AND|NAND|OR|NOR|XOR|NOT)Gate<(\d+)>$/;
+
 function basicLogicGateKind(component) {
-  return BASIC_LOGIC_GATE_VISUALS[component.type] || null;
+  const word = WORD_GATE_TYPE.exec(component?.type || "");
+  return BASIC_LOGIC_GATE_VISUALS[component.type] || (word ? word[1].toLowerCase() : null);
+}
+
+function wordGateWidth(component) {
+  const word = WORD_GATE_TYPE.exec(component?.type || "");
+  return word ? Number(word[2]) : 0;
+}
+
+function drawWordGateWidth(component, parts, width) {
+  const rect = rectToScreenRect(parts.bodyRect);
+  if (rect.w < 28 || rect.h < 18) return;
+  const size = clamp(Math.min(rect.w, rect.h) * 0.16, 8, 15);
+  ctx.save();
+  ctx.font = `600 ${size}px system-ui, sans-serif`;
+  ctx.fillStyle = "rgba(238, 244, 255, 0.82)";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(`/${width}`, rect.x + rect.w - size * 0.4, rect.y + rect.h - size * 0.25);
+  ctx.restore();
 }
 
 function pinByName(pins, name) {
@@ -1542,7 +1681,12 @@ function drawDefaultComponentForeground(component, parts) {
     MAX_COMPONENT_FONT_PX,
   );
   if (fontSize >= COMPONENT_TITLE_MIN_FONT_PX) {
-    clippedRectText(component.name, titleScreenRect, fontSize, "rgb(240, 240, 240)");
+    // ▸ marks a closed part with contents; a block that Apply & Run will
+    // build from its parts says so.
+    const closed = hasChildren(component) && !componentOpen(component);
+    const title = pendingStructural(component) ? `${component.name} · Apply to build`
+      : closed ? `▸ ${component.name}` : component.name;
+    clippedRectText(title, titleScreenRect, fontSize, "rgb(240, 240, 240)");
   }
 }
 
@@ -2218,10 +2362,11 @@ function drawRewireContents(component, parts) {
 }
 
 function drawMemoryCellValue(component, parts) {
-  if (!CircuitMemoryCellView.supports(component.type, component.fidelity)) return;
+  const fidelity = deviceViewComponent(component) ? "behavioral" : component.fidelity;
+  if (!CircuitMemoryCellView.supports(component.type, fidelity)) return;
   const pins = Object.fromEntries([...component.inputPins, ...component.outputPins]
     .map(pin => [pin.name, pinValue(pin)]));
-  const model = CircuitMemoryCellView.model(component.type, component.fidelity, pins);
+  const model = CircuitMemoryCellView.model(component.type, fidelity, pins);
   if (!model) return;
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
@@ -2449,7 +2594,10 @@ function drawClockGeneratorContents(component, parts) {
 
 function drawRegisterFileContents(component, parts) {
   const state = app.componentStates.get(component.id);
-  if (!state || !Array.isArray(state.registers) || !state.registers.length) return;
+  if (!state || !Array.isArray(state.registers) || !state.registers.length) {
+    drawUnavailableState(component, parts, state);
+    return;
+  }
 
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
@@ -2695,9 +2843,24 @@ function drawUnifiedMemoryContents(component, parts, state) {
   ctx.restore();
 }
 
+function drawUnavailableState(component, parts, state) {
+  const rect = rectToScreenRect(parts.bodyRect);
+  if (rect.w < 100 || rect.h < 36) return;
+  ctx.save();
+  ctx.font = `${Math.min(14, rect.w / 15)}px system-ui, sans-serif`;
+  ctx.fillStyle = "rgba(238, 244, 255, 0.65)";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(state ? "State not recorded" : "Loading state…", rect.x + rect.w / 2, rect.y + rect.h / 2, rect.w * 0.9);
+  ctx.restore();
+}
+
 function drawMemoryContents(component, parts) {
   const state = app.componentStates.get(component.id);
-  if (!state || !state.supported) return;
+  if (!state || !state.supported) {
+    drawUnavailableState(component, parts, state);
+    return;
+  }
   if (state.memoryRole === "unified" && state.instructionSide && state.dataSide) {
     drawUnifiedMemoryContents(component, parts, state);
     return;
@@ -2869,25 +3032,32 @@ function drawComponentForeground(component, vr) {
   const parts = componentDrawParts(component);
   drawDefaultComponentForeground(component, parts);
   const gateKind = basicLogicGateKind(component);
-  if (gateKind) drawLogicGateSymbol(component, parts, gateKind);
+  const view = deviceViewComponent(component);
+  const showAbstraction = !deviceViewsEnabled() || view;
+  // A closed word gate (behavioral, or planned collapsed) is its symbol.
+  if (gateKind && showAbstraction && !componentOpen(component)) {
+    drawLogicGateSymbol(component, parts, gateKind);
+    const width = wordGateWidth(component);
+    if (width) drawWordGateWidth(component, parts, width);
+  }
   if (component.type === "ClockGenerator") drawClockGeneratorContents(component, parts);
   if (component.type === "ConstantValue") drawConstantValueContents(component, parts);
   if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
   if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
   if (component.type === "Rewire") drawRewireContents(component, parts);
-  if (deviceAbstraction(component)) {
+  if (CircuitDeviceView.supports(component) && showAbstraction && !componentOpen(component)) {
     const rect = rectToScreenRect(parts.bodyRect);
     CircuitDeviceView.draw(ctx,{x:rect.x+rect.w*.06,y:rect.y+rect.h*.12,w:rect.w*.88,h:rect.h*.8},app.componentStates.get(component.id));
   }
-  drawMemoryCellValue(component, parts);
-  if (component.fidelity === "behavioral") {
-    if (/^Register<\d+>$/.test(component.type)) {
+  if (showAbstraction) drawMemoryCellValue(component, parts);
+  if (showAbstraction && (view || component.fidelity === "behavioral")) {
+    if (component.visualAbstraction==='register' || /^Register<\d+>$/.test(component.type)) {
       drawRegisterValue(component, parts);
     }
-    if ((component.registerView || component.type === "RegisterFile32x32")) {
+    if ((component.visualAbstraction==='register-file' || component.registerView || component.type === "RegisterFile32x32")) {
       drawRegisterFileContents(component, parts);
     }
-    if (isMemoryArrayType(component.type)) {
+    if (component.visualAbstraction==='memory' || isMemoryArrayType(component.type)) {
       drawMemoryContents(component, parts);
     }
   }
@@ -2898,15 +3068,14 @@ function drawComponentForeground(component, vr) {
 function drawComponent(component, vr) {
   if (!drawComponentBackground(component, vr)) return;
   if (!componentCanDescend(component)) return;
-  if (deviceAbstraction(component)) { drawComponentForeground(component, vr); return; }
-  drawComponentGrid(component, vr);
-  drawOwnedWires(component.id, vr);
-
-  for (const childId of component.childIds) {
-    const child = app.components.get(childId);
-    if (child) drawComponent(child, vr);
+  if (!hasChildren(component) || componentOpen(component)) {
+    drawComponentGrid(component, vr);
+    drawOwnedWires(component.id, vr);
+    for (const childId of component.childIds) {
+      const child = app.components.get(childId);
+      if (child) drawComponent(child, vr);
+    }
   }
-
   drawComponentForeground(component, vr);
 }
 
@@ -2991,7 +3160,7 @@ function render() {
 
   if (app.playing && !app.stateRequestInFlight && performance.now() - app.lastPlaybackTick > app.playbackInterval) {
     app.lastPlaybackTick = performance.now();
-    if (app.currentIndex >= app.timestamps.length - 1) setPlaying(false);
+    if (app.currentIndex >= app.timestampCount - 1) setPlaying(false);
     else {
       setStateIndex(app.currentIndex + 1).catch((error) => {
         setPlaying(false);
@@ -3083,7 +3252,9 @@ function updateHover(screenPoint) {
     const pinCandidates = app.pinIndex.queryPoint(world).sort((a, b) => b.z - a.z);
     for (const candidate of pinCandidates) {
       const pin = app.pins.get(candidate.id);
-      if (pin && pointInRect(world, pin.rect, 4 / app.camera.zoom)) {
+      const owner = pin && app.components.get(pin.componentId);
+      if (pin && owner && componentDrawn(owner) && componentCanDescend(owner)
+          && pointInRect(world, pin.rect, 4 / app.camera.zoom)) {
         hover = { type: "pin", id: pin.id };
         break;
       }
@@ -3094,7 +3265,8 @@ function updateHover(screenPoint) {
     const wireCandidates = app.wireIndex.queryPoint(world).sort((a, b) => a.z - b.z);
     for (const candidate of wireCandidates) {
       const wire = app.wires.get(candidate.id);
-      if (wire && wireHit(wire, world)) {
+      const owner = wire && app.components.get(wire.ownerId);
+      if (wire && owner && componentOpen(owner) && componentDrawn(owner) && wireHit(wire, world)) {
         hover = { type: "wire", id: wire.id };
         break;
       }
@@ -3105,7 +3277,7 @@ function updateHover(screenPoint) {
     const componentCandidates = app.componentIndex.queryPoint(world).sort((a, b) => b.z - a.z);
     for (const candidate of componentCandidates) {
       const component = app.components.get(candidate.id);
-      if (component && pointInRect(world, component.rect)) {
+      if (component && componentDrawn(component) && pointInRect(world, component.rect)) {
         hover = { type: "component", id: component.id };
         break;
       }
@@ -3168,6 +3340,16 @@ function selectedWire() {
 }
 
 function setSelection(type, id) {
+  if (deviceViewsEnabled() && type && id) {
+    const owner = type === "component" ? app.components.get(id)
+      : type === "pin" ? app.components.get(app.pins.get(id)?.componentId)
+      : app.components.get(app.wires.get(id)?.ownerId);
+    const outermost = outermostAbstraction(owner);
+    if (outermost && (outermost !== owner || type === "wire")) {
+      type = "component";
+      id = outermost.id;
+    }
+  }
   const selectionChanged = !app.selection
     ? Boolean(type && id)
     : app.selection.type !== type || app.selection.id !== id;
@@ -3583,6 +3765,7 @@ function applyColorCodeFromInspector() {
 
 async function fetchDefaultPlacements(parent, childName = null) {
   const body = {
+    session: app.sessionId,
     scenario: app.scenario,
     parentId: parent.id,
     layout: app.layout,
@@ -4034,7 +4217,8 @@ function closestExistingComponent(componentId) {
 function smoothlyFocusComponent(componentId) {
   resizeCanvas();
   if (app.geometryDirty) computeGeometry();
-  const component = closestExistingComponent(componentId);
+  let component = closestExistingComponent(componentId);
+  if (deviceViewsEnabled()) component = outermostAbstraction(component) || component;
   if (!component || !component.rect) return;
   setSelectedComponent(component.id);
   const viewport = cameraSafeViewport();
@@ -4120,16 +4304,21 @@ function isMemoryArrayType(type) {
 }
 
 function statefulOverlayComponents() {
+  if (deviceViewsEnabled()) {
+    return app.componentOrder.filter(component => deviceViewComponent(component)
+      && ["device", "register-file", "memory"].includes(canvasAbstractionKind(component)));
+  }
   return app.componentOrder.filter((component) => (
     CircuitDeviceView.supports(component) || (component.fidelity === "behavioral"
     && (
-      (component.registerView || component.type === "RegisterFile32x32")
-      || isMemoryArrayType(component.type)
+      (component.visualAbstraction==='register-file' || component.registerView || component.type === "RegisterFile32x32")
+      || component.visualAbstraction==='memory' || isMemoryArrayType(component.type)
     ))
   ));
 }
 
 async function refreshComponentStates(index, requestId = null) {
+  const componentRequestId = ++app.componentStateRequestId;
   const components = statefulOverlayComponents();
   if (!components.length) {
     app.componentStates.clear();
@@ -4146,7 +4335,8 @@ async function refreshComponentStates(index, requestId = null) {
     return [component.id, await response.json()];
   }));
 
-  if (requestId != null && requestId !== app.stateRequestId) return;
+  if (componentRequestId !== app.componentStateRequestId
+      || (requestId != null && requestId !== app.stateRequestId)) return;
   const activeIds = new Set(components.map((component) => component.id));
   for (const componentId of [...app.componentStates.keys()]) {
     if (activeIds.has(componentId)) app.componentStates.delete(componentId);
@@ -4158,7 +4348,7 @@ async function refreshComponentStates(index, requestId = null) {
 }
 
 async function setStateIndex(index) {
-  index = Math.max(0, Math.min(index, app.timestamps.length - 1));
+  index = Math.max(0, Math.min(index, app.timestampCount - 1));
   app.requestedIndex = index;
   ui.slider.value = String(index);
   syncSliderFill();
@@ -4389,6 +4579,7 @@ function visibleMissingScopeIds() {
   return visibleGeometryComponents()
     .filter((component) => (
       componentCanDescend(component)
+      && !componentClosedByView(component)
       && !app.loadedScopeIds.has(component.id)
       && !app.pendingScopeIds.has(component.id)
     ))
@@ -4454,7 +4645,9 @@ function buildLocalModel(payload) {
   if(recordingStatus){
     recordingStatus.classList.toggle('hidden',!payload.recording);
     recordingStatus.textContent=payload.recording
-      ? `${payload.recording.guest} · ${payload.recording.checkpoints} presentation checkpoints` : '';
+      ? `${payload.recording.guest} · ${payload.recording.capturePolicy==='all-signal-ticks'
+        ? `${payload.recording.timestamps.toLocaleString()} signal ticks · ${payload.recording.checkpoints} PRESENTs`
+        : `${payload.recording.checkpoints} presentation checkpoints`}` : '';
     recordingStatus.title='Saved circuit states at PRESENT; intermediate gate transitions are not retained.';
   }
   if(ui.timing)ui.timing.disabled=Boolean(payload.recording);
@@ -4469,9 +4662,29 @@ function buildLocalModel(payload) {
     revision: 0,
     exactOverrides: {},
   };
+  if(ui.fidelity){
+    const preset=app.profile.fidelityPreset;
+    ui.fidelity.disabled=Boolean(payload.recording) || !app.profile.editable;
+    ui.fidelity.value=preset;
+    for(const option of ui.fidelity.options){
+      option.textContent=option.dataset.baseLabel || option.textContent;
+      option.dataset.baseLabel=option.textContent;
+      const unavailable=app.profile.unavailablePresets?.[option.value];
+      option.disabled=Boolean(unavailable) && !(option.value===preset && app.profile.custom);
+      option.title=unavailable || '';
+      if(option.disabled)option.textContent+=' (unavailable)';
+      if(option.value===preset && app.profile.custom)option.textContent+=' + overrides';
+    }
+    if(payload.recording && ![...ui.fidelity.options].some(o=>o.value===preset)){
+      ui.fidelity.add(new Option(payload.recording.fidelityProfile || 'Recorded fidelity',preset,true,true));
+    }
+    ui.fidelity.title=payload.recording?'Fidelity is fixed by this recording.':('Named profile; explorer overrides are saved separately for each profile. '+Object.values(app.profile.unavailablePresets || {}).join(' '));
+  }
   app.layoutKey = payload.layoutKey || payload.scenario;
   app.rootId = payload.rootId;
   app.timestamps = payload.timestamps && payload.timestamps.length ? payload.timestamps : [0];
+  app.timestampCount = Number.isSafeInteger(payload.timestampCount)&&payload.timestampCount>0
+    ? payload.timestampCount : app.timestamps.length;
   app.checkpoints = (payload.checkpoints || []).filter((checkpoint) => Number.isFinite(Number(checkpoint.index)));
   app.layout = payload.layout;
   normalizeLayoutPayload(payload);
@@ -4542,7 +4755,7 @@ function buildLocalModel(payload) {
   mergeTopologyRecords(payload);
 
   ui.slider.min = "0";
-  ui.slider.max = String(Math.max(0, app.timestamps.length - 1));
+  ui.slider.max = String(Math.max(0, app.timestampCount - 1));
   ui.slider.value = "0";
   renderCheckpointMarks();
   setTimeLabel(app.state);
@@ -4582,6 +4795,49 @@ function syncScenarioSelection(value) {
   return selected.key;
 }
 
+// The published long-game recordings (site assets), as menu rows. A page
+// without them (the native server) simply has no such group.
+// Compact recordings, then the same games recorded with the core built from
+// its stages (Visual), when published.
+const RECORDINGS_MANIFESTS = [["../assets/system/long-games/manifest.json", ""],
+  ["../assets/system/long-games/visual/manifest.json", " · Visual"]];
+const RECORDING_TITLES = {"2048": "2048", sokoban: "Sokoban", snake: "Snake", pong: "Pong",
+  tetris: "Tetris", "snake-leds": "Snake with LEDs"};
+async function loadPublishedRecordings() {
+  const entries = [];
+  for (const [address, suffix] of RECORDINGS_MANIFESTS) {
+    try {
+      const manifest = new URL(address, document.baseURI);
+      const response = await fetch(manifest);
+      if (!response.ok) continue;
+      const campaign = await response.json();
+      for (const game of campaign.games || []) {
+        if (game.status !== "passed" || !game.playlist) continue;
+        const base = game.name.replace(/-long$/, "");
+        entries.push({path: new URL(game.playlist, manifest).pathname.replace(/^.*\/assets\//, "../assets/"),
+          title: `${RECORDING_TITLES[base] || base} · ${game.frames} frames${suffix}`});
+      }
+    } catch {
+      // A page without published recordings (the native server) lists none.
+    }
+  }
+  return entries;
+}
+
+function openRecording(path) {
+  const url = new URL(window.location);
+  url.search = "";
+  url.searchParams.set("recording", path);
+  window.location.assign(url);
+}
+
+function leaveRecording(scenario) {
+  const url = new URL(window.location);
+  url.search = "";
+  url.searchParams.set("scenario", scenario);
+  window.location.assign(url);
+}
+
 async function loadScenarios() {
   const response = await visualizerRequest(apiUrl("api/scenarios"));
   if (!response.ok) throw new Error(await response.text());
@@ -4591,8 +4847,13 @@ async function loadScenarios() {
   scenarioCatalogData = payload.catalog;
   scenarioOptions = payload.scenarios;
   const selected = params.get("scenario") || payload.default;
+  const recording = params.get("recording");
+  const recordings = await loadPublishedRecordings();
+  const listed = recording && recordings.some(r => r.path === recording);
   ui.scenario.innerHTML = "";
   for (const group of scenarioCatalogApi.menuOptions(scenarioOptions, payload.groups)) {
+    // The open recording appears in the long-game group below instead.
+    if (group.id === "recorded-games" && listed) continue;
     const element = document.createElement('optgroup');
     element.label = group.title;
     for (const scenario of group.options) {
@@ -4602,6 +4863,19 @@ async function loadScenarios() {
       element.appendChild(option);
     }
     ui.scenario.appendChild(element);
+  }
+  if (recordings.length) {
+    const element = document.createElement("optgroup");
+    element.label = "Computer System / Games (long versions, recorded)";
+    for (const entry of recordings) element.appendChild(new Option(entry.title, "recording:" + entry.path));
+    // Before the developer circuits, like the live games group.
+    const developer = [...ui.scenario.querySelectorAll("optgroup")].find(g => g.label === "Developer circuits");
+    ui.scenario.insertBefore(element, developer || null);
+  }
+  if (recording) {
+    const key = syncScenarioSelection(payload.default);
+    if (listed) ui.scenario.value = "recording:" + recording;
+    return key;
   }
   return syncScenarioSelection(selected);
 }
@@ -4614,6 +4888,12 @@ async function loadCircuit(scenario) {
   await nextPaint();
   const query = new URLSearchParams({ scenario });
   query.set("timing", (ui.timing && ui.timing.value) || "unit");
+  // The profile named in the URL, otherwise the one the scenario opens in.
+  const fidelity = new URLSearchParams(window.location.search).get("fidelity") || scenarioFidelity(scenario);
+  if (fidelity) {
+    if (ui.fidelity) ui.fidelity.value = fidelity;
+    query.set("fidelity", fidelity);
+  }
   // Documentation can choose the initial core without overwriting a saved
   // explorer profile. Explicit Apply remains the only profile write.
   const coreFidelity = new URLSearchParams(window.location.search).get("core_fidelity");
@@ -4630,10 +4910,6 @@ async function loadCircuit(scenario) {
   buildLocalModel(payload);
   await nextPaint();
   await refreshComponentStates(app.currentIndex, app.stateRequestId);
-  if(payload.recording){
-    const display=app.componentOrder.find(component=>component.deviceViewKind==='display');
-    if(display){setSelection('component',display.id);frameRoot();}
-  }
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
   document.body.dataset.circuitsimStatus = 'ready';
@@ -4661,6 +4937,7 @@ async function applyExplorerProfile(request) {
         revision: request.revision,
         exactOverrides: request.exactOverrides,
         timing: app.timing?.name || "unit",
+        fidelity: app.profile?.fidelityPreset || scenarioFidelity(app.scenario),
       }),
     });
     if (!response.ok) throw new Error(await response.text());
@@ -4701,6 +4978,9 @@ app.explorer = new window.CircuitExplorer({
   toggleButton: ui.explorerToggle,
   closeButton: ui.explorerClose,
   resizer: ui.explorerResizer,
+  // The plan changed: the canvas follows it for parts that exist, and the
+  // explorer previews parts that exist only after Apply & Run.
+  onDraftChanged: () => { requestRender(); schedulePreview(); },
   onFocus: (componentId) => {
     if (app.compactView) app.explorer.setOpen(false, { persist: false });
     smoothlyFocusComponent(componentId);
@@ -4737,16 +5017,34 @@ compactViewport.addEventListener("change", () => {
   requestRender();
 });
 
+// The fidelity profile a scenario opens in: its catalog `fidelity`. A
+// recording is not a catalog scenario; it carries its own profile (null).
+function scenarioFidelity(scenario) {
+  if (!scenarioCatalogApi || !scenarioOptions || !scenario) return null;
+  const option = scenarioCatalogApi.findScenario(scenarioOptions, scenario, scenarioCatalogData);
+  return option?.fidelity ?? null;
+}
+
 function selectScenario(scenario) {
   syncScenarioSelection(scenario);
   const url = new URL(window.location);
   url.searchParams.set("scenario", scenario);
+  // Another scenario opens in its own profile.
+  url.searchParams.delete("fidelity");
   window.history.replaceState({}, "", url);
   loadCircuit(scenario).catch(showError);
 }
 
 ui.scenario.addEventListener("change", () => {
+  if (ui.scenario.value.startsWith("recording:")) {
+    openRecording(ui.scenario.value.slice("recording:".length));
+    return;
+  }
   const option = scenarioOptions.find(o => o.key === ui.scenario.value);
+  if (new URLSearchParams(window.location.search).has("recording")) {
+    leaveRecording(option.key);
+    return;
+  }
   const chosen = option.workload ? scenarioCatalogApi.resolveProgram(scenarioOptions,
     option.workload, ui.programCore.value, ui.programPolicy.value) : option;
   selectScenario(chosen.key);
@@ -4762,7 +5060,22 @@ ui.timing.addEventListener("change", () => {
   if (ui.timing.value === "unit") url.searchParams.delete("timing");
   else url.searchParams.set("timing", ui.timing.value);
   window.history.replaceState({}, "", url);
-  if (app.scenario) loadCircuit(app.scenario).catch(showError);
+  const scenario=url.searchParams.get('scenario') || app.scenario;
+  if (scenario) loadCircuit(scenario).catch(showError);
+});
+{
+  const requested=new URLSearchParams(window.location.search).get('fidelity');
+  if(requested && [...ui.fidelity.options].some(o=>o.value===requested))ui.fidelity.value=requested;
+}
+ui.fidelity.addEventListener('change',()=>{
+  const url=new URL(window.location);
+  const scenarioKey=url.searchParams.get('scenario') || app.scenario;
+  if(scenarioKey && ui.fidelity.value===scenarioFidelity(scenarioKey))url.searchParams.delete('fidelity');
+  else url.searchParams.set('fidelity',ui.fidelity.value);
+  url.searchParams.delete('core_fidelity');
+  window.history.replaceState({},'',url);
+  const scenario=url.searchParams.get('scenario') || app.scenario;
+  if(scenario)loadCircuit(scenario).catch(showError);
 });
 for (const control of [ui.programCore, ui.programPolicy]) control.addEventListener('change', () => {
   const option = scenarioOptions.find(o => o.key === ui.scenario.value);
@@ -4785,6 +5098,7 @@ ui.slider.addEventListener("input", () => {
 });
 ui.resetView.title = "Fit circuit to view";
 ui.resetView.addEventListener("click", () => frameRoot({ animate: true }));
+ui.deviceViews.addEventListener("click", () => toggleDeviceViews().catch(showError));
 ui.zoomOut.addEventListener("click", () => zoomAtPoint(0.8, viewportCenter(cameraSafeViewport())));
 ui.zoomIn.addEventListener("click", () => zoomAtPoint(1.25, viewportCenter(cameraSafeViewport())));
 ui.undoLayout.addEventListener("click", undoLayoutChange);
@@ -4816,6 +5130,7 @@ ui.componentColorCode.addEventListener("blur", () => commitLayoutTransaction());
 ui.restoreTypeStyle.addEventListener("click", restoreSelectedTypeStyle);
 ui.restorePlacement.addEventListener("click", () => restoreSelectedPlacement().catch(showError));
 ui.restoreChildrenLayout.addEventListener("click", () => restoreSelectedChildrenLayout().catch(showError));
+
 
 document.addEventListener("keydown", (event) => {
   const tag = document.activeElement ? document.activeElement.tagName : "";

@@ -8,6 +8,7 @@
 #include "components/StructuralNetBuilder.hpp"
 #include "components/TimingProfile.hpp"
 #include "MemoryHandshakeWiring.hpp"
+#include <algorithm>
 #include "NORSyncControl.hpp"
 #include <bit>
 #include <tuple>

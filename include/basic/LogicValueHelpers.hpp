@@ -1,6 +1,7 @@
 #pragma once
 
 #include "basic/LogicValue.hpp"
+#include "basic/PackedLogic.hpp"
 #include <vector>
 
 // Small four-state predicates shared by directly evaluated models.
@@ -53,4 +54,26 @@ inline bool allKnown(const std::vector<LogicValue>& values) {
     }
     return true;
 }
+
+// The same gate rules on every bit of a packed word at once (HIGH_Z reads as
+// UNKNOWN; an undecided result bit is UNKNOWN). `width` bounds the result.
+namespace packed {
+inline uint64_t ones(const PackedLogic& v) { return v.value & ~v.unknown; }
+inline uint64_t zeros(const PackedLogic& v, size_t width) { return ~v.value & ~v.unknown & PackedLogic::mask(width); }
+inline PackedLogic from(uint64_t one, uint64_t zero, size_t width) {
+    return {one, PackedLogic::mask(width) & ~(one | zero)};
+}
+inline PackedLogic notGate(const PackedLogic& a, size_t width) { return from(zeros(a, width), ones(a), width); }
+inline PackedLogic andGate(const PackedLogic& a, const PackedLogic& b, size_t width) {
+    return from(ones(a) & ones(b), zeros(a, width) | zeros(b, width), width);
+}
+inline PackedLogic orGate(const PackedLogic& a, const PackedLogic& b, size_t width) {
+    return from(ones(a) | ones(b), zeros(a, width) & zeros(b, width), width);
+}
+inline PackedLogic xorGate(const PackedLogic& a, const PackedLogic& b, size_t width) {
+    const uint64_t known = PackedLogic::mask(width) & ~a.unknown & ~b.unknown;
+    const uint64_t differ = a.value ^ b.value;
+    return from(known & differ, known & ~differ, width);
+}
+} // namespace packed
 } // namespace circuit::logic_values

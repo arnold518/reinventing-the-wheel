@@ -52,6 +52,10 @@ public:
     std::shared_ptr<Pin<>> getInputPin(const std::string& pin_name);
     std::shared_ptr<Pin<>> getOutputPin(const std::string& pin_name);
 
+    // Construction only: remove a child added through this builder that
+    // nothing is wired to (an adapter that turned out to be unused).
+    void removeComponent(const std::shared_ptr<Component>& component);
+
     std::shared_ptr<IOComponent> addByContract(
         circuit::ComponentBuildRequest request);
 

@@ -34,7 +34,10 @@ struct ExperimentClock {
 // RV32IProfileSweepTest checks every entry against the analysis.
 struct CertifiedCorePeriod { std::string_view profile, core; SimulationTime period; };
 inline constexpr std::array<CertifiedCorePeriod, 9> CERTIFIED_CORE_PERIODS{{
-    {"unit", "single", 166}, {"unit", "baseline", 80}, {"unit", "advanced", 94},
+    // unit re-certified 2026-10-27 after the splitter became zero-delay (was
+    // 166/80/94), and the advanced core again (82 -> 80) after the second
+    // table pass re-proved its parts on the new storage tables.
+    {"unit", "single", 142}, {"unit", "baseline", 68}, {"unit", "advanced", 80},
     {"embedded", "single", 7164}, {"embedded", "baseline", 3354}, {"embedded", "advanced", 4104},
     {"desktop", "single", 4986}, {"desktop", "baseline", 2334}, {"desktop", "advanced", 2858},
 }};

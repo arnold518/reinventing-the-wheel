@@ -1,6 +1,7 @@
 #pragma once
 
 #include "simulator/SimulationTime.hpp"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -65,6 +66,9 @@ public:
     virtual void preparePrecomputedSimulation() {}
     virtual SimulationTime getRunDuration() const { return 100; }
     virtual bool supportsBuildProfile() const { return false; }
+    // Fidelity presets this scenario cannot open in, with the reason shown to
+    // the reader (in addition to its root contract's own restrictions).
+    virtual std::map<std::string, std::string> unavailableFidelityPresets() const { return {}; }
     virtual circuit::BuildProfile getBuildProfile() const {
         throw std::logic_error("This simulation scenario does not accept a build profile");
     }

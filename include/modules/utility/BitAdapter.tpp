@@ -3,6 +3,7 @@
 #include "modules/utility/BitAdapter.hpp"
 #include "simulator/Event.hpp"
 #include "components/TimingProfile.hpp"
+#include <array>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -23,8 +24,14 @@ void BitSplitter<WIDTH>::evaluate(SimulationTime current_time, Simulator& simula
         return;
     }
 
+    // Output names are built once per width, not once per bit and evaluation.
+    static const auto names = [] {
+        std::array<std::string, WIDTH> result;
+        for (size_t i = 0; i < WIDTH; ++i) result[i] = "OUT_" + std::to_string(i);
+        return result;
+    }();
     for (size_t i = 0; i < WIDTH; ++i) {
-        _updateOutputWire(simulator, "OUT_" + std::to_string(i), input->getBit(i), current_time);
+        _updateOutputWire(simulator, names[i], input->getBit(i), current_time);
     }
 }
 
@@ -39,10 +46,14 @@ BitJoiner<WIDTH>::BitJoiner(std::string name)
 
 template<size_t WIDTH>
 void BitJoiner<WIDTH>::evaluate(SimulationTime current_time, Simulator& simulator) {
-    std::vector<LogicValue> values(WIDTH, LogicValue::UNKNOWN);
+    if (!resolved_) {
+        for (size_t i = 0; i < WIDTH; ++i) inputs_[i] = getInputPin("IN_" + std::to_string(i));
+        resolved_ = true;
+    }
+    PackedLogic value = PackedLogic::allUnknown(WIDTH);
     for (size_t i = 0; i < WIDTH; ++i) {
-        if (auto input = getInputPin("IN_" + std::to_string(i))) {
-            values[i] = input->getValue();
+        if (inputs_[i]) {
+            value.set(i, inputs_[i]->packed().get(0));
         }
     }
 
@@ -51,10 +62,10 @@ void BitJoiner<WIDTH>::evaluate(SimulationTime current_time, Simulator& simulato
         return;
     }
 
-    output->setValueFromVector(values);
+    output->setPacked(value);
     if (auto wire = output->getExternalWire()) {
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(checkedTimeAdd(current_time, getDelay()), wire, values));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(checkedTimeAdd(current_time, getDelay()), wire, value));
     } else {
-        simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output, values);
+        simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output, value.toVector(WIDTH));
     }
 }

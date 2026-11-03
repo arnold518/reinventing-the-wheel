@@ -3,6 +3,8 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
+#include "modules/basic/WordGate.hpp"
+#include "modules/utility/Rewire.hpp"
 #include <array>
 #include <memory>
 #include <string>
@@ -94,31 +96,42 @@ public:
         return inputs.front();
     }
 
+    // Five-bit equality: XORGate<5> and NOTGate<5> (an XNOR per bit, grouped
+    // as words between zero-delay Rewires), then the same AND tree.
     NetId equal5(
         const std::string& prefix,
         const std::array<NetId, 5>& left,
         const std::array<NetId, 5>& right) {
-        std::vector<NetId> equal_bits;
-        equal_bits.reserve(5);
+        using circuit::word::GateKind;
+        const auto join = [&](const std::string& name, const std::array<NetId, 5>& bits) {
+            std::vector<Rewire::WireSpec> ins;
+            std::vector<Rewire::BitMap> map;
+            for (size_t bit = 0; bit < 5; ++bit) {
+                ins.emplace_back("B" + std::to_string(bit), 1);
+                map.emplace_back("B" + std::to_string(bit), 0, "OUT", bit);
+            }
+            auto r = builder_.addNewComponent<Rewire>(name, ins, std::vector<Rewire::WireSpec>{{"OUT", 5}}, map);
+            for (size_t bit = 0; bit < 5; ++bit) sink(bits[bit], r->getInputPin("B" + std::to_string(bit)));
+            return r;
+        };
+        auto a = join(prefix + "_A", left), b = join(prefix + "_B", right);
+        auto differ = builder_.add(circuit::word::gate(GateKind::Xor, 5), prefix + "_XOR");
+        auto same = builder_.add(circuit::word::gate(GateKind::Not, 5), prefix + "_XNOR");
+        words_.push_back({prefix + "_A_WORD", a->getOutputPinDynamic("OUT"), differ->getInputPinDynamic("A")});
+        words_.push_back({prefix + "_B_WORD", b->getOutputPinDynamic("OUT"), differ->getInputPinDynamic("B")});
+        words_.push_back({prefix + "_DIFFER", differ->getOutputPinDynamic("OUT"), same->getInputPinDynamic("IN")});
+        std::vector<Rewire::WireSpec> outs;
+        std::vector<Rewire::BitMap> map;
         for (size_t bit = 0; bit < 5; ++bit) {
-            const auto xor_net = [&] {
-                const auto name =
-                    prefix + "_XOR_" + std::to_string(bit);
-                builder_.addNewComponent<XORGate>(name);
-                sink(
-                    left[bit],
-                    builder_.getInputPin<XORGate>(name, "A"));
-                sink(
-                    right[bit],
-                    builder_.getInputPin<XORGate>(name, "B"));
-                return source(
-                    name + "_OUT",
-                    builder_.getOutputPin<XORGate>(name, "OUT"));
-            }();
-            equal_bits.push_back(logicalNot(
-                prefix + "_XNOR_" + std::to_string(bit),
-                xor_net));
+            outs.emplace_back("B" + std::to_string(bit), 1);
+            map.emplace_back("IN", bit, "B" + std::to_string(bit), 0);
         }
+        auto split = builder_.addNewComponent<Rewire>(prefix + "_EQUAL_BITS",
+            std::vector<Rewire::WireSpec>{{"IN", 5}}, outs, map);
+        words_.push_back({prefix + "_SAME", same->getOutputPinDynamic("OUT"), split->getInputPinDynamic("IN")});
+        std::vector<NetId> equal_bits;
+        for (size_t bit = 0; bit < 5; ++bit)
+            equal_bits.push_back(source(prefix + "_EQUAL_" + std::to_string(bit), split->getOutputPin("B" + std::to_string(bit))));
         return andAll(prefix + "_ALL", equal_bits);
     }
 
@@ -137,12 +150,16 @@ public:
                 net.source,
                 net.sinks);
         }
+        for (auto& word : words_)
+            builder_.addNewWireDynamic(word.name, word.source->getWidth(), word.source, {word.sink});
     }
 
 protected:
     ComponentBuilder& builder_;
 
 private:
+    struct WordNet { std::string name; std::shared_ptr<PinBase> source, sink; };
     std::vector<LogicNet> nets_;
+    std::vector<WordNet> words_;
 };
 } // namespace rv32i::detail

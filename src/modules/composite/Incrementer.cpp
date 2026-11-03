@@ -19,17 +19,22 @@ template<size_t W>void buildIncrementer(IOComponent& root,ComponentBuilder& buil
     for(size_t i=0;i<W;++i)bits[i]=split->getOutputPin("OUT_"+std::to_string(i));
     if(step && std::has_single_bit(step)) {
         const size_t first=std::countr_zero(step);
+        // Each prefix level and the sum are rows of independent gates, built
+        // as word gates (PREFIX_<distance>, INCREMENT).
+        using circuit::word::GateKind;
         auto prefix=bits;
         for(size_t distance=1;distance<W;distance*=2) {
-            auto next=prefix;
-            for(size_t i=first+distance;i<W;++i)
-                next[i]=wires.both("PREFIX_"+std::to_string(distance)+"_"+std::to_string(i),prefix[i],prefix[i-distance]);
-            prefix=std::move(next);
+            if(first+distance>=W)break;
+            std::vector<typename Wiring::PinPtr> high,low;
+            for(size_t i=first+distance;i<W;++i){high.push_back(prefix[i]);low.push_back(prefix[i-distance]);}
+            const auto level=wires.gateBits(GateKind::And,"PREFIX_"+std::to_string(distance),high,low);
+            for(size_t i=first+distance;i<W;++i)prefix[i]=level[i-first-distance];
         }
-        for(size_t i=first;i<W;++i) {
-            const auto id="INCREMENT_BIT_"+std::to_string(i);
-            bits[i]=i==first?wires.invert(id,bits[i]):wires.binary<XORGate>(id,bits[i],prefix[i-1]);
-        }
+        std::vector<typename Wiring::PinPtr> upper,carries;
+        for(size_t i=first+1;i<W;++i){upper.push_back(bits[i]);carries.push_back(prefix[i-1]);}
+        bits[first]=wires.invert("INCREMENT_BIT_"+std::to_string(first),bits[first]);
+        const auto sum=wires.gateBits(GateKind::Xor,"INCREMENT",upper,carries);
+        for(size_t i=first+1;i<W;++i)bits[i]=sum[i-first-1];
     } else if(step) {
         const size_t first=std::countr_zero(step);
         auto carry=bits[first];

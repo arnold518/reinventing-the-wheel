@@ -17,6 +17,10 @@
 #include "tests/MemoryEndpointTests.hpp"
 #include "tests/CacheTests.hpp"
 #include "tests/RV32IALUTests.hpp"
+#include "tests/PipelineControlSweepTests.hpp"
+#include "tests/WordGateTests.hpp"
+#include "tests/CompactFormEquivalenceTests.hpp"
+#include "tests/SystemTests.hpp"
 #include "tests/RV32IBlockStandaloneTests.hpp"
 #include "tests/RV32IMemoryAccessTests.hpp"
 #include "tests/RV32IControlTests.hpp"
@@ -213,7 +217,8 @@ void markVisualizable(
     };
     static const std::set<std::string> headless{
         "RegisterWidthsTest", "ClockedStateBitTest", "DecoderWidth5ZeroDisabledTest",
-        "ALUWidthContractTest", "WidthComponentsTest", "ALUFidelityContractTest",
+        "ALUWidthContractTest", "WidthComponentsTest", "ALUFidelityContractTest", "AdderWidthSweepTest", "WordGateSweepTest", "CompactFormEquivalenceTest", "GateListCompactEquivalenceTest",
+        "SystemDescriptionTest", "BusInterconnectTest", "LedPanelTest", "GuestHeaderContentTest", "BusPortCheckerTest",
         "CacheReadTest", "CacheControllerLockstepTest", "TwoPortMemoryArbiterTest",
     };
     for (auto& entry : entries) {
@@ -426,6 +431,11 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
             "RV32IForwardingUnitTest"),
         entry<RV32IHazardDetectionUnitTest>(
             "RV32IHazardDetectionUnitTest"),
+        entry<RV32IPipelineControlSweepTest>(
+            "RV32IPipelineControlSweepTest"),
+        entry<WordGateSweepTest>("WordGateSweepTest"),
+        entry<CompactFormEquivalenceTest>("CompactFormEquivalenceTest"),
+        entry<GateListCompactEquivalenceTest>("GateListCompactEquivalenceTest"),
         entry<RV32IMemoryAlignmentUnitTest>(
             "RV32IMemoryAlignmentUnitTest"),
         entry<RV32IPipelineRetirementUnitTest>(
@@ -569,9 +579,11 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                 [arrangement]{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,arrangement);},true});
         }
         appendWordALUTests(entries);
+        appendWordGateScenarios(entries);
         appendRV32IMPhase3Tests(entries);
         appendSimulationTimeTests(entries);
         appendRV32IMRecordedTests(entries);
+        appendSystemTests(entries);
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);
         markVisualizable(entries);

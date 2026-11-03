@@ -19,7 +19,20 @@ with sync_playwright() as p:
     assert page.locator('#program-core').input_value() == 'advanced'
     assert page.locator('#program-policy').input_value() == 'two-bit'
     assert page.evaluate('app.scenario') == 'rv32i-predict-two-bit-program4'
-    assert page.locator('#scenario-select optgroup').count() >= 10
+    menu = page.evaluate("""()=>({
+      actual: [...document.querySelectorAll('#scenario-select optgroup')].map(g=>({
+        title:g.label, keys:[...g.querySelectorAll('option')].map(o=>o.value)})),
+      expected: scenarioCatalogData.groups.map(g=>({title:g.title,
+        keys:scenarioOptions.filter(o=>o.group===g.id && (!o.workload || o.core==='single')).map(o=>o.key)
+      })).filter(g=>g.keys.length)
+    })""")
+    # The published long-game recordings are one extra group, before the
+    # developer circuits; choosing one opens the recording.
+    recorded = [g for g in menu['actual'] if g['title'] == 'Computer System / Games (long versions, recorded)']
+    assert len(recorded) == 1 and len(recorded[0]['keys']) == 6, recorded
+    assert all(key.startswith('recording:../assets/system/long-games/') for key in recorded[0]['keys']), recorded
+    assert [g['title'] for g in menu['actual']][-2:] == [recorded[0]['title'], 'Developer circuits'], menu['actual']
+    assert [g for g in menu['actual'] if g is not recorded[0]] == menu['expected'], menu
     titles = page.locator('#scenario-select option').all_text_contents()
     assert sum('Conditional branches and fallthrough' in text for text in titles) == 1
     assert not any('Test' in title for title in titles)

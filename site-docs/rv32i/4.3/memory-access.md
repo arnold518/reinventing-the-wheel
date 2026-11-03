@@ -73,7 +73,7 @@ Nine top-level children expose the data flow instead of placing every bit gate s
 | `LOAD_EXTEND` | `RV32ILoadExtender`: select byte/halfword/word data and sign/zero extension |
 | `WRITE_MASK` | `RV32IByteWriteMask`: generate the four byte-write enables |
 
-`ADDRESS` receives `ADDR[32]` and `SIZE[2]`; it outputs `WORD_ADDR[32]`, `OFFSET[2]`, and `BYTE/HALF/WORD`. `LOAD_EXTEND` receives shifted `DATA[32]`, those three enables, and `SIGN_EXTEND`; its `OUT[32]` is assembled from four `RV32ILoadByte<0…3>` circuits. Each byte circuit contains eight numbered bit lanes; lower bytes retain input bits while higher bytes select the relevant sign fill. `WRITE_MASK` receives the offset and size enables and produces `MASK[4]`.
+`ADDRESS` receives `ADDR[32]` and `SIZE[2]`; it outputs `WORD_ADDR[32]`, `OFFSET[2]`, and `BYTE/HALF/WORD`. `LOAD_EXTEND` receives shifted `DATA[32]`, those three enables, and `SIGN_EXTEND`; its `OUT[32]` is assembled from four `RV32ILoadByte<0…3>` circuits. Each byte circuit masks its eight data bits with the size enables in 8-bit word gates (`BYTE`, `HALF`, `WORD`, each enable spread across the byte by wiring) and merges them in two word ORs (`RESULT_0`, `RESULT_1`); lower bytes keep input bits while higher bytes take the relevant sign fill (`BYTE_FILL`, `HALF_FILL`) across the byte. `WRITE_MASK` receives the offset and size enables and produces `MASK[4]`.
 
 The internal helpers are fixed structural parts with no state and no behavioral variants of their own; grouping does not turn them into behavioral memory devices.
 
@@ -256,7 +256,7 @@ State is initially unknown until reset. Four-state behavior follows the FF cells
 
 #### Structural implementation
 
-`BUSY`, `SENT`, and `ABANDONED` are always-clocked `ClockedStateBit` children. The general requester retains five fields in `Register` children. Payload multiplexers select live fields while idle and held fields while busy. `TAG_MATCH` is a fixed structural `RV32IRequestTagMatch`: inputs `CURRENT[32]` and `SAVED[32]` feed 32 XOR comparisons and an OR-reduction tree, producing `CHANGED`. Payload, handshake state, and response handling remain visible at the requester level.
+`BUSY`, `SENT`, and `ABANDONED` are always-clocked `ClockedStateBit` children. The general requester retains five fields in `Register` children. Payload multiplexers select live fields while idle and held fields while busy. `TAG_MATCH` is a fixed structural `RV32IRequestTagMatch`: inputs `CURRENT[32]` and `SAVED[32]` feed one word XOR (`TAG_DIFFERENT`, `XORGate<32>`: 32 XOR comparisons) and an OR-reduction tree, producing `CHANGED`. Payload, handshake state, and response handling remain visible at the requester level.
 
 | Payload register | Width | Purpose |
 | --- | ---: | --- |

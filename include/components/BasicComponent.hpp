@@ -41,8 +41,8 @@ protected:
         if (auto pin = getOutputPin<WIDTH>(pin_name)) {
             pin->setValueFromUInt64(new_value);
             if (auto wire = pin->getExternalWire()) {
-                simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
-                    publishTime(pin_name, current_sim_time), wire, new_value));
+                simulator.scheduleEvent(circuit::makeEvent<WireUpdateEvent>(
+                    publishTime(pin_name, current_sim_time), wire, pin->packed()));
             } else {
                 simulator.recordPinChange(
                     publishTime(pin_name, current_sim_time), pin, pin->getValueAsVector());
@@ -57,8 +57,8 @@ protected:
         if (auto pin = getOutputPin<WIDTH>(pin_name)) {
             pin->setValueFromVector(new_value);
             if (auto wire = pin->getExternalWire()) {
-                simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
-                    publishTime(pin_name, current_sim_time), wire, new_value));
+                simulator.scheduleEvent(circuit::makeEvent<WireUpdateEvent>(
+                    publishTime(pin_name, current_sim_time), wire, pin->packed()));
             } else {
                 simulator.recordPinChange(
                     publishTime(pin_name, current_sim_time), pin, pin->getValueAsVector());
@@ -72,6 +72,9 @@ protected:
     void _updateOutputWireDynamic(Simulator& simulator, const std::string& pin_name,
                                   const std::vector<LogicValue>& new_value,
                                   SimulationTime current_sim_time);
+    // Publishes a packed value of the pin's own width on an output pin.
+    void _updateOutputPacked(Simulator& simulator, const std::shared_ptr<PinBase>& pin,
+                             const PackedLogic& new_value, SimulationTime current_sim_time);
 
 public:
     BasicComponent(std::string name, SimulationTime delay_val, PinInitFunction initializer = nullptr);

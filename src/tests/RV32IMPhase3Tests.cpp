@@ -18,6 +18,7 @@
 #include "visualizer/DeviceInspector.hpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include "components/selection/StandardProfiles.hpp"
+#include <chrono>
 #include <deque>
 #include <array>
 #include <functional>
@@ -100,13 +101,13 @@ void steps(bool divide){
         }
     }
 }
-void arithmetic(const circuit::ComponentFamily&f,bool combined,bool divide){
-    Rig r(f);std::mt19937 rng(0x32a11);
+void arithmetic(const circuit::ComponentFamily&f,bool combined,bool divide,bool compact=true,unsigned pairs=48){
+    Rig r(f,compact);std::mt19937 rng(0x32a11);
     const std::vector<uint32_t> edges{0,1,2,0x7fffffff,0x80000000,0xffffffff,0x12345678,0x87654321};
     const std::array<std::pair<uint32_t,uint32_t>,8> directed{{
         {0x80000000,0xffffffff},{0x80000000,0},{0x80000000,0x80000000},{0xffffffff,0xffffffff},
         {0x7fffffff,0x7fffffff},{1,0},{0,0},{0x7fffffff,0xffffffff}}};
-    for(unsigned i=0;i<48;++i) {
+    for(unsigned i=0;i<pairs;++i) {
         uint32_t a=i<edges.size()?edges[i]:rng(),b=i<edges.size()?edges[edges.size()-1-i]:rng();
         if(i>=8&&i<16){a=directed[i-8].first;b=directed[i-8].second;}
         unsigned first=combined?0:divide?4:0,last=combined?8:divide?8:4;
@@ -277,17 +278,6 @@ void buttons(){
     require((r.access(false,12).second&2)&&((r.access(false,0).second>>6)&1),"Button overflow lost level");
     require(r.access(true,20,1).first==0&&!(r.access(false,12).second&2),"Button overflow clear");
 }
-void pixels(){
-    Rig r(circuit::device::indexedPixelSelector(32),false);
-    uint32_t word=0xff031ce0;const std::array<uint32_t,4> expected{0xffff0000,0xff00ff00,0xff0000ff,0xffffffff};
-    for(unsigned i=0;i<4;++i){r.drive({{"WORD",word},{"OFFSET",i}});require(r.out("ARGB")==expected[i]&&r.out("INDEX")==((word>>(8*i))&255),"Pixel order/palette");}
-    for(uint32_t index=0;index<256;++index)for(unsigned lane=0;lane<4;++lane) {
-        auto red=index>>5,green=(index>>2)&7,blue=index&3;
-        red=(red<<5)|(red<<2)|(red>>1);green=(green<<5)|(green<<2)|(green>>1);blue=(blue<<6)|(blue<<4)|(blue<<2)|blue;
-        r.drive({{"WORD",index*0x01010101u},{"OFFSET",lane}});
-        require(r.out("INDEX")==index&&r.out("ARGB")== (0xff000000u|(red<<16)|(green<<8)|blue),"Full RGB332 palette/byte selection");
-    }
-}
 void display(){
     Rig large(circuit::families::FramebufferDisplay,true,{{"width","64"},{"height","48"}});
     require(large.access(false,0).second==64&&large.access(false,4).second==48,"Catalog display geometry parameters");
@@ -335,10 +325,6 @@ void display(){
     require(r.out("FRAME_SEQUENCE")==0&&r.access(false,0,0,15,"FB_").second==0x031ce0aa,"Display reset must retain drawing storage");
 }
 void deviceViews(){
-    {
-        Rig router(circuit::device::busFamily(circuit::device::BusUnit::Router,32),false,{{"video_bytes","16384"}});
-        require(circuit::visualizer::componentLayoutVariant(router.root)=="video_bytes=16384","Router aperture layout variant");
-    }
     using circuit::visualizer::deviceStateJson;
     for(bool compact:{false,true}) {
         Rig r(circuit::families::FramebufferDisplay,compact,{},true);
@@ -361,24 +347,6 @@ void deviceViews(){
     const auto released=deviceStateJson(keyboard.root,keyboard.sim,1,keyboard.now);
     require(released.find("\"levels\":\"00000000000000000000000000000000\"")!=std::string::npos&&released.find("\"count\":\"010\"")!=std::string::npos,"Keyboard preview lost released level or tap queue");
 }
-void routing(const circuit::ComponentFamily&f,bool guard,size_t width=32,circuit::ParameterMap parameters={}){
-    Rig r(f,true,parameters);const std::string target=guard?"MEM_":"CONSOLE_";
-    uint32_t address=guard?4:(parameters.contains("console_base")?uint32_t(std::stoul(parameters.at("console_base"))):0x10000000u)+4;
-    uint32_t response=0x1234&uint32_t((uint64_t{1}<<width)-1);
-    r.drive({{"REQ_VALID",1},{"REQ_OP",0},{"REQ_ADDR",address},{"RSP_READY",0}});
-    r.cycle();r.drive({{"REQ_VALID",0}});
-    require(r.out(target+"REQ_VALID")&&r.out(target+"REQ_ADDR")==4,"Router decode/translation");
-    r.drive({{target+"REQ_READY",1}});r.cycle();r.drive({{target+"REQ_READY",0},{target+"RSP_VALID",1},{target+"RSP_STATUS",0},{target+"RSP_READ_DATA",response}});
-    require(r.out("RSP_VALID")&&r.out("RSP_READ_DATA")==response&&!r.out(target+"RSP_READY"),"Router held response ownership");
-    r.drive({{"RSP_READY",1}});r.cycle();r.drive({{target+"RSP_VALID",0},{"RSP_READY",0}});
-    require(r.out("REQ_READY"),"Router did not release transaction");
-    r.drive({{"REQ_VALID",1},{"REQ_ADDR",guard?0x10000000u:0x30000000u},{"REQ_OP",0}});
-    r.cycle();r.drive({{"REQ_VALID",0}});
-    require(r.out("RSP_VALID")&&r.out("RSP_STATUS")==2,"Unmapped/fetch device address did not fault");
-    require(!r.out(target+"REQ_VALID"),"Invalid request reached device");
-    r.drive({{"RSP_READY",1}});r.cycle();r.drive({{"RSP_READY",0},{"REQ_VALID",1},{"REQ_ADDR",0},{"REQ_OP",4}});
-    r.cycle();r.drive({{"REQ_VALID",0}});require(r.out("RSP_VALID")&&r.out("RSP_STATUS")==4,"Router forwarded burst");
-}
 class TableOnlyEcho : public BasicComponent {
 public:
     explicit TableOnlyEcho(std::string n):BasicComponent(std::move(n),1,[](IOComponent*p){p->addPin("IN",PinType::INPUT);p->addPin("OUT",PinType::OUTPUT);}){}
@@ -391,9 +359,9 @@ void tableOnlyTiming(){
     ComponentBuilder b(part);auto input=b.addNewWire("INPUT",nullptr,{part->getInputPin("IN")});
     auto output=b.addNewWire("OUTPUT",part->getOutputPin("OUT"),{});
     Simulator sim;SimulationTest::scheduleInitialEventsForTree(part,sim);
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(0,input,0));sim.advanceAndRecord(10);
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(0,input,0));sim.advanceAndRecord(10);
     require(output->getValue()==0,"Table-only initial value");
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(20,input,1));sim.advanceAndRecord(26);
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(20,input,1));sim.advanceAndRecord(26);
     require(output->getValue()==0,"Table-only result published early");sim.advanceAndRecord(27);
     require(output->getValue()==1,"Table-only maximum delay not used");
 }
@@ -652,9 +620,6 @@ void widthComponents(){
         require(r.access(true,0,0x55,mask).first==0,"Generic port write");
         require(r.access(true,0,0x55,0).first==0,"Generic port zero-mask no-op");
         if(w==16){require(r.access(true,0,0x55,1).first==6,"Generic port partial-mask rejection");require(r.access(false,1).first==1,"Generic port misalignment");}
-        Rig error(circuit::device::busFamily(circuit::device::BusUnit::ErrorTarget,w));require(error.access(false,0).first==2,"Generic bus error");
-        Rig pixel(circuit::device::indexedPixelSelector(w));pixel.drive({{"WORD",0x1ce0},{"OFFSET",0}});require(pixel.out("INDEX")==224&&pixel.out("ARGB")==0xffff0000,"Generic RGB332 byte selection");
-        pixel.drive({{"OFFSET",1}});require(pixel.out("INDEX")== (w==16?28:0),"Generic RGB332 offset/unused selector");
         Rig queue(circuit::families::synchronousFifo(16),true,{{"depth","3"}});queue.drive({{"PUSH",1},{"PUSH_DATA",0xabcd}});queue.cycle();queue.drive({{"PUSH",0}});
         require(queue.out("DATA")==0xabcd&&queue.out("COUNT")==1,"Generic 16-bit queue");
         Rig counter(circuit::families::clockedCounter(w));counter.drive({{"RST",1}});counter.cycle();counter.drive({{"RST",0}});counter.cycle();require(counter.out("COUNT")==1,"Generic counter width");
@@ -676,18 +641,72 @@ void widthComponents(){
         }
 
     }
-    for(size_t width:{8u,16u,32u}){
-        routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width);
-        routing(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,width),true,width);
-        routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width,{{"console_base",std::to_string(0x18000000)}});
-    }
     bool bad_width=false;try{(void)family(Unit::ALU,12);}catch(const std::invalid_argument&){bad_width=true;}
     require(bad_width,"Unsupported ALU width accepted");
-    circuit::device::AddressMap map;map.validate();map.regions[1].base=0;
-    bool rejected=false;try{map.validate();}catch(const std::invalid_argument&){rejected=true;}require(rejected,"Overlapping map accepted");
-    std::cout<<"PASS generic ALU, adder, iterative M, ports, pixel words, counters, queues and register files\n";
+    std::cout<<"PASS generic ALU, adder, iterative M, ports, counters, queues and register files\n";
 }
 
+// Width-generic M reference, independent of the production value functions.
+uint64_t referenceM(unsigned op,uint64_t a,uint64_t b,size_t w){
+    const uint64_t mask=(uint64_t{1}<<w)-1;const auto sa=signedWord(a,w),sb=signedWord(b,w);
+    if(op<4){const uint64_t product=op==1?uint64_t(sa*sb):op==2?uint64_t(sa*int64_t(b)):a*b;return (op?product>>w:product)&mask;}
+    if(!b)return op<6?mask:a;
+    if(op==4)return uint64_t(sa/sb)&mask;
+    if(op==5)return a/b;
+    if(op==6)return uint64_t(sa%sb)&mask;
+    return a%b;
+}
+// One complete MulDivUnit transaction: launch, W iterations, take.
+uint64_t mTransaction(Rig& unit,size_t w,unsigned op,uint64_t a,uint64_t b){
+    require(unit.out("READY"),"M unit not ready");
+    unit.drive({{"A",a},{"B",b},{"OP",op},{"START",1}});unit.cycle();unit.drive({{"START",0}});
+    for(size_t i=0;i<w;++i){require(!unit.out("DONE"),"M unit completed early");unit.cycle();}
+    require(unit.out("DONE"),"M unit did not complete in W cycles");
+    const uint64_t result=unit.out("RESULT");
+    unit.drive({{"TAKE",1}});unit.cycle();unit.drive({{"TAKE",0}});
+    return result;
+}
+double secondsSince(std::chrono::steady_clock::time_point start){
+    return std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();
+}
+// Gate-level multiply/divide: the earlier M sweeps use compact children.
+void gateLevelM(){
+    // Exhaustive 4-bit M unit, the representative gate-level slice, on both forms.
+    for(bool compact:{false,true}){
+        const auto start=std::chrono::steady_clock::now();
+        Rig unit(circuit::families::mulDivUnit(4),compact);size_t count=0;
+        for(unsigned op=0;op<8;++op)for(uint64_t a=0;a<16;++a)for(uint64_t b=0;b<16;++b){
+            const auto got=mTransaction(unit,4,op,a,b);
+            require(got==referenceM(op,a,b,4),"4-bit M mismatch op="+std::to_string(op)+" a="+std::to_string(a)+" b="+std::to_string(b)+(compact?" (compact)":" (gate level)"));
+            ++count;
+        }
+        std::cout<<"MulDivUnit<4> "<<(compact?"compact":"gate-level")<<": "<<count<<" exhaustive transactions, "<<secondsSince(start)<<" s\n";
+    }
+    // 8/16-bit gate-level units: sign, zero, overflow and seeded random pairs.
+    for(size_t w:{8u,16u}){
+        const auto start=std::chrono::steady_clock::now();
+        Rig unit(circuit::families::mulDivUnit(w),false);const uint64_t mask=(uint64_t{1}<<w)-1,sign=uint64_t{1}<<(w-1);
+        std::vector<std::pair<uint64_t,uint64_t>> pairs{{0,0},{1,0},{mask,0},{sign,mask},{sign,1},{mask,mask},{sign-1,sign-1},{sign,sign},{mask,3},{7,sign-1}};
+        // Seeded random pairs at 8 bits only; each 16-bit transaction costs about 0.12 s.
+        std::mt19937_64 rng(0x4d000+w);
+        for(int i=0;w==8&&i<6;++i){const uint64_t a=rng()&mask;const uint64_t b=rng()&mask;pairs.push_back({a,b});}
+        size_t count=0;
+        for(auto[a,b]:pairs)for(unsigned op=0;op<8;++op){
+            require(mTransaction(unit,w,op,a,b)==referenceM(op,a,b,w),"Gate-level M mismatch W="+std::to_string(w)+" op="+std::to_string(op)+" a="+std::to_string(a)+" b="+std::to_string(b));
+            ++count;
+        }
+        std::cout<<"MulDivUnit<"<<w<<"> gate-level: "<<count<<" transactions, "<<secondsSince(start)<<" s\n";
+    }
+    // 32-bit gate-level units: boundary operands, then the full control checks.
+    for(auto [name,family,combined,divide]:std::array<std::tuple<const char*,const circuit::ComponentFamily*,bool,bool>,3>{{
+            {"Multiplier<32>",&circuit::families::multiplier(32),false,false},
+            {"Divider<32>",&circuit::families::divider(32),false,true},
+            {"MulDivUnit<32>",&circuit::families::mulDivUnit(32),true,false}}}){
+        const auto start=std::chrono::steady_clock::now();
+        arithmetic(*family,combined,divide,false,2);
+        std::cout<<name<<" gate-level: boundary transactions and control checks, "<<secondsSince(start)<<" s\n";
+    }
+}
 class CheckCase : public StandaloneVerificationTest {
     std::string name_;std::function<void()> check_;
 public:CheckCase(std::string n,std::function<void()>f):name_(std::move(n)),check_(std::move(f)){}
@@ -705,6 +724,7 @@ void appendRV32IMPhase3Tests(std::vector<TestRegistryEntry>&entries) {
     add("MultiplierWidth32Test",[]{arithmetic(circuit::families::multiplier(32),false,false);});
     add("DividerWidth32Test",[]{arithmetic(circuit::families::divider(32),false,true);});
     add("MulDivUnitWidth32Test",[]{arithmetic(circuit::families::mulDivUnit(32),true,false);});
+    add("MulDivGateLevelTest",gateLevelM);
     add("TableOnlyDelayPublicationTest",tableOnlyTiming);
     add("RV32IMSemanticsTest",semantics);
     add("RV32IMDecodeControlTest",mdecode);add("RV32IMDecodeStageTest",mdecodeStage);
@@ -719,11 +739,9 @@ void appendRV32IMPhase3Tests(std::vector<TestRegistryEntry>&entries) {
     });
     add("RV32IMCompiledProgramTest",[]{coreProgram(false,true);});
     add("ClockedCounterTest",counter);add("SynchronousFifoTest",fifo);
-    add("DeviceRegisterPortWidth32Test",port);add("BusErrorTargetWidth32Test",[]{Rig r(circuit::device::busFamily(circuit::device::BusUnit::ErrorTarget,32));require(r.access(false,0).first==2,"Bus error target");});
-    add("AddressRouterWidth32Test",[]{routing(circuit::device::busFamily(circuit::device::BusUnit::Router,32),false);});
-    add("InstructionAccessGuardWidth32Test",[]{routing(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,32),true);});
+    add("DeviceRegisterPortWidth32Test",port);
     add("ConsoleDeviceTest",console);add("TimerDeviceTest",timer);add("ButtonDeviceTest",buttons);
-    add("IndexedPixelSelectorWidth32Test",pixels);add("FramebufferDisplayTest",display);
+    add("FramebufferDisplayTest",display);
     add("DeviceInspectorTest",deviceViews);
     appendRV32IMPhase3Scenarios(entries);
     appendRV32IMProgramTests(entries);

@@ -45,8 +45,9 @@ int main() {
         SettlingOptions reads;reads.sources=SettlingSources::InputsOnly;reads.fixed_inputs["RST"]=0;
         const auto r=CircuitTimingAnalyzer::settling(rf,reads);
         size_t read_arcs=0;
-        // 12 ticks: the read path proven on the gate-level register file.
-        for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==12&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
+        // 11 ticks: the read path proven on the gate-level register file
+        // (12 before the splitter became wiring in `unit`).
+        for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==11&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
         check(r.valid&&read_arcs==2,"Both asynchronous register read arcs remain visible");
         // A compact system is analyzed from its proven delay tables; it is
         // never certified faster than its gates.

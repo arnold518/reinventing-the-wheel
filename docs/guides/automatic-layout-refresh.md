@@ -34,8 +34,9 @@ Remove `--dry-run` to save. `--scenarios rv32i-memory-lanes` restricts the refre
 for diagnosis. The old unrestricted reset mode is separate and should not be
 used to preserve existing layout settings.
 
-`create_layout_topology` constructs the selected component scenario directly
-through its catalog/profile, without executing its stimuli. RV32I program
+`server.scenario_topology` (over `create_layout_topology`) constructs the
+selected scenario under its catalog fidelity profile, the profile its saved
+layouts are keyed by, without executing its stimuli. RV32I program
 scenarios use construction-only program roots; one representative covers each
 program family. Legacy fixture setup is accepted only if it processes no
 simulator events. Only one topology is retained at a time, with no visualizer
@@ -55,7 +56,9 @@ the actual registry's visualizable descriptors, including scenarios supplied
 by parameterized registry generators. Review its output before `--apply`.
 Pruning preserves bracketed layout keys and other JSON strings unchanged.
 `tools/check-static-layouts.py ALIAS...` checks saved geometry against the
-selected topologies and rejects an unknown alias instead of skipping it.
+selected topologies and rejects an unknown alias instead of skipping it. Like
+the browser, it gives a profile with no root entry of its own the scenario's
+plain root entry, so a stale plain entry is reported.
 
 Every refreshed arrangement is checked for child bounds, parent-input/output
 stub clearance and non-overlapping child pin footprints. Vertical clearance is

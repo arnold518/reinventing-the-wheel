@@ -8,6 +8,7 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/rv32i/RV32IALU.hpp"
+#include "components/selection/GateListCompact.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/storage/RegisterFile.hpp"
@@ -35,7 +36,7 @@ void require(bool condition, const std::string& message) {
 }
 
 void drive(Simulator& simulator, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
-    simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+    simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(
         time, wire, value ? LogicValue::HIGH : LogicValue::LOW));
 }
 
@@ -470,6 +471,35 @@ profileToggleAuditCases() {
          "halt and trap-status bit cells"},
         {&circuit::families::rv32iALU(), 2,
          "complete ALU operation coverage"},
+        // Word gates and the prefix adder inside the ALU (2026-10-27 word
+        // gates): the same program, each part as one behavioral block.
+        {"logic.and.32",2,"ALU logic and prefix-adder word gates",circuit::Fidelity::Behavioral},
+        {"logic.or.32",2,"ALU logic and prefix-adder word gates",circuit::Fidelity::Behavioral},
+        {"logic.xor.32",2,"ALU logic and prefix-adder word gates",circuit::Fidelity::Behavioral},
+        {"word.parallel-prefix-adder.32",2,"shared ALU adder",circuit::Fidelity::Behavioral},
+        // Word muxes of the shifter (2026-10-28 word grouping review).
+        {"logic.mux.2.32",2,"ALU shifter reversal and stage word muxes",circuit::Fidelity::Behavioral},
+        // Load-lane byte masks (word gates) and the six ALU parts' compact
+        // forms (2026-10-28 behavioral gap review).
+        {"logic.and.8",3,"load-lane byte masks",circuit::Fidelity::Behavioral},
+        // Word gates of the PC+4 incrementer's prefix levels and of the
+        // register file's write decoder (word groupings after the 2026-11-01
+        // adapter change).
+        {"logic.and.14",5,"PC+4 incrementer prefix word gates",circuit::Fidelity::Behavioral},
+        {"logic.and.22",5,"PC+4 incrementer prefix word gates",circuit::Fidelity::Behavioral},
+        {"logic.and.26",5,"PC+4 incrementer prefix word gates",circuit::Fidelity::Behavioral},
+        {"logic.and.28",5,"PC+4 incrementer prefix word gates",circuit::Fidelity::Behavioral},
+        {"logic.and.29",5,"PC+4 incrementer prefix word gates",circuit::Fidelity::Behavioral},
+        {"logic.xor.29",5,"PC+4 incrementer sum word gate",circuit::Fidelity::Behavioral},
+        {"logic.and.31",7,"register-file write decoder enables",circuit::Fidelity::Behavioral},
+        {"logic.not.5",7,"register-file write decoder address inverters",circuit::Fidelity::Behavioral},
+        {"logic.or.8",3,"load-lane byte merge",circuit::Fidelity::Behavioral},
+        {&circuit::families::rv32iALUControl(),2,"ALU control decode"},
+        {&circuit::families::rv32iALUAddSub(),2,"ALU add/subtract"},
+        {&circuit::families::rv32iALULogic(),2,"ALU AND/OR/XOR"},
+        {&circuit::families::rv32iALUShifter(),2,"ALU shifter"},
+        {&circuit::families::rv32iALUCompare(),2,"ALU comparisons"},
+        {&circuit::families::rv32iALUResultSelect(),2,"ALU result selection"},
     };
     return cases;
 }
@@ -506,7 +536,11 @@ selectableContractInventory() {
     visitComponents(
         program_root,
         [&](const auto& component) {
-            if (component->isProfileSelectable()) {
+            // A contract whose only compact form is its gate list is an
+            // explicit choice only and is covered by
+            // GateListCompactEquivalenceTest, not by this toggle audit.
+            if (component->isProfileSelectable()
+                && !circuit::gateListCompactContracts().contains(component->getContractId())) {
                 ++inventory[component->getContractId()];
             }
         });

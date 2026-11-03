@@ -57,6 +57,8 @@ public:
     static std::shared_ptr<Component> findLCA(const std::vector<std::shared_ptr<Component>>& components);
 
     void addChild(const std::shared_ptr<Component>& child);
+    // Construction only: drop a child that nothing is wired to.
+    void removeChild(const std::shared_ptr<Component>& child);
     void addWire(const std::shared_ptr<WireBase>& wire);
 
     std::string format(int lvl, bool formatWires, bool formatPins) const;

@@ -30,6 +30,14 @@ struct DelayTwin {
     virtual ~DelayTwin() = default;
     // Pin names and widths, in the order `settle` takes and gives them.
     std::vector<std::pair<std::string, size_t>> inputs, outputs;
+    // Set when every output value follows from plain gates (no state and no
+    // leaf whose value the list cannot work out), so a compact part may take
+    // its output values from settle() (circuit::GateListCompact).
+    bool exact_values = false;
+    // Output bits wired straight to an input bit, through zero-delay wiring
+    // only: {input pin, bit}, or {-1, -1}. Such a bit passes a floating (Z)
+    // input on unchanged, which settle()'s 0/1/unknown values cannot say.
+    std::vector<std::vector<std::pair<int, int>>> wired;
     // What one part remembers between changes: the bits its flip-flops hold.
     // Null for a part without state.
     struct State { virtual ~State() = default; };

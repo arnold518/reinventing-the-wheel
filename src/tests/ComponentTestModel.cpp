@@ -43,15 +43,7 @@ std::shared_ptr<Event> makeWireUpdate(
         return nullptr;
     }
 
-    auto create = [&]<size_t Width>() -> std::shared_ptr<Event> {
-        return std::make_shared<WireUpdateEvent<Width>>(
-            time,
-            std::dynamic_pointer_cast<Wire<Width>>(wire),
-            values);
-    };
-
-    return circuit::dispatchWidth(wire->getWidth(), create,
-        []() -> decltype(create.operator()<1>()) { return nullptr; });
+    return std::make_shared<WireUpdateEvent>(time, wire, values);
 }
 
 PinSnapshot snapshotOutputs(const IOComponent& component) {

@@ -81,7 +81,9 @@ with sync_playwright() as p:
     page.evaluate("""async () => {
         const row = app.components.get('SRAM_ROOT.STORAGE.ROW_0');
         const cell = app.components.get(row.childIds[0]);
-        childEntryFor(row,cell).rel_pos = [0.123,0.456];
+        // A complete placement, as the page's drag and resize handlers write it.
+        const width = getChildLayout(row,cell).rel_width;
+        Object.assign(childEntryFor(row,cell), {rel_pos:[0.123,0.456], rel_width:width});
         await saveLayout();
     }""")
     page.reload(wait_until="domcontentloaded")

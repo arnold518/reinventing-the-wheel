@@ -10,12 +10,17 @@
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
+#include "components/selection/FidelityPresets.hpp"
 #include <pybind11/stl.h>
 
 void bindTests(py::module_& m) {
-    m.def("create_layout_topology", [](const std::string& name, const std::map<std::string, std::string>& overrides) -> std::shared_ptr<Component> {
+    m.def("create_layout_topology", [](const std::string& name, const std::map<std::string, std::string>& overrides,
+                                       const std::string& fidelity) -> std::shared_ptr<Component> {
         auto test = createTestByName(name);
         if (!test) throw py::key_error("Unknown simulation test: " + name);
+        // The fidelity preset the scenario opens in (a fixed scenario keeps its build).
+        if (!fidelity.empty() && test->supportsBuildProfile())
+            test->setBuildProfile(circuit::fidelityPreset(fidelity, circuit::builtinComponentCatalog()));
         auto profile = test->supportsBuildProfile()
             ? test->getBuildProfile() : circuit::canonicalDefaultProfile();
         for (const auto& [path, fidelity] : overrides) {
@@ -81,7 +86,7 @@ void bindTests(py::module_& m) {
         if (test->getSimulator()->getPerformanceCounters().processed_events != 0)
             throw std::runtime_error("Layout construction unexpectedly simulated: " + name);
         return test->getRoot();
-    }, py::arg("name"), py::arg("overrides") = std::map<std::string, std::string>{},
+    }, py::arg("name"), py::arg("overrides") = std::map<std::string, std::string>{}, py::arg("fidelity") = std::string{},
        "Construct a registered preview hierarchy without running stimuli or recording history.");
     m.def(
         "get_registered_test_names",

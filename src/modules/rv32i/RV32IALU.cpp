@@ -1,5 +1,6 @@
 #include "modules/rv32i/RV32IALU.hpp"
 #include "RV32IALUValue.hpp"
+#include "modules/composite/WordALUValueModel.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/Component.tpp"
@@ -76,18 +77,149 @@ public:
     }
 };
 
+// Compact forms of the six parts (2026-10-28). Each follows its own gates bit
+// by bit with the gate rules (a LOW forces AND, a HIGH forces OR, X/Z
+// otherwise give X; wiring passes Z unchanged), so unknown inputs give the
+// same outputs as the gates; CompactFormEquivalenceTest compares them.
+class ALUPartBehavioral : public BasicComponent {
+protected:
+    using Bits = std::vector<LogicValue>;
+    ALUPartBehavioral(std::string name, void (*pins)(IOComponent*), const char* type)
+        : BasicComponent(std::move(name), 1, pins), type_(type) {}
+    Bits in(const char* name) { return getInputPinDynamic(name)->getValueAsVector(); }
+    LogicValue bit(const char* name) { return getInputPinDynamic(name)->getValue(); }
+    void out(Simulator& s, SimulationTime t, const char* name, const Bits& bits) { _updateOutputWireDynamic(s, name, bits, t); }
+    void out(Simulator& s, SimulationTime t, const char* name, LogicValue value) { _updateOutputWire(s, name, value, t); }
+public:
+    const char* getTypeName() const override { return type_; }
+private:
+    const char* type_;
+};
+using circuit::logic_values::andGate;
+using circuit::logic_values::orGate;
+using circuit::logic_values::xorGate;
+using circuit::logic_values::notGate;
+using circuit::logic_values::mux2;
+using Model = circuit::word::ALUValueModel<32, circuit::word::Carry::Prefix>;
+Model::Word word(const std::vector<LogicValue>& bits) { Model::Word w; std::copy(bits.begin(), bits.end(), w.begin()); return w; }
+
+class ControlBehavioral final : public ALUPartBehavioral {
+public:
+    explicit ControlBehavioral(std::string n) : ALUPartBehavioral(std::move(n), controlPins, RV32IALUControl::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto op = in("OP");
+        out(s, t, "LOCAL_OP", Bits{op[0], op[1], op[2]});
+        out(s, t, "HIGH_HALF", op[3]); out(s, t, "OUT_OF_RANGE", op[4]);
+        const auto not1 = notGate(op[1]);
+        const auto valid = andGate(andGate(notGate(op[4]), notGate(op[2])), not1);
+        out(s, t, "SUB", andGate(valid, orGate(op[3], op[0])));
+        out(s, t, "SHIFT_LEFT", not1); out(s, t, "SHIFT_ARITHMETIC", op[0]);
+    }
+};
+class AddSubBehavioral final : public ALUPartBehavioral {
+public:
+    explicit AddSubBehavioral(std::string n) : ALUPartBehavioral(std::move(n), addSubPins, RV32IALUAddSub::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto sub = bit("SUB");
+        auto b = in("B");
+        for (auto& x : b) x = xorGate(x, sub);
+        const auto r = Model::add(word(in("A")), word(b), sub);
+        out(s, t, "OUT", Bits(r.out.begin(), r.out.end()));
+        out(s, t, "C_OUT", r.carry);
+        out(s, t, "OVERFLOW", xorGate(r.carry_into_sign, r.carry));
+    }
+};
+class LogicBehavioral final : public ALUPartBehavioral {
+public:
+    explicit LogicBehavioral(std::string n) : ALUPartBehavioral(std::move(n), logicPins, RV32IALULogic::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto a = in("A"), b = in("B");
+        Bits all(32), any(32), differ(32);
+        for (size_t i = 0; i < 32; ++i) { all[i] = andGate(a[i], b[i]); any[i] = orGate(a[i], b[i]); differ[i] = xorGate(a[i], b[i]); }
+        out(s, t, "AND_OUT", all); out(s, t, "OR_OUT", any); out(s, t, "XOR_OUT", differ);
+    }
+};
+class ShifterBehavioral final : public ALUPartBehavioral {
+public:
+    explicit ShifterBehavioral(std::string n) : ALUPartBehavioral(std::move(n), shifterPins, RV32IALUShifter::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto a = in("A"), b = in("B");
+        const auto left = bit("LEFT");
+        const auto fill = andGate(andGate(a[31], bit("ARITHMETIC")), notGate(left));
+        Bits current(32);
+        for (size_t i = 0; i < 32; ++i) current[i] = mux2(a[i], a[31-i], left);
+        for (size_t stage = 0; stage < 5; ++stage) {
+            const size_t amount = size_t{1} << stage;
+            Bits next(32);
+            for (size_t i = 0; i < 32; ++i) next[i] = mux2(current[i], i + amount < 32 ? current[i + amount] : fill, b[stage]);
+            current = std::move(next);
+        }
+        Bits result(32);
+        for (size_t i = 0; i < 32; ++i) result[i] = mux2(current[i], current[31-i], left);
+        out(s, t, "OUT", result);
+    }
+};
+class CompareBehavioral final : public ALUPartBehavioral {
+public:
+    explicit CompareBehavioral(std::string n) : ALUPartBehavioral(std::move(n), comparePins, RV32IALUCompare::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto diff = in("DIFF");
+        const auto enable = bit("ENABLE");
+        const auto lts = andGate(xorGate(diff[31], bit("OVERFLOW_IN")), enable);
+        const auto ltu = andGate(notGate(bit("CARRY_IN")), enable);
+        out(s, t, "EQ", andGate(Model::zero(word(diff)), enable));
+        out(s, t, "LT_SIGNED", lts); out(s, t, "LT_UNSIGNED", ltu);
+        Bits slt(32, LogicValue::LOW), sltu(32, LogicValue::LOW);
+        slt[0] = lts; sltu[0] = ltu;
+        out(s, t, "SLT_RESULT", slt); out(s, t, "SLTU_RESULT", sltu);
+    }
+};
+class ResultSelectBehavioral final : public ALUPartBehavioral {
+public:
+    explicit ResultSelectBehavioral(std::string n) : ALUPartBehavioral(std::move(n), resultPins, RV32IALUResultSelect::TypeName) {}
+    void evaluate(SimulationTime t, Simulator& s) override {
+        const auto local = in("LOCAL_OP");
+        const std::array<LogicValue, 4> op{local[0], local[1], local[2], bit("HIGH_HALF")};
+        const auto valid = notGate(bit("OUT_OF_RANGE"));
+        std::array<LogicValue, 12> terms;
+        for (unsigned code = 0; code < terms.size(); ++code) {
+            auto term = valid;
+            for (unsigned i = 0; i < 4; ++i) term = andGate(term, code & (1u << i) ? op[i] : notGate(op[i]));
+            terms[code] = term;
+        }
+        const std::array<LogicValue, 9> selects{orGate(terms[0], terms[1]), terms[2], terms[3], terms[4],
+            orGate(orGate(terms[5], terms[6]), terms[7]), terms[8], terms[9], terms[10], terms[11]};
+        const std::array<const char*, 9> names{"ARITHMETIC_RESULT", "AND_RESULT", "OR_RESULT", "XOR_RESULT",
+            "SHIFT_RESULT", "SLT_RESULT", "SLTU_RESULT", "A", "B"};
+        std::array<Bits, 9> data;
+        for (size_t i = 0; i < names.size(); ++i) data[i] = in(names[i]);
+        Bits result(32);
+        for (size_t bitIndex = 0; bitIndex < 32; ++bitIndex) {
+            auto value = andGate(data[0][bitIndex], selects[0]);
+            for (size_t i = 1; i < names.size(); ++i) value = orGate(value, andGate(data[i][bitIndex], selects[i]));
+            result[bitIndex] = value;
+        }
+        out(s, t, "OUT", result);
+    }
+};
+
+template<typename T> circuit::FamilyFactory compact() {
+    return [](const std::string& n, const std::shared_ptr<circuit::BuildContext>& c) {
+        return Component::createWithContext<T>(c, n);
+    };
+}
+
 template<typename T> circuit::FamilyFactory structural() {
     return [](const std::string& n, const std::shared_ptr<circuit::BuildContext>& c) {
         return Component::createWithContext<T>(c, n);
     };
 }
 
-// Inside the structural ALU every part stays gate level.
+// Each part is chosen by the build profile like any other family: its
+// compact form follows its gates bit for bit (2026-10-28), so a structural
+// ALU may hold compact parts.
 std::shared_ptr<IOComponent> addStructural(ComponentBuilder& b, const circuit::ComponentFamily& f, const std::string& name) {
-    if (!b.getBuildContext()) return b.add(f, name);
-    auto request = f.request(name);
-    request.required_fidelity = circuit::Fidelity::Structural;
-    return b.addByContract(std::move(request));
+    return b.add(f, name);
 }
 }
 
@@ -100,27 +232,27 @@ const ComponentFamily& rv32iALU() {
     return f;
 }
 const ComponentFamily& rv32iALUControl() {
-    static const ComponentFamily f{"rv32i.alu.control", RV32IALUControl::TypeName, controlPins, structural<RV32IALUControl>()};
+    static const ComponentFamily f{"rv32i.alu.control", RV32IALUControl::TypeName, controlPins, structural<RV32IALUControl>(), compact<ControlBehavioral>()};
     return f;
 }
 const ComponentFamily& rv32iALUAddSub() {
-    static const ComponentFamily f{"rv32i.alu.add-sub", RV32IALUAddSub::TypeName, addSubPins, structural<RV32IALUAddSub>()};
+    static const ComponentFamily f{"rv32i.alu.add-sub", RV32IALUAddSub::TypeName, addSubPins, structural<RV32IALUAddSub>(), compact<AddSubBehavioral>()};
     return f;
 }
 const ComponentFamily& rv32iALULogic() {
-    static const ComponentFamily f{"rv32i.alu.logic", RV32IALULogic::TypeName, logicPins, structural<RV32IALULogic>()};
+    static const ComponentFamily f{"rv32i.alu.logic", RV32IALULogic::TypeName, logicPins, structural<RV32IALULogic>(), compact<LogicBehavioral>()};
     return f;
 }
 const ComponentFamily& rv32iALUShifter() {
-    static const ComponentFamily f{"rv32i.alu.shifter", RV32IALUShifter::TypeName, shifterPins, structural<RV32IALUShifter>()};
+    static const ComponentFamily f{"rv32i.alu.shifter", RV32IALUShifter::TypeName, shifterPins, structural<RV32IALUShifter>(), compact<ShifterBehavioral>()};
     return f;
 }
 const ComponentFamily& rv32iALUCompare() {
-    static const ComponentFamily f{"rv32i.alu.compare", RV32IALUCompare::TypeName, comparePins, structural<RV32IALUCompare>()};
+    static const ComponentFamily f{"rv32i.alu.compare", RV32IALUCompare::TypeName, comparePins, structural<RV32IALUCompare>(), compact<CompareBehavioral>()};
     return f;
 }
 const ComponentFamily& rv32iALUResultSelect() {
-    static const ComponentFamily f{"rv32i.alu.result-select", RV32IALUResultSelect::TypeName, resultPins, structural<RV32IALUResultSelect>()};
+    static const ComponentFamily f{"rv32i.alu.result-select", RV32IALUResultSelect::TypeName, resultPins, structural<RV32IALUResultSelect>(), compact<ResultSelectBehavioral>()};
     return f;
 }
 }
@@ -199,6 +331,9 @@ void registerALU(circuit::ComponentCatalog& catalog) {
         {&families::rv32iALUControl(), "RV32IALUControlTest"}, {&families::rv32iALUAddSub(), "RV32IALUAddSubTest"},
         {&families::rv32iALULogic(), "RV32IALULogicTest"}, {&families::rv32iALUShifter(), "RV32IALUShifterTest"},
         {&families::rv32iALUCompare(), "RV32IALUCompareTest"}, {&families::rv32iALUResultSelect(), "RV32IALUResultSelectTest"}}};
-    for (const auto& [family, test] : parts) registration::registerStructural(catalog, *family, test, "stable-after-settle");
+    for (const auto& [family, test] : parts) {
+        registration::registerStructural(catalog, *family, test, "stable-after-settle");
+        registration::registerBehavioral(catalog, *family, test, "CompactFormEquivalenceTest", {}, "stable-after-settle");
+    }
 }
 }

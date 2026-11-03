@@ -1,3 +1,4 @@
+#include "modules/composite/WordSliceBuilder.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
@@ -82,25 +83,24 @@ public:
                                      "RV32ILoadByte<2>", "RV32ILoadByte<3>"};
         return types[Byte];
     }
+    // Word gates on the byte: the size enables (spread by wiring) mask the
+    // data, a fill bit stands in for the data above a byte or half, and an
+    // OR tree of words merges them. Per bit these are the same AND/OR gates.
     void buildInternals(ComponentBuilder& b) override {
-        StructuralWiring w(b);
-        auto bits = b.addNewComponent<BitSplitter<8>>("DATA");
-        auto result = b.addNewComponent<BitJoiner<8>>("RESULT");
-        w.connect(getInputPin<8>("DATA"), bits->getInputPin<8>("IN"));
-        auto byte_fill = Byte == 0 ? nullptr :
-            w.both("BYTE_FILL", getInputPin("BYTE"), getInputPin("BYTE_SIGN"));
-        auto half_fill = Byte < 2 ? nullptr :
-            w.both("HALF_FILL", getInputPin("HALF"), getInputPin("HALF_SIGN"));
-        for (size_t i = 0; i < 8; ++i) {
-            auto bit = bits->getOutputPin("OUT_" + std::to_string(i));
-            auto byte = Byte == 0 ? w.both("BYTE_" + std::to_string(i), getInputPin("BYTE"), bit) : byte_fill;
-            auto half = Byte < 2 ? w.both("HALF_" + std::to_string(i), getInputPin("HALF"), bit) : half_fill;
-            auto word = w.both("WORD_" + std::to_string(i), getInputPin("WORD"), bit);
-            auto value = w.reduce("RESULT_" + std::to_string(i), {byte, half, word}, false);
-            w.connect(value, result->getInputPin("IN_" + std::to_string(i)));
-        }
-        w.connect(result->getOutputPin<8>("OUT"), getOutputPin<8>("OUT"));
-        w.finish();
+        using circuit::word::GateKind;
+        circuit::detail::WordSliceBuilder n(*this, b);
+        const auto data = n.input("DATA");
+        const auto masked = [&](const char* size) {
+            return n.wordGate(GateKind::And, size, n.broadcast(std::string(size) + "_ENABLE", n.input(size), 8), data);
+        };
+        auto byte = Byte == 0 ? masked("BYTE")
+            : n.broadcast("BYTE_FILL_WORD", n.binary<ANDGate>("BYTE_FILL", n.input("BYTE"), n.input("BYTE_SIGN")), 8);
+        auto half = Byte < 2 ? masked("HALF")
+            : n.broadcast("HALF_FILL_WORD", n.binary<ANDGate>("HALF_FILL", n.input("HALF"), n.input("HALF_SIGN")), 8);
+        auto word = masked("WORD");
+        auto low = n.wordGate(GateKind::Or, "RESULT_0", byte, half);
+        n.connect(n.wordGate(GateKind::Or, "RESULT_1", low, word), n.output("OUT"));
+        n.finish();
     }
 };
 

@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "guest": "sokoban-long",
+  "exactHostReference": true,
+  "allFramesRetained": true,
+  "fidelityPreset": "compact",
+  "profileName": "fidelity-compact-v1",
+  "profileFingerprint": "763e0b8bac717d60",
+  "frames": 73,
+  "parts": 5,
+  "metrics": {
+    "solvedPuzzles": 2,
+    "cratePushes": 20,
+    "movesPerPuzzle": [
+      33,
+      38
+    ],
+    "updates": 72,
+    "episodes": 2,
+    "totalScore": 20,
+    "finalStatus": 1,
+    "finalFingerprint": 660290787
+  },
+  "cycles": 673842,
+  "instructions": 159174,
+  "executionSeconds": 1496.381092,
+  "peakNativeRssKiB": 178072,
+  "setupViolations": 0,
+  "events": {
+    "processed": 205084189,
+    "scheduled": 205367781,
+    "maximumQueue": 189,
+    "processedWireUpdates": 119107027,
+    "processedEvaluations": 85977162,
+    "scheduledWireUpdates": 119390619,
+    "scheduledEvaluations": 85977162,
+    "wireChanges": 89160607,
+    "pinChanges": 3439823
+  },
+  "runnerSha256": "0d6e249911adaa2a0988a1c8b03776db841ec2280027951c4c1d23a7c11b7edf",
+  "elfSha256": "a20a29d8c57de397984a9b189c1dbbc95d0728763cdee00cde1a0d833c398355",
+  "batchesSha256": "f2c754031d406f7069fc467789d5b7c76a9e0dc318b05209f4c110b14585ecf4",
+  "expectedSha256": "e336d1f1845036519b6524411db7a93b49c7043bc53cbaf1977c8419c27ab64a",
+  "timingProfile": "embedded",
+  "period": 4500,
+  "topologySha256": "85946ca6f80f3be4f90a5c93013350bdd7c81d7e22fff48d6ded3f149edfd608",
+  "buildManifestSha256": "2b4946640700d9ef501f31be896ece0b6f0f807736f3532326d07c25aeeaafe2",
+  "playlistSha256": "d5376c445df3db9d54b35ada3e130d46a92de651a32e65d589a820c0e33ecfe9",
+  "sourceManifest": "../source-manifest.json",
+  "compressed": true
+}

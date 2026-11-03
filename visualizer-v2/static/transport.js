@@ -4,7 +4,7 @@
 
   async function wasmTransport() {
     if (!wasmTransportPromise) {
-      wasmTransportPromise = import("./wasm_transport.js?v=14")
+      wasmTransportPromise = import("./wasm_transport.js?v=20")
         .then((module) => module.createWasmTransport());
     }
     return wasmTransportPromise;
@@ -14,7 +14,7 @@
     const recording = new URLSearchParams(global.location.search).get("recording");
     if (recording) {
       if (!recordedTransportPromise) {
-        recordedTransportPromise = import("./recorded_circuit_transport.mjs")
+        recordedTransportPromise = import("./recorded_circuit_transport.mjs?v=4")
           .then((module) => module.createRecordedCircuitTransport(recording));
       }
       return (await recordedTransportPromise).request(url, options);

@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-24.
+Updated: 2026-11-03.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -9,11 +9,26 @@ work state changes. Keep dated decisions and validation results in
 
 ## What exists
 
+- The normal visualizer offers named `gate`, `logic`, `visual` and `compact`
+  fidelity presets beside timing, preserving scenario defaults and isolated
+  custom overrides. Native and WASM use the same policy. Full device views
+  have validated compact compositions. Structural gameplay recordings share
+  streamed topology files and retain every PRESENT in bounded state windows;
+  full-tick capture adds compressed signal, memory and register deltas with
+  seekable snapshots and PRESENT markers. Scoped native/browser checks pass;
+  full game recapture is pending below. Replay keeps its recorded fidelity
+  fixed. Supported device-system presets
+  now complete structure-specific browser layouts, preserve saved geometry
+  and report unsupported Gate storage capacity clearly. See the
+  [implementation and running campaign](records/2026-10-24-fidelity-presets-and-visual-gameplays.md).
+
 - The [RV32IM/device milestone checkpoint](records/2026-10-22-rv32im-milestone-wrap-and-integration.md)
   is merged into `alpha`: structural/compact M components, a scripted device
   platform, game fixtures and recorded display/keyboard views. Current scoped
   native, portable and strict package checks pass; phase-6 acceptance remains
   open below. The primary pending work and deployed modules are preserved.
+  The [game RAM review](records/2026-10-26-game-memory-layout-review.md) records
+  the linker budgets and current ELF footprints; peak stack use is unmeasured.
 - CircuitSim has an event-driven C++20 engine, structural and behavioral
   component families, memory devices and RV32I cores. The public component
   and simulator reference is the [MkDocs source](../site-docs/index.md).
@@ -28,20 +43,23 @@ work state changes. Keep dated decisions and validation results in
 - Development uses `alpha` directly in the main repository; no linked Git
   worktrees remain. Older pending changes are saved in a verified stash and
   backup, and former build/evidence directories are ordinary ignored archives.
-  Port 8893 serves the main documentation directory and current word/device
-  simulator package. The replacement ALU references now use `/alu/`; the
-  original canvas has a fresh native 18-checkpoint Pong capture with exact
-  host-reference frames and identical retained pin/wire states to its prior
-  capture. The current scenario-view package passes eight live
-  reference/simulator routes and 26 exact non-HTML asset hashes. The grouped
+  Port 8893 serves the main documentation directory and current milestone
+  simulator package, with [shared package selection](records/2026-10-29-local-preview-recovery.md)
+  for assets and example rows. The replacement ALU references now use `/alu/`; the
+  original canvas now has current native recordings for all ten packaged
+  game fixtures, with 47 exact-reference checkpoints. The refreshed record
+  index, system page and simulator pass live route checks, and all 79 checked
+  recording/evidence/simulator assets match their hashes. The grouped
   M-unit/execute views and dedicated program playback pass focused browser
   checks; live Fibonacci inspection also passes halt and rewind. Its strict
   preview build passes with the per-build
   timing-cache fix loaded; scoped acceptance is in the completed records below.
   Bring-up/2048 frame-only exports retain their source snapshots.
-  Full phase-6
-  acceptance remains open in the [game record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
-  The preview service is capped at 768 MiB with no swap. See the closed
+  The ten fixtures and their acceptance campaign were retired on 2026-11-03
+  ([game scenarios](records/2026-11-03-game-scenarios-plan.md)).
+  The preview service is capped at 768 MiB with no swap and builds in a managed
+  disk cache after the [tmpfs/OOM recovery](records/2026-10-26-preview-memory-recovery.md).
+  See the closed
   [main checkout consolidation](records/2026-10-22-main-alpha-checkout.md) and
   earlier [local preview record](records/2026-10-22-alpha-local-preview.md).
 - Scalable memory endpoints use a visible controller with each technology's
@@ -91,7 +109,8 @@ work state changes. Keep dated decisions and validation results in
   timing, migration/layout, 14 WASM example groups and four browser sessions
   pass, followed by a two-session floorplan recheck and current 8893 acceptance.
   The standalone MulDiv unit period is now 68 ticks; the core remains 94.
-  The complete suites and game campaign were not run.
+  The complete native and browser suites pass (2026-11-03); the game
+  campaign was not run.
 - The completed [RV32IM algorithms and inspection fixes](records/2026-10-23-rv32im-program-expansion-and-inspection.md)
   center EXECUTE in the pipeline, decode M instructions in memory views for
   structural/compact M machines and number programs 23–27. New fast-doubling
@@ -101,6 +120,37 @@ work state changes. Keep dated decisions and validation results in
   program exports and two browser sessions pass. The strict combined site
   and 8893 preview rebuilds pass, with eight routes and 26 exact asset hashes.
   No hardware/timing-table change, full suite or game campaign was needed.
+- The completed [structural constant cleanup](records/2026-10-24-structural-constant-words.md)
+  shares scalar ties and builds fixed buses from constant words across
+  arithmetic/device wiring; SRAM/ROM response wiring also shares its zero
+  source. Both 32-bit arithmetic datapaths have one zero-word source and
+  14 children instead of 46. Step references show `<W>` and the menu shows
+  their recorded `<4>` width. Focused native, unchanged timing, layout,
+  native/WASM and browser checks pass, with the strict site and 8893 preview
+  updated. Complete suites remain outside this selection.
+- The completed [Device I/O hierarchy and layout review](records/2026-10-24-device-io-hierarchy-and-layouts.md)
+  groups all twelve device scenarios into functional structural parts and
+  gives the integrated system an explicit overview floorplan. The later
+  [complete menu review](records/2026-10-24-scenario-menu-order.md) applies
+  the overall component order while retaining these functional groups.
+  Twenty-seven focused native checks, timing-table
+  comparisons, sixteen static layouts, saved-setting migrations, twelve
+  native/WASM comparisons and the device browser selection pass. Strict
+  site/preview builds and final live system geometry checks pass on 8893;
+  fourteen routes and 26 exact assets are verified. Full suites, expanded-core
+  timing certification and the game campaign remain outside this acceptance.
+- The completed [scenario menu review](records/2026-10-24-scenario-menu-order.md)
+  orders all 26 groups and 219 visible rows from foundations/ALU/memories
+  through RV32I/programs, RV32IM/programs and Device I/O, with developer
+  circuits last. Explicit ranks replace browser alphabetization; names,
+  aliases and saved identities are retained. Five focused catalog checks,
+  strict packaging/preview builds and the complete live WASM menu check
+  pass on 8893. The frozen long-game campaign continues independently.
+- Games (§ 5.6, 2026-11-03): each game has a short version, a live scenario
+  run with every check under **Computer System / Games**, and a long
+  version, a computer player's session recorded at every frame. The ten
+  earlier fixtures, their recordings and gameplay record set were retired;
+  see [game scenarios](records/2026-11-03-game-scenarios-plan.md).
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -158,7 +208,169 @@ work state changes. Keep dated decisions and validation results in
   section (arrangements × cache behaviors). §3.8 keeps the cache-alone
   access-pattern experiment.
 
+- The closed [Device I/O architecture record](records/2026-10-28-device-io-architecture.md)
+  built chapter 5 (it replaces the RV32IM and Device I/O chapters). A machine
+  is a JSON description (`systems/*.json`) built by `system.computer`: buses
+  of per-master routers and two-port arbiters, pass-through or registered
+  bridges, a memory subsystem (§ 4.7's shared arrangements and the § 4.8
+  experiments build on it too), devices on generated register-table front
+  ends, a port checker for every link and an LED panel added by description
+  only; guest headers are generated. The one-bus machine equals the retired
+  fixed system cycle for cycle; two buses cost one cycle per device access, a
+  registered bridge three. Every scenario opens in a named fidelity profile
+  (`scenarios.json`); § 5 layouts and colours were reviewed. The machine
+  runs and clock certificates were redone on 2026-11-02 after the last
+  structural changes; the games and the machine comparison moved to new
+  fixtures on 2026-11-03 (below). Status choices use word
+  gates (2026-11-02). Checks: one full native suite run (15 stale failures
+  fixed and rerun), targeted tests after each later change, and the web
+  checks covering the changes. On 2026-11-03 the full native suite (607/607)
+  and the complete browser suite pass (48 checks; `TickRecordingBrowserTest`
+  skipped, as it needs an external capture), after 11 stale checks, two
+  layout lookup gaps, a no-op shipped profile and the games page default
+  were fixed.
+  The closed [chapter completeness review](records/2026-10-29-computer-system-documentation-review.md)
+  adds precise interfaces, reference code and generated timing rows. It also
+  records narrower checker/register-test coverage and the configurations
+  needing additional timing or execution evidence.
+  Its [catalog follow-up](records/2026-10-29-computer-system-compact-availability.md)
+  corrects explicit compact step/decode/coordinator availability.
+
 ## In progress
+
+- [Long games in Visual](records/2026-11-03-visual-long-games.md): prepared,
+  not started. Recordings are now stored compressed (Compact: 58 → 3.5 MB);
+  a Visual smoke campaign passed and opens in the viewer. The six-game
+  Visual campaign (about 25 hours) is ready to launch.
+
+- [Game scenarios](records/2026-11-03-game-scenarios-plan.md): implemented
+  and checked natively, in WebAssembly and in the browser. All six long
+  recordings passed and are published (3.5 MB compressed); the viewer check
+  was run on Sokoban and Pong. The full native suite passes (2026-11-03,
+  after three stale checks were fixed); the complete browser suite was not
+  rerun. Each game has a short version, a live scenario under
+  **Computer System / Games** that reaches its key event in one or two
+  presses on a 32 × 24 screen, and a long version, a computer player's session
+  recorded at every frame. The five machine scenarios now run the bring-up
+  program, and the display, timer, button and LED scenarios were
+  strengthened.
+
+- [Word grouping review](records/2026-10-28-word-grouping-review.md) and
+  [behavioral gap review](records/2026-10-28-behavioral-gap-review.md):
+  implemented. Repeated one-bit parts in the RV32I ALU, Chapter 2 shift,
+  compare and result units, memory read and payload muxes, caches,
+  sequencers, decoders and the pipeline's comparators now use word gates
+  (any width 2–32) and word muxes with the same gates; compact forms exist for
+  the RV32I ALU's six parts, and a generic compiled gate-list form serves 33
+  listed contracts when a profile asks for it exactly. Every delay table is
+  unchanged except the new ones; the complete delay-table verification passes
+  in all three profiles (2026-10-29). Layouts are migrated: the full static
+  check finds 0 problems in 374 scenarios and the layout tests pass. The full
+  native suite passes (2026-11-03).
+- [Visualizer: explorer tree and fidelity](records/2026-10-28-visualizer-fidelity-pictures.md):
+  the explorer tree is the planned fidelity (expanded = structural,
+  collapsed = behavioral, Apply & Run rebuilds to match; badges show the
+  built fidelity); the canvas follows the tree at once for built parts, and
+  parts that exist only after Apply are previewed in gray (build-only C++
+  preview). On the 8893 preview. The running visualizer never writes
+  `layout.json` (port 8765 retired); browser layout saves store only edits;
+  two hover-picking bugs are fixed. Device View returns as a separate canvas
+  toggle, initially off: show only outermost visual abstractions regardless
+  of fidelity, preserving the session, timeline, draft and layout. With it
+  off, behavioral parts retain their visual abstractions. All component
+  outlines are solid; the explorer S/B badges identify fidelity. Focused
+  device/memory-cell checks, the updated explorer/recorded-circuit browser
+  checks on 8893 and the feature's strict site build pass.
+  The complete browser suite, `VisualizerWasmBrowserTest` included, passes
+  (2026-11-03).
+
+- [Non-device improvement plan](records/2026-10-27-non-device-improvement-plan.md):
+  the owner-selected order is test sweeps, then the `Logic` adapter fix, then
+  word-wide gates with a gate-symbol visual, with engine work alongside
+  (run-time pin width included). Done: phase A (test sweeps), B1 (Logic
+  adapters for non-device recipes), C (24 word gate families with a gate-symbol
+  visual, used for the M units' inversions; tables 809 → 833, existing entries
+  identical in all profiles) and exact engine steps: adapter pin caching and env
+  lookups (2–21% less CPU on gate-level tests), inline queue keys, allocation-
+  free no-op wire updates, cached sink routes and the incremental clocked twin
+  (equal to the old twin on 72,000 steps; `DelayRuleTest` passes). One paired
+  A/B/B/A block per test: gate-level tests 21–33% less CPU, the compact 32-bit
+  M unit 59% less, the five-stage core test 4.4% less; a one-byte `LogicValue`
+  adds about 2%; typed fanout copies up to 6.6% more. On the record's Visual
+  guest (2,000 cycles) execution falls 36% against the frozen 2026-10-26
+  baseline (1.04 M → 1.56 M events/s); the 10 M events/s target remains open.
+  Twelve key tests also pass in the WebAssembly test runner, and a native
+  browser check confirms word gates draw closed and open on selection; the
+  browser WASM module and web parity tests are not rebuilt. B2 via `AddSub`
+  was rejected for changing core timing; word gates in Chapter 2 components
+  are now used too, after the owner made the bus splitter zero-delay in `unit`
+  (it already was in the realistic profiles): `embedded`/`desktop` tables are
+  byte-identical, `unit` was regenerated and re-certified in two table passes (cores 142/68/80,
+  RV32IM 84). All 373 scenarios pass the static layout check.
+  D2 (run-time pin width) is done: values of 1–64 bits are packed in two
+  words, one wire event class serves every width, and the fixed width list is
+  gone. The broad non-slow native suite passes 362/365; the three failures
+  predate D2 (`DeviceParametersBindingsTest` from the uncommitted device work,
+  two visualizer palette/profile tests), and `DelayRuleTest` passes. Test-level speed is unchanged within
+  noise (load 3–4); the Visual guest is 2% faster with 12.5% more events.
+  The `unit` tables needed a second pass (the first proved parts on stale
+  storage tables): 117 entries fell, a third pass is identical, and the
+  advanced core's certificate is now 80. The last unused splits (inside the
+  multiply/divide steps) are removed. Pooled events are in: the Visual
+  guest runs 6.3% faster with the same events (1.98 M events/s). The WASM
+  rebuild passes 16 runner tests; all 161 example groups verify and the
+  strict site build passes; native/WASM parity passes 16 of 16 (all ten
+  recorded guests exact) after two stale test expectations were fixed; the
+  three visualizer browser checks pass (one after updating word-gate
+  component counts).
+  Still open: the published §4.8 results at the old `unit` periods (owner
+  decision). The full native suite passes (2026-11-03).
+
+- [Device architecture review](records/2026-10-27-device-architecture-review.md)
+  and [Device I/O and bit-adapter review](records/2026-10-27-device-io-review.md):
+  their findings (fixed map, hand-wired system, no bridge, legacy adapters in
+  device recipes) are addressed by the Device I/O architecture above; the
+  device recipes now use the minimal adapters in their new parts. Interrupts,
+  DMA and trap handling remain outside the scope. Both records stay open
+  until the architecture record closes.
+
+- [Test strength review](records/2026-10-27-test-strength-review.md): the
+  audit of 464 registered tests found thin 16/32-bit word arithmetic
+  (`ParallelPrefixAdderWidth16Test` has 8 cases), gate-level multiply/divide and
+  small RV32I control blocks. Phases 1–4 are done: adder, ALU and RV32IALU
+  sweeps, fully gate-level M units (`MulDivGateLevelTest`, slow), forwarding/
+  hazard enumeration and ROM extras, each catching a deliberate fault that the
+  old tests miss, plus a fix for a pre-existing catalog ownership conflict.
+  Focused CTests pass; the full suite, WASM and strict site build were not
+  run. Bus/router sweeps are deferred with Device I/O.
+
+- [Engine performance investigation](records/2026-10-26-engine-performance.md):
+  primitive gate input caches with immediate invalidation and headless value
+  reuse pass a full isolated native rebuild, thirteen focused native checks,
+  full-tick decoding and exact stored-delay comparison. Earlier private wire
+  and selected-file compiler comparisons show roughly 3% lower CPU in limited
+  stable brackets; wire allocation requests fall 32%.
+  Stateless memo gets no hits, guarded clocked memo gets 0.3% and adds allocations;
+  both are rejected for this workload. Timing scratch reuse has negligible
+  allocation impact. Production remains at the cache-enabled baseline.
+  Ordered-mask incremental clocked twins now skip 66.1% of modeled evaluations
+  with about 79 KiB cumulative metadata. The latest phase passes 58 focused
+  checks, 82 guests and 41 golden-matching traces. Stable `-O1` guest blocks
+  show 4.9% / 4.2% lower CPU without/with capture, but there is only one stable
+  block per mode; all `-O2` blocks are unstable. Large register-kernel gains
+  are separate from whole-engine throughput. These remain private prototypes;
+  broader fallback/workload/WASM validation and integration are pending.
+  Other candidates are typed propagation, behavioral execution routes and
+  bounded event reuse. Hybrid scheduling needs equivalence work; the old
+  bucket prototype regresses sparse queues 2.2–3.4x. Lossless verification
+  archiving preserves evidence with about 2.36 GiB net disk savings.
+  Latest experiment peak RSS is 262 MiB with no experiment OOM/swap.
+  Broader workload/WASM validation and 10 million events/second remain open.
+  Live modules/recordings and the stopped gameplay queue are preserved.
+  The 2026-10-27 review puts native cost at about 1 µs CPU per event,
+  10–12× from the target; measured allocation savings explain only a few
+  percent. It lists new exact-cleanup candidates and a six-phase plan with
+  seven pending owner decisions. No new measurement was run.
 
 - [FF controller startup](records/2026-10-21-memory-controller-startup.md):
   initialization preserves provisioned images in structural, fused and mixed
@@ -179,16 +391,6 @@ work state changes. Keep dated decisions and validation results in
   pass focused native/Python/WASM checks, including device runs above 2^53
   and 2^63. The full current-source suite is not claimed.
 
-- [Scripted device platform and games, phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md):
-  five games and ten audited fixtures are integrated. The preceding width
-  snapshot passes 555 selected native registrations, 72 new timing cases,
-  15 portable checks and 367 static layouts. Its frozen game campaign stopped
-  after seven passes at expanded 2048's event limit. The new native Pong
-  circuit capture passes its exact reference, six focused native checks,
-  three JS checks and original-canvas browser acceptance. Remaining game,
-  WASM-capture and full package/performance work keep phase 6 open; phase 7
-  is unimplemented.
-
 - [RV32IM and device foundation implementation](records/2026-10-20-rv32im-phase0-3-implementation.md)
   implements phases 0–3 of the [adopted roadmap](records/2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap).
   The separate M pipeline and structural device contracts retain the existing
@@ -197,7 +399,7 @@ work state changes. Keep dated decisions and validation results in
   now use main `build-milestone` / `build-wasm-milestone`; older archives remain
   ordinary ignored directories. There is
   no longer a Git worktree. No live viewer module was overwritten.
-  See the [foundation contract](reference/rv32im-device-foundation.md).
+  See the [foundation contract](reference/computer-system.md).
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
   executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
@@ -279,10 +481,6 @@ work state changes. Keep dated decisions and validation results in
   public landing/visualizer pages and minor non-component findings remain
   open. The RV32I results page is tracked in the separate record below.
 
-- [Engine performance](records/2026-10-13-engine-performance.md): measured
-  and profiled; compact cores run at 3,700 to 13,400 cycles per second and
-  the gate-level advanced core at 51. An eight-phase plan is proposed and
-  nothing is implemented. Three owner decisions are open.
 
 ## Open items
 

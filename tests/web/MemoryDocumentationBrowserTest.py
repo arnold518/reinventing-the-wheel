@@ -102,7 +102,7 @@ def main():
             assert set(model["fidelities"]) == ({"structural", "behavioral"}
                 if scenario in {"flip-flop-cell", "ff-word", "ff-storage-bank", "ff-memory-container"} else {"structural"})
             block = page.locator(f'.example-table-block[data-scenario="{scenario}"]')
-            assert block.get_attribute("data-profile") == model["profile"]
+            assert block.get_attribute("data-profile") == model["profile"], (scenario, block.get_attribute("data-profile"), model["profile"])
             rows = block.locator("tbody tr").evaluate_all("""nodes => nodes.map(row => ({
               checkpoint: row.dataset.checkpoint, time: Number(row.dataset.time),
               index: Number(row.dataset.timelineIndex),

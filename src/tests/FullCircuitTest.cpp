@@ -104,12 +104,12 @@ void FullCircuitTest::setInitialState() {
     auto wire_rst = builder->getWire("RST_IN");
     auto clk_gen = builder->getComponent<ClockGenerator>("CLK_GEN");
     
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_rst, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(30 * timeScale(), wire_rst, LogicValue::LOW));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_a, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_b, LogicValue::LOW));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(20 * timeScale(), wire_b, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(160 * timeScale(), wire_a, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_rst, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(30 * timeScale(), wire_rst, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_a, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(20 * timeScale(), wire_b, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(160 * timeScale(), wire_a, LogicValue::LOW));
     clk_gen->startClock(*sim, 0);
 }
 

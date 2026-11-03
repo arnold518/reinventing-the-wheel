@@ -3,6 +3,7 @@
 #include "modules/composite/WordRecipes.hpp"
 #include "modules/rv32i/RV32IALU.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/GateListCompact.hpp"
 
 #include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
@@ -13,6 +14,7 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
 #include "modules/basic/Mux.hpp"
+#include "modules/basic/WordGate.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/memory/FFMemoryCatalog.hpp"
@@ -45,7 +47,11 @@
 #include "rv32i/RV32IValidationConfig.hpp"
 #include "modules/rv32im/MulDiv.hpp"
 #include "modules/rv32im/RV32IMCore.hpp"
-#include "modules/rv32im/RV32IMDeviceSystem.hpp"
+#include "system/Bus.hpp"
+#include "system/Bridge.hpp"
+#include "system/BusPortChecker.hpp"
+#include "system/MemorySubsystem.hpp"
+#include "system/ComputerSystem.hpp"
 #include "modules/device/DeviceComponents.hpp"
 #include <algorithm>
 #include <charconv>
@@ -861,14 +867,20 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     rv32im::registerArithmetic(*catalog);
     rv32im::registerCore(*catalog);
     device::registerComponents(*catalog);
-    rv32im::registerDeviceSystem(*catalog);
     storage::registerRegisterFiles(*catalog);
     logic::registerDecoders(*catalog);
     word::registerMuxes(*catalog);
+    word::registerGates(*catalog);
     word::registerComponents(*catalog);
     rv32i::registerALU(*catalog);
     device::registerWordBusComponents(*catalog);
-    device::registerWordPixelSelectors(*catalog);
+    system::registerBuses(*catalog);
+    system::registerBridges(*catalog);
+    system::registerPortCheckers(*catalog);
+    system::registerMemorySubsystem(*catalog);
+    system::registerComputerSystems(*catalog);
+    // Last: a gate-list compact form for listed parts without their own.
+    registerGateListCompacts(*catalog);
     catalog->freeze();
     return catalog;
 }

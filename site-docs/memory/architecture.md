@@ -123,7 +123,7 @@ A memory access takes time for two reasons. Its logic (decoders,
 multiplexers, the controller) takes gate delays, like any other circuit. Its
 electrical steps (bitline discharge, sensing, DRAM restore, flash
 programming) are delay lines whose lengths come from the active
-[timing profile](../timing.md): in `unit` they are fixed tick counts, in
+[timing profile](../basic/1.2.md): in `unit` they are fixed tick counts, in
 `embedded` and `desktop` the on-chip SRAM intervals are FO4 multiples compared
 against the CACTI SRAM model and the external chips' intervals come from the
 datasheets of real SDRAM, DDR4 and NOR-flash parts; they grow with the number

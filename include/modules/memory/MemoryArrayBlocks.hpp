@@ -4,6 +4,7 @@
 #include "modules/memory/MemoryPeripheralWiring.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/Rewire.hpp"
+#include "modules/composite/WordSliceBuilder.hpp"
 
 // Structural IOComponents, not behavioral memory models. Runtime geometry is
 // included in their type/layout names to keep saved layouts apart.
@@ -45,42 +46,27 @@ public:
         if (depth > 4096 / Width) throw std::invalid_argument("MemoryReadSelector exceeds structural cell limit");
     }
     const char* getTypeName() const override { return type_.c_str(); }
+    // A tree of 2:1 word muxes over the words (a Mux<2,1> per bit, as a
+    // bit-by-bit tree), missing leaves zero; READ_VALID, spread across the
+    // word by wiring, masks the result in one word AND.
     void buildInternals(ComponentBuilder& b) override {
         using namespace circuit::memory_detail;
-        StructuralWiring w(b);
-        std::vector<std::shared_ptr<Rewire>> words;
-        for (size_t word = 0; word < depth_; ++word) {
-            const auto name = "WORD_" + std::to_string(word);
-            std::vector<Rewire::WireSpec> outputs;
-            std::vector<Rewire::BitMap> mappings;
-            for (size_t bit = 0; bit < Width; ++bit) {
-                const auto out = "BIT_" + std::to_string(bit);
-                outputs.emplace_back(out);
-                mappings.emplace_back("WORD", bit, out, 0);
+        circuit::detail::WordSliceBuilder n(*this, b);
+        std::vector<circuit::detail::WordSliceBuilder::Signal> words;
+        for (size_t word = 0; word < depth_; ++word) words.push_back(n.input("WORD_" + std::to_string(word)));
+        circuit::detail::WordSliceBuilder::Signal zero;
+        for (size_t level = 0; words.size() > 1; ++level) {
+            decltype(words) next;
+            for (size_t i = 0; i < words.size(); i += 2) {
+                if (i + 1 == words.size() && !zero) zero = n.constant<Width>("ZERO", 0);
+                next.push_back(n.wordMux("READ_" + std::to_string(level) + "_" + std::to_string(i / 2), words[i],
+                    i + 1 < words.size() ? words[i + 1] : zero, n.input("SELECT_" + std::to_string(level))));
             }
-            // Bus unpacking is wiring, not another one-tick BitSplitter stage.
-            // Keep each word independent so a change doesn't unpack the bank.
-            auto unpack = b.addNewComponent<Rewire>(name + "_BITS",
-                std::vector<Rewire::WireSpec>{{"WORD", Width}}, outputs, mappings);
-            w.connect(this->template getInputPin<Width>(name), unpack->getInputPinDynamic("WORD"));
-            words.push_back(unpack);
+            words = std::move(next);
         }
-        auto zero = w.constant("ZERO", false);
-        auto result = b.addNewComponent<BitJoiner<Width>>("RESULT");
-        std::vector<StructuralWiring::PinPtr> selects;
-        for (size_t bit = 0; bit < arrayAddressBits(depth_); ++bit)
-            selects.push_back(this->getInputPin("SELECT_" + std::to_string(bit)));
-        for (size_t bit = 0; bit < Width; ++bit) {
-            std::vector<StructuralWiring::PinPtr> selected;
-            for (size_t word = 0; word < depth_; ++word)
-                selected.push_back(words[word]->getOutputPin("BIT_" + std::to_string(bit)));
-            // Missing leaves are zero, not extra cells. One word bypasses all muxes.
-            auto selectedBit = selectMuxTree(w, b, "READ_" + std::to_string(bit), std::move(selected), selects, zero);
-            w.connect(w.both("ENABLE_" + std::to_string(bit), selectedBit, this->getInputPin("READ_VALID")),
-                      result->getInputPin("IN_" + std::to_string(bit)));
-        }
-        w.connect(result->template getOutputPin<Width>("OUT"), this->template getOutputPin<Width>("READ_DATA"));
-        w.finish();
+        n.connect(n.wordGate(circuit::word::GateKind::And, "ENABLE", words.front(),
+                             n.broadcast("READ_VALID_WORD", n.input("READ_VALID"), Width)), n.output("READ_DATA"));
+        n.finish();
     }
 private:
     size_t depth_;

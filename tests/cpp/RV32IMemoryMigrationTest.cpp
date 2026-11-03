@@ -20,7 +20,7 @@ using namespace circuit::memory;
 namespace {
 void require(bool ok, const std::string& why) { if (!ok) throw std::runtime_error(why); }
 template<size_t W> void drive(Simulator& sim, SimulationTime t, const std::shared_ptr<Wire<W>>& wire, uint64_t value) {
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t, wire, value));
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t, wire, value));
 }
 class RequesterRig {
 public:

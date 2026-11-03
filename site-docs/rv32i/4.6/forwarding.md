@@ -61,7 +61,7 @@ Decode retains `CLK`, `RST`, `WB_RD<5>` and `WB_VALUE<32>`. Its register-file wr
 
 Execute's main groups are `FORWARDED_OPERANDS`, `DATAPATH`, `NEXT_PC`, and `PACKET_STATUS`. `DATAPATH` is the same selectable single-cycle execution component used by the baseline: one [integer ALU core configuration](../4.3/alu.md) for arithmetic, address calculation, comparison, and JAL/JALR targets. The separate PC+immediate adder is needed alongside a conditional-branch comparison; PC+4 uses an incrementer. There is no duplicate RS1+immediate target adder.
 
-The forwarding selector uses five-bit equality networks, nonzero checks and priority gates. Decode's `WB_BYPASS` child is `RV32IWritebackBypass`: it compares `RS1` and `RS2` with `WB_RD` (five bits each) and asserts its one-bit `SELECT_A`/`SELECT_B` outputs only when `WB_VALID`, `WB_REG_WRITE`, a nonzero destination, and the corresponding match hold. The two 32-bit muxes then select `WB_VALUE`. Muxes select values without storing them. Packet/status rewiring stays separate from the datapath.
+The forwarding selector uses five-bit equality networks (an `XORGate<5>` and an inverting `NOTGate<5>` per compare, then an AND tree), nonzero checks and priority gates. Decode's `WB_BYPASS` child is `RV32IWritebackBypass`: it compares `RS1` and `RS2` with `WB_RD` (five bits each) and asserts its one-bit `SELECT_A`/`SELECT_B` outputs only when `WB_VALID`, `WB_REG_WRITE`, a nonzero destination, and the corresponding match hold. The two 32-bit muxes then select `WB_VALUE`. Muxes select values without storing them. Packet/status rewiring stays separate from the datapath.
 
 ### Behavioral implementation
 
@@ -79,4 +79,4 @@ The selector rows cover both sources, competing producers, x0, invalid producers
 
 ## Tests
 
-`RV32IForwardingUnitTest`, `RV32IDecodeStageTest`, and `RV32IExecuteStageTest` compare both fidelities. Program lockstep additionally checks arithmetic chains, loads, stores, branches and JALR against the architectural oracle. `RV32IAdvancedExamplesTest` compiles and checks the displayed selector example.
+`RV32IForwardingUnitTest`, `RV32IDecodeStageTest`, and `RV32IExecuteStageTest` compare both fidelities. `RV32IPipelineControlSweepTest` enumerates the forwarding unit (8,502 vectors: registers x0, x1, x17, x30 in every position with every flag combination, plus every one-bit register difference) against an independent priority rule on both forms. Program lockstep additionally checks arithmetic chains, loads, stores, branches and JALR against the architectural oracle. `RV32IAdvancedExamplesTest` compiles and checks the displayed selector example.

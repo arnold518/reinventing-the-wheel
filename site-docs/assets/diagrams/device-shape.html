@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The shape of a register device</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="device-shape">
+<div class="diagram-viewport" role="region" aria-label="The shape of a register device" tabindex="0">
+<svg viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="device-shape-title device-shape-desc">
+<title id="device-shape-title">The shape of a register device</title>
+<desc id="device-shape-desc">A request arrives on the device&#x27;s bus port, the register port turns it into one register access, the register front end built from the device&#x27;s register table decodes the offset and checks the access, and the device core does the work and drives the outside pins.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="device-shape-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="device-shape-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="device-shape-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="288" fill="var(--dg-paper)"/>
+<rect data-node="bus" x="40" y="40" width="112" height="56" rx="6" class="dg-box"/>
+<text x="96.0" y="65.0" class="dg-name" text-anchor="middle">bus port</text>
+<text x="96.0" y="87.0" class="dg-small" text-anchor="middle">REQ / RSP</text>
+<path class="dg-edge" d="M 152 68 L 192 68" marker-end="url(#device-shape-arrow)"/>
+<rect data-node="port" x="192" y="40" width="128" height="56" rx="6" class="dg-box"/>
+<text x="256.0" y="65.0" class="dg-name" text-anchor="middle">PORT</text>
+<text x="256.0" y="87.0" class="dg-small" text-anchor="middle">one access</text>
+<path class="dg-edge" d="M 320 68 L 360 68" marker-end="url(#device-shape-arrow)"/>
+<rect data-node="regs" x="360" y="40" width="240" height="56" rx="6" class="dg-focus"/>
+<text x="480.0" y="65.0" class="dg-name" text-anchor="middle">REGISTERS</text>
+<text x="480.0" y="87.0" class="dg-small" text-anchor="middle">front end from the table</text>
+<path class="dg-edge" d="M 480 96 L 480 136" marker-end="url(#device-shape-arrow)"/>
+<path class="dg-edge" d="M 440 136 L 440 96" marker-end="url(#device-shape-arrow)"/>
+<text x="492" y="124" class="dg-tag" text-anchor="start">strobes</text>
+<text x="388" y="124" class="dg-tag" text-anchor="start">values</text>
+<rect data-node="core" x="360" y="136" width="240" height="56" rx="6" class="dg-store"/>
+<text x="480.0" y="161.0" class="dg-name" text-anchor="middle">device core</text>
+<text x="480.0" y="183.0" class="dg-small" text-anchor="middle">queue · counter · state</text>
+<path class="dg-edge" d="M 480 192 L 480 232" marker-end="url(#device-shape-arrow)"/>
+<text x="480" y="256" class="dg-small" text-anchor="middle">outside pins</text>
+<rect x="40" y="136" width="280" height="120" rx="6" class="dg-zone"/>
+<text x="56" y="164" class="dg-name" text-anchor="start">register table</text>
+<text x="56" y="192" class="dg-code" text-anchor="start">0x0  TX      write-only data</text>
+<text x="56" y="214" class="dg-code" text-anchor="start">0x4  STATUS  read-only</text>
+<text x="56" y="236" class="dg-code" text-anchor="start">0x8  COUNT   read-only</text>
+</svg>
+</div>
+<figcaption><strong>Port, registers, core.</strong> The register port (shared by every device) holds a request and its response. The front end is generated from the device's register table: it decodes the offset, answers wrong accesses with a status, selects the value a read returns and raises one strobe per writable register. The core (a queue, a counter, a frame counter, LEDs) is the only part that differs from device to device.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

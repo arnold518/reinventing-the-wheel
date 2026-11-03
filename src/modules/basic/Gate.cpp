@@ -11,7 +11,7 @@ BEGIN_BASIC_PINS(NOTGate, circuit::timing::leafDelay(circuit::timing::Leaf::Not)
 END_BASIC_PINS()
 
 void NOTGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input = getInputValue("IN");
+    const LogicValue input = inputs_.read(*this);
     LogicValue new_output_value = (input == LogicValue::HIGH) ? LogicValue::LOW :
                                   (input == LogicValue::LOW)  ? LogicValue::HIGH : LogicValue::UNKNOWN;
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
@@ -26,8 +26,7 @@ BEGIN_BASIC_PINS(ANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::And)
 END_BASIC_PINS()
 
 void ANDGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input_A = getInputValue("A");
-    LogicValue input_B = getInputValue("B");
+    const auto [input_A, input_B] = inputs_.read(*this);
     LogicValue new_output_value = LogicValue::UNKNOWN;
 
     if (input_A == LogicValue::LOW || input_B == LogicValue::LOW) {
@@ -47,8 +46,7 @@ BEGIN_BASIC_PINS(NANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nan
 END_BASIC_PINS()
 
 void NANDGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input_A = getInputValue("A");
-    LogicValue input_B = getInputValue("B");
+    const auto [input_A, input_B] = inputs_.read(*this);
     LogicValue new_output_value = LogicValue::UNKNOWN;
 
     if (input_A == LogicValue::LOW || input_B == LogicValue::LOW) {
@@ -68,8 +66,7 @@ BEGIN_BASIC_PINS(ORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Or))
 END_BASIC_PINS()
 
 void ORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input_A = getInputValue("A");
-    LogicValue input_B = getInputValue("B");
+    const auto [input_A, input_B] = inputs_.read(*this);
     LogicValue new_output_value = LogicValue::UNKNOWN;
 
     if (input_A == LogicValue::HIGH || input_B == LogicValue::HIGH) {
@@ -89,8 +86,7 @@ BEGIN_BASIC_PINS(NORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nor)
 END_BASIC_PINS()
 
 void NORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input_A = getInputValue("A");
-    LogicValue input_B = getInputValue("B");
+    const auto [input_A, input_B] = inputs_.read(*this);
     LogicValue new_output_value = LogicValue::UNKNOWN;
 
     if (input_A == LogicValue::HIGH || input_B == LogicValue::HIGH) {
@@ -110,8 +106,7 @@ BEGIN_BASIC_PINS(XORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Xor)
 END_BASIC_PINS()
 
 void XORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
-    LogicValue input_A = getInputValue("A");
-    LogicValue input_B = getInputValue("B");
+    const auto [input_A, input_B] = inputs_.read(*this);
     LogicValue new_output_value = LogicValue::UNKNOWN;
 
     if (input_A == LogicValue::UNKNOWN || input_A == LogicValue::HIGH_Z ||

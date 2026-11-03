@@ -1,3 +1,4 @@
+#include <bit>
 #include "analysis/DelayTwin.hpp"
 #include "TimingGraph.hpp"
 #include "components/IOComponent.hpp"
@@ -23,12 +24,14 @@ constexpr size_t LARGEST_TWIN = 60000;
 // How many of a leaf's latest input bits have every value tried (2^n evaluations).
 constexpr size_t LEAF_BITS_TRIED = 6;
 
+
 class GateTwin final : public circuit::DelayTwin {
 public:
     struct Gate { Kind kind; int a, b; Tick delay; uint8_t constant; };
     // A flip-flop: where its data and reset arrive and its outputs leave.
     struct Flop { int d = -1, reset = -1, q = -1, q_bar = -1; Tick launch = 0; };
     struct Memory final : State {
+        std::vector<uint64_t> dirty_words;
         std::vector<uint8_t> value, held;   // every node after the last change; the bit of each flip-flop
         std::vector<Tick> time, held_since;
         uint8_t clock = UNKNOWN;
@@ -50,6 +53,26 @@ public:
     };
     std::vector<Leaf> leaves;
     int clock_input = -1;
+    std::vector<uint32_t> fanout_offsets_,fanout_nodes_;
+    bool incremental_ready_=false;
+    void prepareIncremental() {
+        // Leaves retain the original whole-list evaluation contract.
+        if(flops.empty()||!leaves.empty())return;
+        fanout_offsets_.assign(gates.size()+1,0);
+        for(int node:order){
+            const auto& gate=gates[node];
+            if(gate.a>=0)++fanout_offsets_[gate.a+1];
+            if(gate.b>=0&&gate.b!=gate.a)++fanout_offsets_[gate.b+1];
+        }
+        for(size_t i=1;i<fanout_offsets_.size();++i)fanout_offsets_[i]+=fanout_offsets_[i-1];
+        fanout_nodes_.resize(fanout_offsets_.back());auto cursor=fanout_offsets_;
+        for(uint32_t rank=0;rank<order.size();++rank){
+            const auto& gate=gates[order[rank]];
+            if(gate.a>=0)fanout_nodes_[cursor[gate.a]++]=rank;
+            if(gate.b>=0&&gate.b!=gate.a)fanout_nodes_[cursor[gate.b]++]=rank;
+        }
+        incremental_ready_=true;
+    }
 
     // Every bit of one leaf output. With all inputs at 0 or 1 a leaf that
     // describes itself is final once the inputs deciding it are; otherwise
@@ -154,10 +177,13 @@ public:
     bool settle(State* state, long long now, const std::vector<std::vector<LogicValue>>& values,
                 const std::vector<std::vector<long long>>& changed, std::vector<long long>& settled,
                 std::vector<std::vector<uint8_t>>& result) const override {
-        thread_local std::vector<uint8_t> value;
-        thread_local std::vector<Tick> time;
+        thread_local std::vector<uint8_t> full_value;
+        thread_local std::vector<Tick> full_time;
         const auto code = [](LogicValue level) { return uint8_t(level == LogicValue::LOW ? 0 : level == LogicValue::HIGH ? 1 : UNKNOWN); };
         auto* memory = static_cast<Memory*>(state);
+        auto& value=memory?memory->value:full_value;
+        auto& time=memory?memory->time:full_time;
+        const bool incremental=memory&&memory->started&&incremental_ready_;
         bool answered = true;
         if (memory) {
             const uint8_t clock = clock_input >= 0 ? code(values[clock_input][0]) : UNKNOWN;
@@ -189,25 +215,53 @@ public:
             }
             memory->clock = clock;
         }
-        value.resize(gates.size());
-        time.resize(gates.size());
-        for (size_t node = 0; node < gates.size(); ++node) { value[node] = gates[node].constant; time[node] = NEVER; }
+        if(!incremental){
+            value.resize(gates.size());time.resize(gates.size());
+            for(size_t node=0;node<gates.size();++node){value[node]=gates[node].constant;time[node]=NEVER;}
+            if(memory&&incremental_ready_){memory->dirty_words.assign((order.size()+63)/64,0);}
+        }
+        const auto notify=[&](int node){
+            if(incremental)for(uint32_t at=fanout_offsets_[node];at<fanout_offsets_[node+1];++at){
+                const auto rank=fanout_nodes_[at];
+                memory->dirty_words[rank/64]|=uint64_t(1)<<(rank%64);
+            }
+        };
+        const auto assign=[&](int node,uint8_t next,Tick at){
+            const bool changed=value[node]!=next||time[node]!=at;
+            value[node]=next;time[node]=at;if(changed)notify(node);
+        };
         for (size_t pin = 0; pin < input_nodes.size(); ++pin) for (size_t bit = 0; bit < input_nodes[pin].size(); ++bit) {
             const int node = input_nodes[pin][bit];
             if (node < 0) continue;
-            value[node] = code(values[pin][bit]);
-            time[node] = changed[pin][bit];
+            assign(node,code(values[pin][bit]),changed[pin][bit]);
         }
         if (memory) for (size_t flop = 0; flop < flops.size(); ++flop) {
             const auto& f = flops[flop];
             const uint8_t held = memory->held[flop];
-            if (f.q >= 0) { value[f.q] = held; time[f.q] = memory->held_since[flop]; }
-            if (f.q_bar >= 0) { value[f.q_bar] = held > 1 ? UNKNOWN : 1 - held; time[f.q_bar] = memory->held_since[flop]; }
+            if(f.q>=0)assign(f.q,held,memory->held_since[flop]);
+            if(f.q_bar>=0)assign(f.q_bar,held>1?UNKNOWN:1-held,memory->held_since[flop]);
         }
         const auto later = [](Tick at, Tick delay) { return at == NEVER ? NEVER : at + delay; };
         thread_local std::vector<uint8_t> leaf_done;
         leaf_done.assign(leaves.size(), 0);
-        for (const int node : order) {
+        // Incremental calls visit only gates whose inputs changed, in
+        // topological order (ordered 64-bit dirty masks); first calls,
+        // stateless twins and twins with leaves evaluate every gate.
+        size_t position=0;
+        while(true){
+            int node;
+            if(incremental){
+                while(position<memory->dirty_words.size()&&!memory->dirty_words[position])++position;
+                if(position==memory->dirty_words.size())break;
+                const auto bit=std::countr_zero(memory->dirty_words[position]);
+                memory->dirty_words[position]&=memory->dirty_words[position]-1;
+                node=order[position*64+bit];
+            }else{
+                if(position==order.size())break;
+                node=order[position++];
+            }
+            const auto previous=incremental?value[node]:uint8_t(0);
+            const auto previous_time=incremental?time[node]:NEVER;
             const auto& gate = gates[node];
             if (gate.kind == Kind::Hub) {
                 if (!leaf_done[gate.a]) settleLeaf(leaves[gate.a], value, time);
@@ -245,6 +299,7 @@ public:
                 value[node] = (a > 1 || b > 1) ? unknown : a ^ b;
                 time[node] = later(std::max(ta, tb), gate.delay);
             }
+            if(incremental&&(value[node]!=previous||time[node]!=previous_time))notify(node);
         }
         if (memory) {
             // A reset in progress is outside what the flip-flop's timing was measured for.
@@ -255,8 +310,6 @@ public:
                 const uint8_t next = reset == 1 ? 0 : UNKNOWN;
                 if (next != memory->held[flop] || next == UNKNOWN) { memory->held[flop] = next; memory->held_since[flop] = now; }
             }
-            memory->value = value;
-            memory->time = time;
             memory->started = true;
             memory->answered = answered;
         }
@@ -396,6 +449,24 @@ std::shared_ptr<const circuit::DelayTwin> buildDelayTwin(const std::shared_ptr<C
     // An input the graph treats as a constant would hide its changes.
     for (const auto& bits : twin->input_nodes) for (const int node : bits)
         if (node >= 0 && graph.nodes[node].kind != Kind::Source && twin->flops.empty()) return no("an input the graph holds constant");
+    twin->prepareIncremental();
+    // Values are exact for plain gates only: no flip-flops, and no leaf (a
+    // memory primitive may hold state the list does not see).
+    twin->exact_values = twin->flops.empty() && twin->leaves.empty();
+    std::unordered_map<int, std::pair<int, int>> input_bit;
+    for (size_t pin = 0; pin < twin->input_nodes.size(); ++pin)
+        for (size_t bit = 0; bit < twin->input_nodes[pin].size(); ++bit)
+            if (twin->input_nodes[pin][bit] >= 0) input_bit.emplace(twin->input_nodes[pin][bit], std::pair<int, int>(int(pin), int(bit)));
+    twin->wired.resize(twin->output_nodes.size());
+    for (size_t pin = 0; pin < twin->output_nodes.size(); ++pin) {
+        twin->wired[pin].assign(twin->output_nodes[pin].size(), {-1, -1});
+        for (size_t bit = 0; bit < twin->output_nodes[pin].size(); ++bit) {
+            int node = twin->output_nodes[pin][bit];
+            while (node >= 0 && !input_bit.contains(node) && twin->gates[node].kind == Kind::Buf && twin->gates[node].delay == 0)
+                node = twin->gates[node].a;
+            if (const auto found = input_bit.find(node); found != input_bit.end()) twin->wired[pin][bit] = found->second;
+        }
+    }
     return twin;
 }
 

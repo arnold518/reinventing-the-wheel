@@ -3,6 +3,7 @@
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "simulator/Event.hpp"
+#include "simulator/SignalTrace.hpp"
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -34,13 +35,16 @@ void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
         return;
     }
     ++performance_counters_.scheduled_events;
-    if (event->getPriority() == EventPriority::WIRE_UPDATE) {
+    const auto priority = event->getPriority();
+    if (priority == EventPriority::WIRE_UPDATE) {
         ++performance_counters_.scheduled_wire_updates;
-    } else if (event->getPriority() == EventPriority::COMPONENT_EVAL) {
+    } else if (priority == EventPriority::COMPONENT_EVAL) {
         ++performance_counters_.scheduled_component_evaluations;
     }
     event->scheduling_order = next_scheduling_order++;
-    event_queue.push(std::move(event));
+    const auto time = event->time;
+    const auto order = event->scheduling_order;
+    event_queue.push({time, priority, order, std::move(event)});
     performance_counters_.maximum_event_queue_depth = std::max(
         performance_counters_.maximum_event_queue_depth,
         event_queue.size());
@@ -59,12 +63,12 @@ void Simulator::recordProcessedEvent(const std::shared_ptr<Event>& event) noexce
 }
 
 void Simulator::dropCancelled() const noexcept {
-    while (!event_queue.empty() && event_queue.top()->cancelled) event_queue.pop();
+    while (!event_queue.empty() && event_queue.top().event->cancelled) event_queue.pop();
 }
 
 void Simulator::advanceAndRecord(SimulationTime target_time) {
     while (dropCancelled(), !event_queue.empty()) {
-        auto event = event_queue.top();
+        auto event = event_queue.top().event;
 
         if (event->time > target_time) {
             break;
@@ -73,12 +77,14 @@ void Simulator::advanceAndRecord(SimulationTime target_time) {
         event_queue.pop();
 
         if (event->time > current_time) {
+            if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(event->time - 1);
             current_time = event->time;
         }
 
         recordProcessedEvent(event);
         event->process(*this);
     }
+    if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(target_time);
 }
 
 void Simulator::runAndRecord(SimulationTime max_time) {
@@ -93,8 +99,9 @@ DrainResult Simulator::drainUntilIdle(SimulationTime deadline, size_t max_events
     size_t processed_events = 0;
 
     while (dropCancelled(), !event_queue.empty()) {
-        const auto& event = event_queue.top();
+        const auto& event = event_queue.top().event;
         if (event->time > deadline) {
+            if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(deadline);
             return {
                 DrainStatus::DeadlineReached,
                 current_time,
@@ -102,6 +109,8 @@ DrainResult Simulator::drainUntilIdle(SimulationTime deadline, size_t max_events
             };
         }
         if (processed_events >= max_events) {
+            if (current_time && event->time > current_time)
+                if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(current_time);
             return {
                 DrainStatus::EventLimitReached,
                 current_time,
@@ -112,6 +121,7 @@ DrainResult Simulator::drainUntilIdle(SimulationTime deadline, size_t max_events
         auto next = event;
         event_queue.pop();
         if (next->time > current_time) {
+            if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(next->time - 1);
             current_time = next->time;
         }
         recordProcessedEvent(next);
@@ -119,6 +129,7 @@ DrainResult Simulator::drainUntilIdle(SimulationTime deadline, size_t max_events
         ++processed_events;
     }
 
+    if (auto* trace = SignalTraceSubscription::observer(*this)) trace->settledThrough(deadline);
     return {
         DrainStatus::Idle,
         current_time,
@@ -136,7 +147,7 @@ std::optional<SimulationTime> Simulator::nextEventTime() const {
     if (event_queue.empty()) {
         return std::nullopt;
     }
-    return event_queue.top()->time;
+    return event_queue.top().time;
 }
 
 void Simulator::setCircuitStateAtTime(SimulationTime target_time) {
@@ -193,6 +204,10 @@ std::vector<SimulationTime> Simulator::getUniqueTimestamps() const {
     return {timestamps.begin(), timestamps.end()};
 }
 
+bool Simulator::changeValuesObserved() const {
+    return history_recording_enabled_ || SignalTraceSubscription::observer(*this) != nullptr;
+}
+
 void Simulator::recordChange(SimulationTime time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value) {
     if (!wire) {
         return;
@@ -201,6 +216,7 @@ void Simulator::recordChange(SimulationTime time, std::shared_ptr<WireBase> wire
     // WireUpdateEvent calls recordChange only after observing an actual value
     // transition, so this counter does not depend on retaining the timeline.
     ++performance_counters_.effective_wire_changes;
+    if (auto* trace = SignalTraceSubscription::observer(*this)) trace->wireChanged(time, wire, value);
     if (!history_recording_enabled_) {
         return;
     }
@@ -222,17 +238,23 @@ void Simulator::recordPinChange(SimulationTime time, std::shared_ptr<PinBase> pi
     }
 
     if (!history_recording_enabled_) {
-        auto& state = _headless_pin_state[std::move(pin)];
+        auto& state = _headless_pin_state[pin];
         if (state.empty() || state.back().second != value) {
-            state.clear();
-            state.push_back({time, value});
+            if (auto* trace = SignalTraceSubscription::observer(*this)) trace->pinChanged(time, pin, value);
+            if (state.empty()) {
+                state.push_back({time, value});
+            } else {
+                state.back().first = time;
+                state.back().second = value;
+            }
             ++performance_counters_.effective_pin_changes;
         }
         return;
     }
 
-    auto& history = _pin_log[std::move(pin)];
+    auto& history = _pin_log[pin];
     if (history.empty() || history.back().second != value) {
+        if (auto* trace = SignalTraceSubscription::observer(*this)) trace->pinChanged(time, pin, value);
         history.push_back({time, value});
         ++history_revision_;
         ++performance_counters_.effective_pin_changes;

@@ -29,7 +29,7 @@ tests=["RV32I"+name+"Test" for name in ("PredictionCounter","BranchPredecode","B
 tests += ["RV32IPredictionProgramTest/"+policy+"/program-20" for policy in ("not-taken","taken","backward-taken","one-bit","two-bit")]
 
 for test in ([] if args.program_roots_only else tests):
-    root=server.circuit_backend.create_layout_topology(test)
+    root=server.scenario_topology(test)
     key=server.scenario_layout_key(server.scenario_canonical_alias(test),root)
     nodes=list(refresh._walk(root))
     for component,depth in nodes:

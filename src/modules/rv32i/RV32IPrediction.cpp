@@ -119,16 +119,23 @@ public:
     void buildInternals(ComponentBuilder& b) override {
         StructuralWiring w(b);
         std::array<std::vector<Signal>,2> columns;
+        // Row write enables: UPDATE AND each row's match, one word AND
+        // (WRITE_ROW) over the rows.
+        std::vector<StructuralWiring::PinPtr> selected_rows, updates;
+        std::vector<Ptr> entries;
         for (size_t row=0; row<config_.entries; ++row) {
             const auto n=std::to_string(row);
             auto entry=b.addNewComponent<PredictionEntry>("ROW_"+n,config_.policy==Policy::OneBit);
             for (auto p : {"CLK","RST","TAKEN"}) input(w,*this,entry,p);
-            auto selected=match(b,w,"UPDATE_ROW_"+n,getInputPin<32>("UPDATE_PC"),uint32_t((config_.entries-1)<<2),uint32_t(row<<2));
-            w.connect(w.both("WRITE_ROW_"+n,selected,getInputPin("UPDATE")),entry->getInputPin("WE"));
+            selected_rows.push_back(match(b,w,"UPDATE_ROW_"+n,getInputPin<32>("UPDATE_PC"),uint32_t((config_.entries-1)<<2),uint32_t(row<<2)));
+            updates.push_back(getInputPin("UPDATE"));
+            entries.push_back(entry);
             auto bits=b.addNewComponent<BitSplitter<2>>("ROW_BITS_"+n);
             w.connect(entry->getOutputPin<2>("Q"),bits->getInputPin<2>("IN"));
             for (unsigned bit=0;bit<2;++bit) columns[bit].push_back(bits->getOutputPin("OUT_"+std::to_string(bit)));
         }
+        const auto writes=w.gateBits(circuit::word::GateKind::And,"WRITE_ROW",selected_rows,updates);
+        for (size_t row=0; row<config_.entries; ++row) w.connect(writes[row],entries[row]->getInputPin("WE"));
         unsigned address_bits=0;
         while ((size_t{1}<<address_bits)<config_.entries) ++address_bits;
         std::vector<Rewire::WireSpec> outputs;
@@ -354,12 +361,13 @@ void RV32IBranchRecovery::buildInternals(ComponentBuilder& b) {
     const auto compare=[&](const std::string& name,const std::string& pin) {
         auto d=b.addNewComponent<BitSplitter<32>>(name+"_BITS");
         input(w,*this,d,pin,"IN");
-        std::vector<Signal> differences;
+        std::vector<Signal> left,right;
         for(unsigned bit=0;bit<32;++bit) {
             const auto n=std::to_string(bit);
-            differences.push_back(w.binary<XORGate>(name+"_DIFFERENT_"+n,a->getOutputPin("OUT_"+n),d->getOutputPin("OUT_"+n)));
+            left.push_back(a->getOutputPin("OUT_"+n)); right.push_back(d->getOutputPin("OUT_"+n));
         }
-        return w.reduce(name+"_DIFFERENCE",differences,false);
+        // One XORGate<32>, then the OR tree (a reduction, kept per bit).
+        return w.reduce(name+"_DIFFERENCE",w.gateBits(circuit::word::GateKind::Xor,name+"_DIFFERENT",left,right),false);
     };
     // Component creation order must not depend on C++ argument evaluation
     // order (GCC/native and Clang/WASM can choose opposite orders).

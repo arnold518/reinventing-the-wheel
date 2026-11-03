@@ -394,8 +394,8 @@ input[type="color"]::-moz-color-swatch {
   left: 0;
   right: 0;
   display: grid;
-  grid-template-columns: clamp(180px, 18vw, 260px) 170px auto minmax(140px, 1fr) minmax(150px, 230px);
-  grid-template-areas: "scenario timing controls track readouts";
+  grid-template-columns: clamp(160px, 16vw, 240px) 155px 140px auto minmax(120px, 1fr) minmax(140px, 210px);
+  grid-template-areas: "scenario timing fidelity controls track readouts";
   column-gap: 14px;
   row-gap: 8px;
   height: var(--topbar-height);
@@ -468,6 +468,7 @@ input[type="color"]::-moz-color-swatch {
 
 .field-scenario { grid-area: scenario; }
 .field-timing { grid-area: timing; }
+.field-fidelity { grid-area: fidelity; }
 
 #program-controls {
   grid-area: program;
@@ -484,8 +485,8 @@ body.program-view {
 body.program-view #topbar {
   grid-template-rows: 44px 44px;
   grid-template-areas:
-    "scenario timing controls track readouts"
-    "program program . . .";
+    "scenario timing fidelity controls track readouts"
+    "program program program . . .";
 }
 
 .timeline-controls {
@@ -577,17 +578,22 @@ body.program-view #topbar {
   color: var(--text);
   font: 600 13px/1.2 var(--font-sans);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-#stats-label {
+#stats-label,
+#recording-status {
   display: block;
   min-width: 0;
   color: var(--text-faint);
   font-size: 11px;
   line-height: 1.25;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* Bottom dock: centered over the visible canvas. */
@@ -877,6 +883,37 @@ body.explorer-open #component-explorer {
   line-height: 12px;
   text-align: center;
   text-transform: uppercase;
+}
+
+/* A row whose plan differs from what is built (Apply & Run pending). */
+.explorer-row.pending .explorer-name {
+  font-style: italic;
+}
+
+.explorer-row.pending .explorer-arrow {
+  color: var(--accent-text);
+}
+
+/* A part shown from the preview: built only after Apply & Run. */
+.explorer-row.preview {
+  color: var(--text-faint);
+}
+
+.explorer-row.preview .explorer-name {
+  opacity: 0.75;
+}
+
+.explorer-badge.preview {
+  visibility: hidden;
+}
+
+/* Stands in for parts that exist only after Apply & Run. */
+.explorer-row.placeholder {
+  display: flex;
+  color: var(--text-faint);
+  font-size: 11.5px;
+  font-style: italic;
+  cursor: default;
 }
 
 .explorer-badge.structural {
@@ -1275,7 +1312,7 @@ body.explorer-open #loading {
 
 @media (max-width: 1180px) {
   #topbar {
-    grid-template-columns: 170px 140px auto minmax(100px, 1fr) minmax(130px, 180px);
+    grid-template-columns: 150px 120px 110px auto minmax(80px, 1fr) minmax(120px, 160px);
     column-gap: 10px;
     padding: 10px 12px;
   }
@@ -1288,16 +1325,17 @@ body.explorer-open #loading {
 /* An iframe or a narrow standalone window is a circuit-first view. Panels
    open on demand above the canvas, never over the persistent panel controls. */
 body.compact-view {
-  --topbar-height: 112px;
+  --topbar-height: 152px;
   --dock-height: 46px;
   --dock-gap: 10px;
 }
 
 body.compact-view #topbar {
   grid-template-columns: auto minmax(0, 1fr) minmax(0, 9.5em);
-  grid-template-rows: 34px 34px minmax(0, 1fr);
+  grid-template-rows: 34px 34px 34px minmax(0, 1fr);
   grid-template-areas:
-    "scenario scenario timing"
+    "scenario scenario scenario"
+    "fidelity fidelity timing"
     "controls track track"
     "readouts readouts readouts";
   column-gap: 8px;
@@ -1306,13 +1344,14 @@ body.compact-view #topbar {
 }
 
 body.compact-view.program-view {
-  --topbar-height: 152px;
+  --topbar-height: 192px;
 }
 
 body.compact-view.program-view #topbar {
-  grid-template-rows: 34px 34px 34px minmax(0, 1fr);
+  grid-template-rows: 34px 34px 34px 34px minmax(0, 1fr);
   grid-template-areas:
-    "scenario scenario timing"
+    "scenario scenario scenario"
+    "fidelity fidelity timing"
     "program program program"
     "controls track track"
     "readouts readouts readouts";

@@ -3,6 +3,8 @@
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
+#include "modules/basic/WordGate.hpp"
+#include "modules/utility/Rewire.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include <array>
@@ -58,6 +60,28 @@ public:
     }
     Signal reduceBalanced(const std::string& name, std::vector<Signal> signals, bool conjunction) {
         return reduce(name, std::move(signals), conjunction);
+    }
+    // One word gate on whole words (b is unused for NOT).
+    Signal wordGate(circuit::word::GateKind kind, const std::string& name, const Signal& a, const Signal& b = nullptr) {
+        auto gate = add(circuit::word::gate(kind, a->getWidth()), name);
+        if (kind == circuit::word::GateKind::Not) connect(a, gate->getInputPinDynamic("IN"));
+        else { connect(a, gate->getInputPinDynamic("A")); connect(b, gate->getInputPinDynamic("B")); }
+        return gate->getOutputPinDynamic("OUT");
+    }
+    // One 2:1 word mux (Mux<2,W>): SEL low gives a, high gives b.
+    Signal wordMux(const std::string& name, const Signal& a, const Signal& b, const Signal& sel) {
+        auto c = add(circuit::word::mux(2, a->getWidth()), name);
+        connect(a, c->getInputPinDynamic("A")); connect(b, c->getInputPinDynamic("B"));
+        connect(sel, c->getInputPinDynamic("SEL"));
+        return c->getOutputPinDynamic("OUT");
+    }
+    // A one-bit signal on every bit of a word, through a zero-delay Rewire.
+    Signal broadcast(const std::string& name, const Signal& bit, size_t width) {
+        std::vector<Rewire::BitMap> map;
+        for (size_t i = 0; i < width; ++i) map.emplace_back("IN", 0, "OUT", i);
+        auto r = add<Rewire>(name, std::vector<Rewire::WireSpec>{{"IN", 1}}, std::vector<Rewire::WireSpec>{{"OUT", width}}, map);
+        connect(bit, r->getInputPinDynamic("IN"));
+        return r->getOutputPinDynamic("OUT");
     }
     template<size_t Inputs>
     Signal selectBit(const std::string& name,const std::array<Signal,Inputs>& inputs,const Signal& op) {

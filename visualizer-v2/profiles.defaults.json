@@ -1,18 +1,12 @@
 {
   "scenarios": {
-    "flip-flop-cell": {
-      "exact_overrides": {
-        "FLIP_FLOP_CELL_ROOT": "structural"
-      },
-      "revision": 6
-    },
-    "rv32i-core": {
+    "rv32i-core::logic": {
       "exact_overrides": {
         "RV32I_SINGLE_CYCLE_CORE_ROOT.DECODE_CONTROL": "structural"
       },
       "revision": 2
     },
-    "rv32i-five-stage-program1": {
+    "rv32i-five-stage-program1::visual": {
       "exact_overrides": {
         "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.COORDINATOR": "structural",
         "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.DECODE": "structural",
@@ -26,12 +20,6 @@
         "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.WRITEBACK": "structural"
       },
       "revision": 3
-    },
-    "rv32i-register-file": {
-      "exact_overrides": {
-        "REGISTER_FILE_W32_N32_ROOT.STORAGE.WORD_0": "structural"
-      },
-      "revision": 2
     }
   },
   "schema_version": 1

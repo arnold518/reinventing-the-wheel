@@ -1,11 +1,13 @@
 #include "visualizer/VisualizerSession.hpp"
 #include "runtime/RecordedGuestFixtures.hpp"
 #include "components/TimingProfile.hpp"
+#include "components/selection/FidelityPresets.hpp"
 
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
 #include <map>
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <stdexcept>
@@ -17,11 +19,13 @@ namespace {
 class WasmVisualizer {
 public:
     std::string runRecordedGuestJson(const std::string& name, bool caches, bool dram, unsigned max_cycles) {
-        return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles);
+        return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles,{},100000,false,true,0,0,
+            fidelity_preset_);
     }
 
     std::string runRecordedGuestSurfaceJson(const std::string& name,unsigned width,unsigned height,unsigned max_cycles) {
-        return circuit::runtime::runRecordedGuestFixtureJson(name,false,false,max_cycles,{},100000,false,true,width,height);
+        return circuit::runtime::runRecordedGuestFixtureJson(name,false,false,max_cycles,{},100000,false,true,width,height,
+            fidelity_preset_);
     }
 
     std::string visualizableTestsJson() const {
@@ -29,6 +33,11 @@ public:
     }
 
     void clearProfileOverrides() { exact_overrides_.clear(); }
+    void setFidelityProfile(const std::string& name){
+        const auto names=circuit::fidelityPresetNames();
+        if(std::find(names.begin(),names.end(),name)==names.end())throw std::invalid_argument("Unknown fidelity profile: "+name);
+        fidelity_preset_=name;
+    }
 
     void setProfileOverride(
         const std::string& component_path,
@@ -70,8 +79,15 @@ public:
             registered_test_name,
             scenario_key,
             exact_overrides_,
-            profile_revision);
+            profile_revision,fidelity_preset_);
         return session_->topologyResponseJson();
+    }
+
+    // The parts the scenario would have with the current overrides and
+    // preset, built without simulating (the explorer's preview).
+    std::string previewComponentsJson(const std::string& registered_test_name) const {
+        return circuit::visualizer::VisualizerSession::previewComponentsJson(
+            registered_test_name, exact_overrides_, fidelity_preset_);
     }
 
     std::string stateJson(size_t index) {
@@ -114,6 +130,8 @@ private:
     }
 
     std::map<std::string, std::string> exact_overrides_;
+    // Empty until the page chooses one: recorded guests then run their own profile.
+    std::string fidelity_preset_;
     std::unique_ptr<circuit::visualizer::VisualizerSession> session_;
 };
 
@@ -130,6 +148,8 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
         .function("setTimingProfile", &WasmVisualizer::setTimingProfile)
         .function("timingProfileJson", &WasmVisualizer::timingProfileJson)
         .function("loadScenario", &WasmVisualizer::loadScenario)
+        .function("previewComponentsJson", &WasmVisualizer::previewComponentsJson)
+        .function("setFidelityProfile", &WasmVisualizer::setFidelityProfile)
         .function("stateJson", &WasmVisualizer::stateJson)
         .function("exampleRowsJson", &WasmVisualizer::exampleRowsJson)
         .function("componentStateJson", &WasmVisualizer::componentStateJson)

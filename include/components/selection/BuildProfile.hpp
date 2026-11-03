@@ -44,6 +44,8 @@ struct ProfileDecision {
     std::optional<Fidelity> fidelity;
     std::string reason;
     bool matched_rule = false;
+    // The winning rule names this exact path (an explicit choice for one part).
+    bool exact_path = false;
 };
 
 class BuildProfile {

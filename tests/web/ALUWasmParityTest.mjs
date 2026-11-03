@@ -67,8 +67,11 @@ for (const [test, scenario] of scenarios) {
         'integer ALU: one shared arithmetic unit');
       assert.equal(actual.components.filter(component => component.type === 'ParallelPrefixAdder<32>').length, 1,
         'integer ALU: one shared prefix adder');
-      assert.equal(actual.components.filter(component => component.type === 'HalfAdder').length, 32,
-        'integer ALU: one sum bit-slice per bit');
+      // The bit stage is two 32-bit gates: propagate = A XOR B, generate = A AND B.
+      assert.equal(actual.components.filter(component => component.type === 'XORGate<32>' && component.id.endsWith('.PROPAGATE')).length, 1,
+        'integer ALU: one 32-bit propagate gate');
+      assert.equal(actual.components.filter(component => component.type === 'ANDGate<32>' && component.id.endsWith('.GENERATE')).length, 1,
+        'integer ALU: one 32-bit generate gate');
       assert.equal(actual.components.filter(component => component.type.startsWith('CarryPrefixLevel<')).length, 5,
         'integer ALU: five prefix-carry levels');
     }

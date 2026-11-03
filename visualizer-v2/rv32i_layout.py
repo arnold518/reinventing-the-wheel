@@ -208,17 +208,22 @@ def placements(kind, aspects, parent_aspect, child_stubs=None):
     elif kind in {"Decoder<5>","Decoder<5,zero-disabled>"}:
         # Literal preparation -> low/high predecode -> 32 product terms ->
         # output enables. Row n represents decoded register address n.
-        p.slot("ADDR_SPLIT", .02,.13,.12,.77)
-        p.grid([f"NOT_ADDR{i}" for i in range(5)], (.16,.15,.08,.70), 1)
-        p.grid([f"LOW_{i}" for i in range(4)], (.27,.15,.09,.70), 1)
-        p.grid([f"HIGH_PAIR_{i}" for i in range(8)], (.39,.12,.08,.82), 1)
-        p.grid([f"HIGH_{i}" for i in range(8)], (.49,.12,.08,.82), 1)
+        # The address inverters are one word NOT, the output enables one word
+        # AND between the MATCH join and the OUT split (2026-10-28).
+        p.slot("ADDR_SPLIT", .02,.13,.10,.77)
+        p.slot("NOT_ADDR", .13,.40,.07,.20)
+        p.slot("NOT_ADDR_BITS", .21,.13,.05,.77)
+        p.grid([f"LOW_{i}" for i in range(4)], (.28,.15,.08,.70), 1)
+        p.grid([f"HIGH_PAIR_{i}" for i in range(8)], (.38,.12,.07,.82), 1)
+        p.grid([f"HIGH_{i}" for i in range(8)], (.47,.12,.07,.82), 1)
         for i in range(32):
             col, row = i // 16, i % 16
-            y = .08 + row * .054
-            p.slot(f"MATCH_{i}", .60 + col*.08, y, .075,.050)
-            p.slot(f"OUT{i}_ENABLE_AND", .79 + col*.08, y, .075,.050)
-        p.slot("OUT0_ZERO", .785,.08,.08,.05)
+            p.slot(f"MATCH_{i}", .56 + col*.07, .08 + row * .054, .065,.050)
+        p.slot("MATCH_WORD", .71,.13,.04,.77)
+        p.slot("ENABLE_WORD", .76,.10,.06,.12)
+        p.slot("ENABLE", .76,.40,.08,.20)
+        p.slot("OUT_BITS", .86,.13,.04,.77)
+        p.slot("OUT0_ZERO", .91,.08,.07,.05)
         if set(p.result) != set(names): return None
     elif re.fullmatch(r"Mux<2,(4|8|16|32)>",kind):
         # Two data buses and a shared inverted select feed parallel per-bit
@@ -477,7 +482,11 @@ def placements(kind, aspects, parent_aspect, child_stubs=None):
     elif kind == "RV32IRequestTagMatch":
         p.slot("CURRENT_TAG",.02,.09,.10,.81)
         p.slot("SAVED_TAG",.14,.09,.10,.81)
-        p.grid([f"TAG_DIFFERENT_{bit}" for bit in range(32)],(.29,.09,.20,.81),2)
+        # One XORGate<n> compares the tags as words; its joins and split
+        # stand beside it.
+        p.grid(["TAG_DIFFERENT_A","TAG_DIFFERENT_B"],(.26,.30,.05,.40),1)
+        p.slot("TAG_DIFFERENT",.33,.20,.10,.60)
+        p.slot("TAG_DIFFERENT_BITS",.45,.09,.05,.81)
         for level in range(5):
             p.grid([f"TAG_CHANGED_{level}_{bit}" for bit in range(16 >> level)],
                    (.53+level*.09,.09,.075,.81),1)

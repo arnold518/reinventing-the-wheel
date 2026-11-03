@@ -1,9 +1,9 @@
 "use strict";
 (function(root,factory){const api=factory();if(typeof module==="object"&&module.exports)module.exports=api;else root.CircuitDeviceView=api;}(globalThis,()=>{
-  const types=new Set(['FramebufferDisplay','ButtonDevice','ConsoleDevice','TimerDevice','SynchronousFifo<8>','SynchronousFifo<16>','SynchronousFifo<32>']);
+  const types=new Set(['FramebufferDisplay','ButtonDevice','ConsoleDevice','TimerDevice','LedPanel','SynchronousFifo<8>','SynchronousFifo<16>','SynchronousFifo<32>']);
   const images=new WeakMap();
   function supports(component){return typeof component==='object'&&component!==null
-    ?['display','keyboard','console','timer','queue'].includes(component.deviceViewKind)||types.has(component.type):types.has(component);}
+    ?['display','keyboard','console','timer','queue','leds','bus'].includes(component.deviceViewKind)||types.has(component.type):types.has(component);}
   function number(bits){return typeof bits==='string'&&/^[01]+$/.test(bits)?parseInt(bits,2):null;}
   function validKeyboardState(state){
     const bits=(value,width)=>typeof value==='string'&&value.length===width&&/^[01XZ]+$/.test(value);
@@ -31,9 +31,24 @@
     }
     return result;
   }
+  const ops=['read','write','program','erase','burst'];
+  // Bus traffic: one line per master that has a request or an answer.
+  function busLines(state){
+    const hex=bits=>{const v=number(bits);return v===null?'X':'0x'+v.toString(16).padStart(8,'0');};
+    const lines=[];
+    for(const m of state.masters||[]){
+      if(m.valid==='1'){
+        lines.push(`${m.name}: ${ops[number(m.op)]??'op?'} ${hex(m.addr)}${m.ready==='1'?' (taken)':' (waiting)'}`);
+      }else if(m.rspValid==='1')lines.push(`${m.name}: answer, status ${number(m.status)??'X'}`);
+    }
+    for(const t of state.targets||[])if(t.valid==='1')lines.push(`→ ${t.name} at ${hex(t.addr)}`);
+    return lines.length?lines:['idle'];
+  }
   function summary(state){
     if(!state?.supported)return state?.reason||'Device state pending';
     const count=number(state.count),head=number(state.head);
+    if(state.kind==='leds')return `LEDs ${typeof state.leds==='string'?[...state.leds].map(b=>b==='1'?'●':b==='0'?'○':'?').join(''):'?'}`;
+    if(state.kind==='bus')return busLines(state).join(' · ');
     if(state.kind==='display')return `${state.width} × ${state.height} RGB332 · sequence ${number(state.sequence)??'X'}`;
     if(state.kind==='keyboard')return `Held: ${keyboard(state).filter(k=>k.value==='1').map(k=>k.id).join(', ')||'none'} · queue ${count??'X'} · head ${head??'X'} · overflow ${state.overflow}`;
     if(state.kind==='console'){const value=number(state.data);return `TX ${state.valid} · byte ${value??'X'}${value!==null&&value>=32&&value<=126?` (${String.fromCharCode(value)})`:''} · queue ${count??'X'}`;}
@@ -56,8 +71,18 @@
       for(const key of keys){const x=rect.x+gap+(key.id%cols)*(w+gap),y=rect.y+gap+Math.floor(key.id/cols)*(h+gap);
         ctx.fillStyle=key.value==='1'?'#37b88a':key.value==='0'?'#26374c':'#a83b91';ctx.fillRect(x,y,w,h);ctx.fillStyle='#fff';ctx.fillText(key.label,x+w/2,y+h/2,w);}
       ctx.fillText(`Queue ${number(state.count)??'X'} · overflow ${state.overflow}`,rect.x+rect.w/2,rect.y+rect.h-label,rect.w-8);
+    }else if(state?.supported&&state.kind==='leds'){
+      const bits=typeof state.leds==='string'?state.leds:'X'.repeat(16),n=bits.length,gap=3;
+      const d=Math.max(4,Math.min((rect.w-(n+1)*gap)/n,rect.h-label*3));
+      const x0=rect.x+(rect.w-(n*d+(n-1)*gap))/2,y=rect.y+(rect.h-label*2)/2;
+      for(let i=0;i<n;++i){const b=bits[n-1-i];ctx.beginPath();ctx.arc(x0+i*(d+gap)+d/2,y,d/2,0,2*Math.PI);
+        ctx.fillStyle=b==='1'?'#ffcf33':b==='0'?'#3a2f12':'#a83b91';ctx.fill();}
+      ctx.fillStyle='#e5edf7';ctx.fillText('LED 15 … 0',rect.x+rect.w/2,rect.y+rect.h-label,rect.w-8);
+    }else if(state?.supported&&state.kind==='bus'){
+      const lines=busLines(state);ctx.textAlign='left';
+      lines.slice(0,Math.max(1,Math.floor(rect.h/(label*1.4)))).forEach((line,i)=>ctx.fillText(line,rect.x+6,rect.y+label*(1.2+1.4*i),rect.w-12));
     }else ctx.fillText(summary(state),rect.x+rect.w/2,rect.y+rect.h/2,rect.w-8);
     ctx.restore();
   }
-  return {supports,number,validKeyboardState,keyboard,rgba,summary,draw};
+  return {supports,number,validKeyboardState,keyboard,rgba,summary,draw,busLines};
 }));

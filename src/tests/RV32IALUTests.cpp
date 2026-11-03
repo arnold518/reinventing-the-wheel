@@ -8,6 +8,8 @@
 #include "modules/composite/WordComponent.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/utility/BitAdapter.hpp"
+#include "tests/SettledSweep.hpp"
+#include <random>
 #include <array>
 #include <cstdint>
 #include <iostream>
@@ -772,4 +774,46 @@ void RV32IALUSliceTest::verifyResults() {
     expect(
         runRowsBatched<AddSub4Slice>(addSub4Rows(), 100),
         "RV32IALUSliceTest AddSub4Slice exhaustive");
+}
+
+namespace {
+circuit::test::NamedValues namedValues(const std::map<std::string, TestValue>& values,
+                                       const circuit::test::SettledSweep& sweep) {
+    circuit::test::NamedValues result;
+    for (const auto& [name, value] : values) {
+        if (value.hasLogicVector()) result[name] = value.values;
+        else if (value.multi) result[name] = circuit::test::logicBits(sweep.width(name), value.numeric);
+        else result[name] = {value.logic};
+    }
+    return result;
+}
+} // namespace
+
+void RV32IALUSweepTest::verifyResults() {
+    using namespace circuit::test;
+    FidelitySweep sweep(circuit::families::rv32iALU());
+    size_t rows = 0;
+    auto check = [&](uint32_t a, uint32_t b, uint8_t op) {
+        const auto row = aluAutoRow(a, b, op);
+        const auto inputs = namedValues(row.inputs, sweep.gates());
+        auto expected = namedValues(row.outputs, sweep.gates());
+        // RV32IALU exposes OUT and the three comparison outputs only.
+        for (const auto* flag : {"ZERO", "NEGATIVE", "CARRY_OUT", "OVERFLOW"}) expected.erase(flag);
+        sweep.evaluate(inputs, &expected);
+        ++rows;
+    };
+    const std::array<uint32_t, 6> edges{
+        0x00000000U, 0x00000001U, 0x0000001fU, 0x7fffffffU, 0x80000000U, 0xffffffffU};
+    for (uint8_t op = 0; op <= ::rv32i::ALUOp::CLEAR; ++op)
+        for (auto a : edges)
+            for (auto b : edges) check(a, b, op);
+    std::mt19937 rng(0xA1B32);
+    for (size_t i = 0; i < 256; ++i) {
+        const uint32_t a = rng();
+        const uint32_t b = rng();
+        const auto op = static_cast<uint8_t>(rng() % 32);
+        check(a, b, op);
+    }
+    std::cout << "RV32IALU: " << rows << " vectors against C++ integer results; "
+              << (sweep.hasBehavioral() ? "gate-level and behavioral forms agree" : "gate-level form only") << '\n';
 }

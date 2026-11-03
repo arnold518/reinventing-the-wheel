@@ -39,7 +39,7 @@ def refresh(path):
             entry["layout_revision"] = REVISION
             changed.append(f"{fingerprint}/{REWIRE}")
 
-    root = server.circuit_backend.create_layout_topology("RV32IFiveStageCoreProgramTest/program-01")
+    root = server.scenario_topology("RV32IFiveStageCoreProgramTest/program-01")
     representatives = {}
     for component, _ in layouts._walk(root):
         kind = server._component_layout_type(component)

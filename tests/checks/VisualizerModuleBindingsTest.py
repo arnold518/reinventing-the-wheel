@@ -191,11 +191,15 @@ def main():
         "Hybrid",
         "Equivalence",
     )
+    # Component tests run every fidelity, so no registered test is a
+    # per-fidelity copy. The two catalog-wide compact-form checks are named
+    # for what they check and are the only allowed exceptions.
+    catalog_checks = {"CompactFormEquivalenceTest", "GateListCompactEquivalenceTest"}
     for test_name in registered:
-        assert not any(
+        assert test_name in catalog_checks or not any(
             fragment in test_name
             for fragment in forbidden_test_fragments
-        )
+        ), test_name
 
     alu_test = circuit_backend.create_test_by_name("ALUWidth8ScenarioTest")
     alu_test.setup_circuit()

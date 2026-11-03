@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>One bus and two buses</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="bus-layers">
+<div class="diagram-viewport" role="region" aria-label="One bus and two buses" tabindex="0">
+<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="bus-layers-title bus-layers-desc">
+<title id="bus-layers-title">One bus and two buses</title>
+<desc id="bus-layers-desc">Left: one bus connects the core to memory, video memory and the four devices. Right: a system bus connects the core to memory, video memory and a bridge; behind the bridge a peripheral bus connects the four devices.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="bus-layers-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="bus-layers-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="bus-layers-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="360" fill="var(--dg-paper)"/>
+<rect data-node="core1" x="24" y="32" width="264" height="40" rx="6" class="dg-focus"/>
+<text x="156.0" y="57.0" class="dg-name" text-anchor="middle">CORE</text>
+<path class="dg-edge" d="M 156 72 L 156 104" marker-end="url(#bus-layers-arrow)"/>
+<rect data-node="bus1" x="24" y="104" width="264" height="40" rx="6" class="dg-box"/>
+<text x="156.0" y="129.0" class="dg-name" text-anchor="middle">BUS</text>
+<path class="dg-edge" d="M 44 144 L 44 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="24" y="184" width="40" height="32" rx="4" class="dg-store"/>
+<text x="44" y="205" class="dg-code" text-anchor="middle">MEM</text>
+<path class="dg-edge" d="M 88 144 L 88 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="68" y="184" width="40" height="32" rx="4" class="dg-store"/>
+<text x="88" y="205" class="dg-code" text-anchor="middle">VID</text>
+<path class="dg-edge" d="M 132 144 L 132 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="112" y="184" width="40" height="32" rx="4" class="dg-box"/>
+<text x="132" y="205" class="dg-code" text-anchor="middle">CON</text>
+<path class="dg-edge" d="M 176 144 L 176 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="156" y="184" width="40" height="32" rx="4" class="dg-box"/>
+<text x="176" y="205" class="dg-code" text-anchor="middle">TIM</text>
+<path class="dg-edge" d="M 220 144 L 220 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="200" y="184" width="40" height="32" rx="4" class="dg-box"/>
+<text x="220" y="205" class="dg-code" text-anchor="middle">BTN</text>
+<path class="dg-edge" d="M 264 144 L 264 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="244" y="184" width="40" height="32" rx="4" class="dg-box"/>
+<text x="264" y="205" class="dg-code" text-anchor="middle">DSP</text>
+<text x="24" y="252" class="dg-small" text-anchor="start">one bus: every target on one router</text>
+<rect data-node="core2" x="352" y="32" width="264" height="40" rx="6" class="dg-focus"/>
+<text x="484.0" y="57.0" class="dg-name" text-anchor="middle">CORE</text>
+<path class="dg-edge" d="M 484 72 L 484 104" marker-end="url(#bus-layers-arrow)"/>
+<rect data-node="sys" x="352" y="104" width="264" height="40" rx="6" class="dg-box"/>
+<text x="484.0" y="129.0" class="dg-name" text-anchor="middle">SYSTEM_BUS</text>
+<path class="dg-edge" d="M 376 144 L 376 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="352" y="184" width="48" height="32" rx="4" class="dg-store"/>
+<text x="376" y="205" class="dg-code" text-anchor="middle">MEM</text>
+<path class="dg-edge" d="M 432 144 L 432 184" marker-end="url(#bus-layers-arrow)"/>
+<rect x="408" y="184" width="48" height="32" rx="4" class="dg-store"/>
+<text x="432" y="205" class="dg-code" text-anchor="middle">VID</text>
+<path class="dg-edge" d="M 560 144 L 560 176" marker-end="url(#bus-layers-arrow)"/>
+<rect data-node="bridge" x="512" y="176" width="96" height="40" rx="6" class="dg-focus"/>
+<text x="560.0" y="201.0" class="dg-name" text-anchor="middle">BRIDGE</text>
+<path class="dg-edge" d="M 560 216 L 560 240" marker-end="url(#bus-layers-arrow)"/>
+<rect data-node="per" x="352" y="240" width="264" height="40" rx="6" class="dg-box"/>
+<text x="484.0" y="265.0" class="dg-name" text-anchor="middle">PERIPHERAL_BUS</text>
+<path class="dg-edge" d="M 384 280 L 384 304" marker-end="url(#bus-layers-arrow)"/>
+<rect x="360" y="304" width="48" height="32" rx="4" class="dg-box"/>
+<text x="384" y="325" class="dg-code" text-anchor="middle">CON</text>
+<path class="dg-edge" d="M 448 280 L 448 304" marker-end="url(#bus-layers-arrow)"/>
+<rect x="424" y="304" width="48" height="32" rx="4" class="dg-box"/>
+<text x="448" y="325" class="dg-code" text-anchor="middle">TIM</text>
+<path class="dg-edge" d="M 512 280 L 512 304" marker-end="url(#bus-layers-arrow)"/>
+<rect x="488" y="304" width="48" height="32" rx="4" class="dg-box"/>
+<text x="512" y="325" class="dg-code" text-anchor="middle">BTN</text>
+<path class="dg-edge" d="M 576 280 L 576 304" marker-end="url(#bus-layers-arrow)"/>
+<rect x="552" y="304" width="48" height="32" rx="4" class="dg-box"/>
+<text x="576" y="325" class="dg-code" text-anchor="middle">DSP</text>
+</svg>
+</div>
+<figcaption><strong>The same parts, one or two buses.</strong> In the two-bus machine (right) the system bus carries the fast traffic (memory, video) and passes the whole peripheral window, 0x1000_0000 to 0x1FFF_FFFF, to a bridge. Behind the bridge the peripheral bus routes the same addresses to the devices, so software sees the same map. The bridge can pass a transfer straight through or register it for one cycle each way.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

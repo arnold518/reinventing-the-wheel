@@ -321,13 +321,16 @@ ComponentTestSpec joinerSpec(
     if (width == 8) {
         LogicVector expected(8, LogicValue::UNKNOWN);
         expected[0] = LogicValue::HIGH;
+        circuit::test::NamedValues partial{{"IN_0", logicBit(true)}};
+        for (size_t bit_index = 1; bit_index < 8; ++bit_index)
+            partial.emplace("IN_" + std::to_string(bit_index), logicBit(LogicValue::UNKNOWN));
         scenario.actions.push_back({
             "partial-unknown",
             CheckpointKind::Settled,
-            {{"IN_0", logicBit(true)}},
+            std::move(partial),
             {{"OUT", std::move(expected)}},
             true,
-            "Undriven input bits remain unknown in the joined bus.",
+            "Unknown input bits remain unknown in the joined bus.",
         });
     }
     for (const auto value :
@@ -452,11 +455,18 @@ void RewireValidationTest::verifyResults() {
                 std::vector<Rewire::BitMap>{{"A", 0, "B", 4}});
         },
         "RewireValidationTest invalid destination bit");
+    // Any width from 1 to 64 bits is a valid wire; 65 is not.
+    expect(Component::create<Rewire>(
+               "ROOT",
+               std::vector<Rewire::WireSpec>{{"A", 7}},
+               std::vector<Rewire::WireSpec>{{"B", 64}},
+               std::vector<Rewire::BitMap>{{"A", 0, "B", 0}}) != nullptr,
+           "RewireValidationTest 7 and 64 bits accepted");
     expectInvalidArgument(
         [] {
             (void)Component::create<Rewire>(
                 "ROOT",
-                std::vector<Rewire::WireSpec>{{"A", 7}},
+                std::vector<Rewire::WireSpec>{{"A", 65}},
                 std::vector<Rewire::WireSpec>{{"B", 4}},
                 std::vector<Rewire::BitMap>{{"A", 0, "B", 0}});
         },
@@ -502,7 +512,7 @@ void RewireValidationTest::verifyResults() {
             (void)Component::create<Rewire>(
                 "ROOT",
                 std::vector<Rewire::WireSpec>{{"A", 4}},
-                std::vector<Rewire::WireSpec>{{"B", 64}},
+                std::vector<Rewire::WireSpec>{{"B", 65}},
                 std::vector<Rewire::BitMap>{{"A", 0, "B", 0}});
         },
         "RewireValidationTest unsupported output width");

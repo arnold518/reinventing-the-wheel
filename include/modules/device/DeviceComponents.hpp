@@ -7,7 +7,7 @@
 #include "components/capabilities/MemoryStateView.hpp"
 namespace circuit { class ComponentCatalog; }
 namespace circuit::families {
-extern const ComponentFamily ConsoleDevice, TimerDevice, ButtonDevice, FramebufferDisplay;
+extern const ComponentFamily ConsoleDevice, TimerDevice, ButtonDevice, FramebufferDisplay, LedPanelDevice;
 const ComponentFamily& clockedCounter(size_t width);
 const ComponentFamily& synchronousFifo(size_t width);
 }
@@ -67,5 +67,14 @@ public: explicit FramebufferDisplay(std::string,size_t width=4,size_t height=4,s
     void initializeMemoryBytes(uint32_t,const std::vector<uint8_t>&);
     void clearMemoryImage();
     void setMemoryHistoryRecordingEnabled(bool);
+};
+// Sixteen LEDs: a register table (LEDS, BLINK) and a free-running counter.
+// Added to a system only through its description.
+class LedPanel : public IOComponent, public DeviceView {
+public: explicit LedPanel(std::string);
+    static constexpr const char* TypeName="LedPanel";
+    const char* getTypeName() const override{return TypeName;}
+    std::string deviceViewKind() const override {return "leds";}
+    void buildInternals(ComponentBuilder&) override;
 };
 namespace circuit::device { void registerComponents(ComponentCatalog&); }

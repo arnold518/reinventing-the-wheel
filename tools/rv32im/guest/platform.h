@@ -1,8 +1,11 @@
 #ifndef CIRCUITSIM_GAME_PLATFORM_H
 #define CIRCUITSIM_GAME_PLATFORM_H
 #include <stdint.h>
-#define SCREEN_W 64u
-#define SCREEN_H 48u
+/* Addresses and register offsets, generated from the system description. */
+#ifndef SYSTEM_HEADER
+#define SYSTEM_HEADER "system.h"
+#endif
+#include SYSTEM_HEADER
 enum { BUTTON_UP, BUTTON_RIGHT, BUTTON_DOWN, BUTTON_LEFT, BUTTON_ACTION,
        BUTTON_RESET, BUTTON_TICK, BUTTON_P2_UP, BUTTON_P2_DOWN, BUTTON_PAUSE };
 #ifdef CIRCUITSIM_GUEST_REFERENCE
@@ -23,13 +26,13 @@ static inline void io_write8(uint32_t a, uint8_t v) { *(volatile uint8_t *)(uint
 static inline void io_order(void) { __asm__ volatile ("fence iorw, iorw" ::: "memory"); }
 static inline volatile uint32_t *platform_report(void) { return (volatile uint32_t *)(uintptr_t)0x3f000; }
 #endif
-static inline uint32_t ticks(void) { return io_read(0x10001000u); }
-static inline uint32_t button_levels(void) { return io_read(0x10002000u); }
-static inline uint32_t event_count(void) { return io_read(0x10002008u); }
-static inline uint32_t event_peek(void) { return io_read(0x10002004u); }
-static inline void event_pop(void) { io_write(0x10002010u,1); }
-static inline void present(void) { io_order(); io_write(0x10003014u,1); io_order(); }
-// Logical game boards remain 64 x 48; physical drawing uses device metadata.
+static inline uint32_t ticks(void) { return io_read(TIMER_COUNT); }
+static inline uint32_t button_levels(void) { return io_read(BUTTONS_LEVELS); }
+static inline uint32_t event_count(void) { return io_read(BUTTONS_COUNT); }
+static inline uint32_t event_peek(void) { return io_read(BUTTONS_HEAD); }
+static inline void event_pop(void) { io_write(BUTTONS_POP,1); }
+static inline void present(void) { io_order(); io_write(DISPLAY_PRESENT,1); io_order(); }
+// Drawing uses the geometry the display reports (DISPLAY_WIDTH, ...).
 uint32_t display_width(void);
 uint32_t display_height(void);
 uint32_t display_stride(void);

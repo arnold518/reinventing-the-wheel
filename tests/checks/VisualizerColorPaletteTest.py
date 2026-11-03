@@ -63,9 +63,10 @@ def main() -> None:
         ("RV32IMExecuteStage", "MulDivUnit<32>"),
         ("MulDivUnit<32>", "Multiplier<32>"),
         ("MulDivUnit<32>", "Divider<32>"),
-        ("RV32IMDeviceSystem", "RV32IMFiveStageCore"),
+        ("ComputerSystem", "RV32IMFiveStageCore"),
+        ("ComputerSystem", "MemorySubsystem"),
         ("TimerDevice", "ClockedCounter<32>"),
-        ("FramebufferDisplay", "IndexedPixelSelector<32>"),
+        ("LedPanel", "ClockedCounter<32>"),
     ):
         assert effective_color(parent) != effective_color(child)
 

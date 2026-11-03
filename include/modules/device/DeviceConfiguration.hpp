@@ -32,23 +32,9 @@ struct AddressRegion {
     std::string prefix;
     uint32_t base;
     uint64_t bytes;
-};
-struct AddressMap {
-    std::array<AddressRegion,6> regions{{
-        {"RAM_",0,0x40000},{"CONSOLE_",0x10000000,0x100},
-        {"TIMER_",0x10001000,0x100},{"BUTTONS_",0x10002000,0x100},
-        {"DISPLAY_",0x10003000,0x100},{"VIDEO_",0x20000000,0x1000}}};
-    void validate() const {
-        const std::array<std::string,6> names{"RAM_","CONSOLE_","TIMER_","BUTTONS_","DISPLAY_","VIDEO_"};
-        for(size_t i=0;i<regions.size();++i){const auto& a=regions[i];
-            if(a.prefix!=names[i] || a.bytes<4 || a.bytes>(uint64_t{1}<<32) || !std::has_single_bit(a.bytes)
-                || uint64_t(a.base)%a.bytes || uint64_t(a.base)+a.bytes>(uint64_t{1}<<32))
-                throw std::invalid_argument("Invalid device address region");
-            for(size_t j=0;j<i;++j){const auto& b=regions[j];
-                if(uint64_t(a.base)<uint64_t(b.base)+b.bytes && uint64_t(b.base)<uint64_t(a.base)+a.bytes)
-                    throw std::invalid_argument("Overlapping device address regions");}
-        }
-    }
+    // The target sees the offset in the region (a device), or the whole
+    // address (a bridge to another bus).
+    bool local = true;
 };
 inline bool validFifoDepth(size_t depth) { return depth >= 1 && depth <= 7; }
 inline bool validVideoAperture(size_t bytes) {

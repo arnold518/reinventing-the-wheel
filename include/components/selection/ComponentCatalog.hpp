@@ -26,6 +26,9 @@ struct ImplementationDescriptor {
     std::string contract_id;
     Fidelity fidelity = Fidelity::Structural;
     bool terminal_primitive = false;
+    // A GateListCompact: chosen only by an exact-path rule or a parent's
+    // requirement (components/selection/GateListCompact.hpp).
+    bool gate_list = false;
     std::string concrete_type_name;
     std::vector<std::string> capabilities;
     VerificationEvidence evidence;

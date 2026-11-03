@@ -6,15 +6,15 @@ It differs from the Chapter 2 [`ALU<W>`](../../alu/2.6.md#263-aluw) in the ways 
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
-| `RV32IALUControl` | Turns the five-bit operation code into selector and control bits | Yes | No |
-| `RV32IALUAddSub` | 32-bit addition or subtraction, with SUB as the carry input | Yes | No |
-| `RV32IALULogic` | AND, OR and XOR of two words, all at once | Yes | No |
-| `RV32IALUShifter` | Logical left, logical right and arithmetic right shifts | Yes | No |
-| `RV32IALUCompare` | Equality and signed/unsigned less-than from a subtraction | Yes | No |
-| `RV32IALUResultSelect` | Picks the result word for the operation code | Yes | No |
+| `RV32IALUControl` | Turns the five-bit operation code into selector and control bits | Yes | Yes |
+| `RV32IALUAddSub` | 32-bit addition or subtraction, with SUB as the carry input | Yes | Yes |
+| `RV32IALULogic` | AND, OR and XOR of two words, all at once | Yes | Yes |
+| `RV32IALUShifter` | Logical left, logical right and arithmetic right shifts | Yes | Yes |
+| `RV32IALUCompare` | Equality and signed/unsigned less-than from a subtraction | Yes | Yes |
+| `RV32IALUResultSelect` | Picks the result word for the operation code | Yes | Yes |
 | `RV32IALU` | The complete RV32I ALU | Yes | Yes |
 
-The six parts are documented first, in the order the ALU uses them; § 4.3.3.7 assembles them. Execute builds the ALU with `b.add(circuit::families::rv32iALU(), "ALU")`, so a build profile chooses its fidelity; its contract is `rv32i.alu`, and the parts are `rv32i.alu.control`, `rv32i.alu.add-sub`, `rv32i.alu.logic`, `rv32i.alu.shifter`, `rv32i.alu.compare` and `rv32i.alu.result-select`. Inside a structural `RV32IALU` the parts are always gate level. Python creates the ALU with `create_rv32i_alu(name, fidelity)`. The operation codes are named in `rv32i::ALUOp` in `include/modules/rv32i/RV32IALU.hpp`.
+The six parts are documented first, in the order the ALU uses them; § 4.3.3.7 assembles them. Execute builds the ALU with `b.add(circuit::families::rv32iALU(), "ALU")`, so a build profile chooses its fidelity; its contract is `rv32i.alu`, and the parts are `rv32i.alu.control`, `rv32i.alu.add-sub`, `rv32i.alu.logic`, `rv32i.alu.shifter`, `rv32i.alu.compare` and `rv32i.alu.result-select`. Each part is chosen by the build profile like any other family, so a structural `RV32IALU` may hold compact parts; each part's compact form follows its own gates bit for bit, including X and Z. Python creates the ALU with `create_rv32i_alu(name, fidelity)`. The operation codes are named in `rv32i::ALUOp` in `include/modules/rv32i/RV32IALU.hpp`.
 
 ## 4.3.3.1. `RV32IALUControl`
 
@@ -63,6 +63,10 @@ Control control(unsigned op) { // OP is a five-bit input.
 #### Structural implementation
 
 A splitter and a joiner expose the opcode bits. NOT gates on bits 1, 2 and 4 and two AND gates detect the arithmetic codes 0, 1, 8 and 9; an OR of bits 3 and 0 and a final AND give `SUB`.
+
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
 
 ### Examples
 
@@ -118,7 +122,7 @@ Each bit follows the adder's XOR/AND/OR logic, so a known controlling value can 
 
 #### Structural implementation
 
-32 XOR gates (`B_XOR_SUB_i`) invert B when `SUB` is high, and `SUB` also drives the carry input of one [`ParallelPrefixAdder<32>`](../../alu/2.1.md#214-parallelprefixadderw) named `PREFIX_ADDER`. Overflow is `C_SIGN XOR C_OUT`: the carry into the sign bit against the carry out of it.
+The word gate `B_XOR_SUB` (`XORGate<32>`, one XOR per bit) inverts B when `SUB` is high; the wiring part `SUB_WORD` spreads `SUB` across the word ([word gates](../../basic/1.3.md#137-andgatew)). `SUB` also drives the carry input of one [`ParallelPrefixAdder<32>`](../../alu/2.1.md#214-parallelprefixadderw) named `PREFIX_ADDER`. Overflow is `C_SIGN XOR C_OUT`: the carry into the sign bit against the carry out of it.
 
 The carry crosses 32 bits in five prefix levels instead of 32 ripple stages:
 
@@ -126,6 +130,10 @@ The carry crosses 32 bits in five prefix levels instead of 32 ripple stages:
 Prefix adder, operand to carry out | word.parallel-prefix-adder.32.behavioral | A → C_OUT
 Ripple adder, operand to carry out | word.ripple-carry-adder.32.behavioral | A → C_OUT
 -->
+
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
 
 ### Examples
 
@@ -173,7 +181,11 @@ AND with zero gives zero and OR with one gives one; other cases with X or Z give
 
 #### Structural implementation
 
-Two splitters, 32 gates of each kind and three joiners form three parallel paths.
+Three word gates, `AND` (`ANDGate<32>`), `OR` (`ORGate<32>`) and `XOR` (`XORGate<32>`), take the whole operands and drive the three outputs. Each is 32 one-bit gates, grouped as a word, so the three paths are independent per bit.
+
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
 
 ### Examples
 
@@ -229,7 +241,11 @@ uint32_t shift(uint32_t a, uint32_t b, bool left, bool arithmetic) {
 
 #### Structural implementation
 
-One right-shift network selects distances 1, 2, 4, 8 and 16 in five stages. Reversal muxes at the input and output reuse it for left shifts. The fill bit is `A[31] AND ARITHMETIC AND NOT LEFT`.
+One right-shift network selects distances 1, 2, 4, 8 and 16 in five stages, `SHIFT_S0` … `SHIFT_S4`. Each stage is one 2:1 word mux (`Mux<2,32>`, one 2:1 mux per bit) choosing between the word and the word moved down by its distance, with the fill bit entering at the top; the moved word is wiring only (a splitter and the joiner `SHIFT_Sk_MOVED`). The word muxes `INPUT_REVERSE` and `OUTPUT_REVERSE`, selected by `LEFT`, reverse the bit order at the input and output, so the same network performs left shifts. The fill bit is `A[31] AND ARITHMETIC AND NOT LEFT`.
+
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
 
 ### Examples
 
@@ -286,6 +302,10 @@ A low `ENABLE` masks unknown subtraction inputs. When enabled, the outputs follo
 
 A Chapter 2 [`ZeroDetect<32>`](../../alu/2.4.md#241-zerodetectw) named `ARITHMETIC_ZERO` gives equality. A sign splitter, XOR, NOT and AND gates give the less-than results, and joiners widen them into words.
 
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
+
 ### Examples
 
 <!-- simulator-examples: rv32i-alu-compare RV32IALUCompareTest -->
@@ -341,7 +361,11 @@ Known controls mask the unselected words; unknown controls follow the selector's
 
 #### Structural implementation
 
-Opcode minterms qualify nine result sources. `BIT_0` … `BIT_31` are expandable `ALUResultBit` slices: each masks the nine source bits and combines them in a balanced OR tree. Reserved codes select no source and give zero. `RV32ILogicOptimizationTest` compares this circuit with a gate-built mux reference for all 1,024 four-state selector combinations, each with four data patterns.
+Opcode minterms qualify nine result sources. Nine word gates `MASK_0` … `MASK_8` (`ANDGate<32>`) mask the nine source words with their selects, each spread across the word by wiring, and word ORs (`ORGate<32>`) combine them in a balanced tree (`RESULT_…`): per bit the same nine ANDs and OR tree as a bit-by-bit circuit. Reserved codes select no source and give zero. `RV32ILogicOptimizationTest` compares this circuit with a gate-built mux reference for all 1,024 four-state selector combinations, each with four data patterns.
+
+#### Behavioral implementation
+
+The compact form evaluates the same gates bit by bit with the gate rules (a low input forces AND low, a high input forces OR high, other X or Z inputs give X; wiring passes Z unchanged), so it gives the same outputs as the structural circuit for every four-state input, and it runs on delays proven on that circuit ([delay model](../../basic/1.2.md)). `CompactFormEquivalenceTest` runs both forms on binary, dense four-state and single-unknown vectors.
 
 ### Examples
 
@@ -447,4 +471,4 @@ The recorded cases cover every operation at its boundaries and every reserved co
 
 ### Tests
 
-`RV32IALUTest` checks all outputs on the structural and compact forms. `ALUHierarchyTest` checks the six named parts and the single shared prefix adder. `RV32IBuildingBlocksDocumentationTest` compiles the C++ examples on this page and replays them against the recorded binary cases. Sources: [`RV32IALU.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/include/modules/rv32i/RV32IALU.hpp), [`RV32IALU.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/src/modules/rv32i/RV32IALU.cpp).
+`RV32IALUTest` checks all outputs on the structural and compact forms. `RV32IALUSweepTest` adds an 8 × 8 boundary grid on every operation and 1,024 seeded random vectors over all 32 operation codes, against C++ integer results on both forms. `ALUHierarchyTest` checks the six named parts and the single shared prefix adder. `RV32IBuildingBlocksDocumentationTest` compiles the C++ examples on this page and replays them against the recorded binary cases. Sources: [`RV32IALU.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/include/modules/rv32i/RV32IALU.hpp), [`RV32IALU.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/src/modules/rv32i/RV32IALU.cpp).

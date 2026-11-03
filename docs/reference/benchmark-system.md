@@ -31,6 +31,26 @@ Use `tools/benchmarks/run.py` for campaigns. `benchmark-runs.jsonl` is the
 portable result stream. A `COMPLETE` file means every selected process
 finished; its absence means the directory is partial evidence.
 
+## Native engine investigations
+
+`tools/engine-performance/` contains bounded research equipment using the same
+`RunRecord` result envelope for scheduler, wire/fanout and oracle-checked RV32IM
+workloads. It freezes an existing native archive and source snapshot, records
+every command/resource outcome, and compares experimental implementations
+without deploying a new visualizer module. See its
+[procedure and limits](../../tools/engine-performance/README.md) and the
+[open investigation](../records/2026-10-26-engine-performance.md). These are
+host-throughput experiments, not hardware latency measurements or full-game
+acceptance. Timing comparisons require repeated matched work and explicit
+accounting for trace cost and host variability.
+
+Compiler provenance includes any CMake launcher and its actual executable,
+not just `CMAKE_CXX_COMPILER_ID`. Layout-changing cache experiments require a
+complete archive/consumer rebuild. The gate-cache controls compare compatible
+new-layout objects separately from a complete frozen pre-change executable;
+never mix their headers or objects. Each successful process needs both a
+successful wrapper exit and a completed timed-command receipt.
+
 ## Bounded equivalence checks
 
 Use short, targeted workloads to validate the compact models, and long workloads

@@ -27,7 +27,7 @@ with sync_playwright() as playwright:
     errors, api_requests = [], []
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.on("request", lambda request: api_requests.append(request.url) if "/api/" in request.url else None)
-    for scenario, suffix in (("ff-memory-container", ".READ_SELECT.WORD_0_BITS"),
+    for scenario, suffix in (("ff-memory-container", ".READ_SELECT.ENABLE.A_BITS"),
                              ("rewire", "")):
         print(f"Checking {scenario} unpacker", flush=True)
         page.goto(base + "?scenario=" + scenario, wait_until="domcontentloaded")

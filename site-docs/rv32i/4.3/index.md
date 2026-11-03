@@ -36,7 +36,7 @@ shorten publication to the gate list's settling time. Clocked parts also carry
 clock-to-output and setup times. The register file uses its table without a
 delay twin, because its large gate list brought no measured timing benefit.
 How tables, twins and profiles work is explained once in
-[§ 1 Time and Delay](../../timing.md); the certified clock of a complete core
+[§ 1 Time and Delay](../../basic/1.2.md); the certified clock of a complete core
 is in [4.2](../4.2/timing.md). Directly created parts without a matching table
 use their constructor delay. Where a block's timing has something to show (the
 adder's prefix network, the register file's read and write), its behavioral

@@ -129,15 +129,18 @@ ComponentTestSpec output() {
                {{"OUT", v == H ? logicBits(8, 0xa5) : LogicVector(8, v == L ? Z : X)}});
     return s.spec;
 }
-ComponentTestSpec romCell() {
-    Scenario s("ROMCellTest", "memory.rom.cell", {{"value", "1"}});
-    s.step("fixed-one", {}, {{"Q", logicBit(H)}});
+ComponentTestSpec romCell(const std::string& value = "1") {
+    Scenario s("ROMCellTest", "memory.rom.cell", {{"value", value}});
+    s.step(value == "1" ? "fixed-one" : "fixed-zero", {}, {{"Q", logicBit(value == "1" ? H : L)}});
     return s.spec;
 }
-ComponentTestSpec romRow() {
-    Scenario s("ROMRowTest", "memory.rom.row", {{"contents", "1010"}});
-    s.step("fixed-row", {},
-           {{"Q_0", logicBit(H)}, {"Q_1", logicBit(L)}, {"Q_2", logicBit(H)}, {"Q_3", logicBit(L)}});
+// Q_i reads character i of the contents string.
+ComponentTestSpec romRow(const std::string& contents = "1010") {
+    Scenario s("ROMRowTest", "memory.rom.row", {{"contents", contents}});
+    NamedValues expected;
+    for (size_t i = 0; i < contents.size(); ++i)
+        expected["Q_" + std::to_string(i)] = logicBit(contents[i] == '1' ? H : L);
+    s.step("fixed-row", {}, expected);
     return s.spec;
 }
 ComponentTestSpec romControl() {
@@ -427,6 +430,9 @@ DEFINE_TEST(NORFlashTest, flashDevice())
 void MemoryDeviceContractTest::verifyResults() {
     for (auto spec : {romCell(), romRow(), romBank(), dramRow(), dramBank(), flashRow(), flashBank()})
         compare(std::move(spec));
+    // Further fixed contents beyond the recorded examples.
+    compare(romCell("0"));
+    for (const char* contents : {"0000", "1111", "0110", "1001"}) compare(romRow(contents));
     for (size_t width : {8, 16, 32})
         for (size_t k : {1, 2, 4}) {
             compare(romDevice(width, 2 * k, k));

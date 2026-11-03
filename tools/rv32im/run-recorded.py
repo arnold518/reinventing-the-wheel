@@ -3,19 +3,20 @@
 import argparse, hashlib, json, pathlib, resource, subprocess
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 p=argparse.ArgumentParser(description=__doc__)
-p.add_argument('guest',choices=['bringup','2048','sokoban','snake','pong','tetris','2048-merge','tetris-line-clear','pong-rally','snake-wall'])
+FIXTURES=json.loads((ROOT/'tests/fixtures/rv32im/games/manifest.json').read_text())['guests']
+p.add_argument('guest',choices=[f['name'] for f in FIXTURES if f['version']=='short'])
 p.add_argument('--runner',type=pathlib.Path,required=True)
 p.add_argument('--machine',choices=['ff','cached-ff','cached-dram'],default='ff')
 p.add_argument('--output',type=pathlib.Path,required=True)
-p.add_argument('--width',type=int,default=64)
-p.add_argument('--height',type=int,default=48)
+p.add_argument('--width',type=int,default=0,help='0: the fixture screen')
+p.add_argument('--height',type=int,default=0,help='0: the fixture screen')
 p.add_argument('--max-cycles',type=int,default=500000)
 p.add_argument('--timeout',type=int,default=3600)
 p.add_argument('--memory-mib',type=int,default=768)
 p.add_argument('--quantum-events',type=int,default=100000)
-p.add_argument('--logic-profile',choices=['compact','expanded-core','structural'],default='compact')
+p.add_argument('--logic-profile','--fidelity',dest='logic_profile',choices=['gate','logic','visual','compact','expanded-core','structural'],default='visual')
 a=p.parse_args()
-if not 1<=a.width<=4096 or not 1<=a.height<=4096 or a.width*a.height>262144:p.error('Invalid surface geometry')
+if a.width<0 or a.height<0 or a.width>4096 or a.height>4096 or a.width*a.height>262144:p.error('Invalid surface geometry')
 if a.memory_mib<128 or a.memory_mib>4096 or not 1<=a.max_cycles<=10000000 or not 1<=a.quantum_events<=1000000 or a.timeout<=0:p.error('Invalid resource limit')
 sha=lambda data:hashlib.sha256(data).hexdigest()
 fixtures=ROOT/'tests/fixtures/rv32im/games';manifest=json.loads((fixtures/'manifest.json').read_text())
@@ -56,7 +57,7 @@ source_before=source_hashes();runner_before=sha(runner.read_bytes());manifest_be
 
 def cap():
     limit=a.memory_mib*1024*1024;resource.setrlimit(resource.RLIMIT_AS,(limit,limit))
-command=[str(runner),a.guest,a.machine,str(a.max_cycles),str(a.quantum_events),a.logic_profile,str(a.width),str(a.height)]
+command=[str(runner),a.guest,a.machine,str(a.max_cycles),str(a.quantum_events),a.logic_profile]+([str(a.width),str(a.height)] if a.width and a.height else [])
 # Keep the simulator as the direct child so subprocess kills and reaps the
 # actual runner on timeout. An intervening timing wrapper could leave it alive.
 with (a.output/'stderr.log').open('w') as error_log:

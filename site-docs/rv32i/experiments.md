@@ -56,7 +56,7 @@ descriptions, not parts of one score.
 ### Cycles and time
 
 The tables give **cycles**. A core's cycle count is the same in every
-[timing profile](../timing.md#timing-profiles): the campaigns were run in
+[timing profile](../basic/1.2.md#timing-profiles): the campaigns were run in
 `unit` and again in `embedded` and `desktop`, and every case took the same
 number of cycles. What differs is the length of a cycle, each core's
 certified clock period:
@@ -603,7 +603,7 @@ What it shows:
 - **Host speed.** Results are simulated cycles and times; how long the host
   computer took is not a measured result.
 - **Earlier publication.** The first `unit` campaign (October 14, 2026) ran
-  the advanced core at 100 ticks, the certificate then; the current one is 94.
+  the advanced core at 100 ticks, the certificate then; the current one is 80 (94 until the bus splitter became wiring in `unit` on 2026-10-27, then 82 until the `unit` delay tables were re-proven the same day).
   The cycles are unchanged, but the shorter clock changes a few orderings:
   single-cycle no longer wins two fixed programs, and every advanced
   predictor now beats single-cycle on every longer branch pattern.

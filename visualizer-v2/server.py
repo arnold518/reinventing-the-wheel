@@ -28,12 +28,13 @@ from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
 from palette import color_for_layout_type
-from profile_store import ProfileStore, validate_overrides
+from profile_store import ProfileStore, validate_overrides, normalize_fidelity, profile_storage_key, FIDELITY_PRESETS
 import sram_layout
 import memory_device_layout
 import cache_layout
 import arbiter_layout
 import rv32i_layout
+import device_layout
 import register_file_layout
 from scenario_catalog import CATALOG as SCENARIO_CATALOG, aliases_for, default_alias, scenario_options
 
@@ -147,6 +148,14 @@ for arithmetic_width in (4, 8, 16, 32):
         COMPONENT_LAYOUT_DEFAULTS[f"{arithmetic_type}<{arithmetic_width}>"] = {
             "aspect_ratio": .85, "min_aspect_ratio": .5,
             "title_bar_ratio": .055, "pin_size_ratio": .025, "boundary_area_ratio": .03,
+        }
+# Word gates draw the one-bit gate symbol; a square body also leaves room for
+# the column of one-bit gates shown when one is selected.
+for word_gate_width in (4, 8, 16, 32):
+    for word_gate_kind in ("AND", "NAND", "OR", "NOR", "XOR", "NOT"):
+        COMPONENT_LAYOUT_DEFAULTS[f"{word_gate_kind}Gate<{word_gate_width}>"] = {
+            "aspect_ratio": 1.0, "min_aspect_ratio": .5,
+            "title_bar_ratio": .06, "pin_size_ratio": .02, "boundary_area_ratio": .03,
         }
 COMPONENT_LAYOUT_DEFAULTS["MulDivUnit<32>"] = {
     "aspect_ratio": 1.15, "min_aspect_ratio": .8,
@@ -294,7 +303,8 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
 # memory devices their storage bank (geometry), policy variants the names of
 # their children. Keep in step with src/visualizer/VisualizerSession.cpp.
 def _named_variant_type(component_type: str) -> bool:
-    return (component_type.startswith(("Cache", "RV32IPredictionTable<", "MemoryTimer<", "ClockedCounter<"))
+    return (component_type.startswith(("Cache", "RV32IPredictionTable<", "MemoryTimer<", "ClockedCounter<",
+                                       "DRAMCommandControl<", "NORFlashCommandControl<"))
             or component_type in ("RV32IPredictionEntry", "RV32IBranchPredictor"))
 
 
@@ -854,52 +864,16 @@ def _rv32i_program_root_layout(
     five-stage core share the same outside organization without distortion.
     """
     child_by_name = {child.get_name(): child for child in children}
-    # One memory shared through the arbiter (B, C-ID, D-0, D-ID): the core,
-    # then whichever of the L1 caches, the arbiter, the shared L2 and the
-    # memory are present, left to right.
-    l1 = {"INSTRUCTION_CACHE", "DATA_CACHE", "INSTRUCTION_CACHE_NO_INVALIDATION", "DATA_CACHE_NO_INVALIDATION"}
-    l2 = {"SHARED_CACHE", "SHARED_CACHE_NO_INVALIDATION"}
-    base = {"CLOCK", "CORE", "MEMORY_ARBITER", "SHARED_MEMORY"}
-    names = set(child_by_name)
-    if base <= names and names - base in (set(), l1, l2, l1 | l2):
+    # One memory shared through the arbiter (B, C-ID, D-0, D-ID): the core on
+    # the left, the memory subsystem (its caches, arbiter, shared cache and
+    # memory) filling the right.
+    if set(child_by_name) == {"CLOCK", "CORE", "MEMORY"}:
         top, height, put = _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction)
-        placements = put.placements
         centre = top + height * 0.45
-
-        def above(constant: str, owner: str, below: bool = False) -> None:
-            # A cache's INV_VALID constant just above (or below) its cache.
-            x, y = placements[owner]["rel_pos"]
-            owner_height = placements[owner]["rel_width"] * child_aspects[child_by_name[owner].get_id()] / parent_aspect
-            aspect = child_aspects[child_by_name[constant].get_id()]
-            width = min(placements[owner]["rel_width"] * 0.5, height * 0.05 * parent_aspect / max(aspect, 0.01))
-            gap = height * 0.03
-            const_height = width * aspect / parent_aspect
-            y = y + owner_height + gap if below else y - gap - const_height
-            placements[constant] = {"rel_pos": [x, max(top, min(y, 1.0 - const_height))], "rel_width": width}
-
-        put("CORE", 0.0, centre, 0.28, height * 0.70)
+        put("CORE", 0.0, centre, 0.30, height * 0.70)
         put("CLOCK", 0.0, top + height * 0.90, 0.10, height * 0.12)
-        # The columns present after the core, spread evenly over the rest.
-        columns = ([("L1", 0.11)] if l1 <= names else []) + [("MEMORY_ARBITER", 0.07)] + \
-                  ([("SHARED_CACHE", 0.11)] if l2 <= names else []) + [("SHARED_MEMORY", 0.34)]
-        # The memory is wide enough for its two panels at the root's zoom.
-        gap = (1.0 - 0.28 - sum(width for _, width in columns)) / len(columns)
-        x = 0.28 + gap
-        for name, width in columns:
-            if name == "L1":
-                put("INSTRUCTION_CACHE", x, top + height * 0.25, width, height * 0.32)
-                put("DATA_CACHE", x, top + height * 0.68, width, height * 0.32)
-                above("INSTRUCTION_CACHE_NO_INVALIDATION", "INSTRUCTION_CACHE")
-                above("DATA_CACHE_NO_INVALIDATION", "DATA_CACHE", below=True)
-            elif name == "MEMORY_ARBITER":
-                put(name, x, centre, width, height * 0.50)
-            elif name == "SHARED_CACHE":
-                put(name, x, centre, width, height * 0.32)
-                above("SHARED_CACHE_NO_INVALIDATION", "SHARED_CACHE")
-            else:
-                put(name, x, centre, width, height * 0.80)
-            x += width + gap
-        return placements
+        put("MEMORY", 0.36, centre, 0.62, height * 0.92)
+        return put.placements
     required = {
         "CLOCK",
         "CORE",
@@ -1034,6 +1008,12 @@ def _custom_child_layout(
     """
     if not children:
         return {}
+
+    device = device_layout.placements(_component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect, title_fraction)
+    if device is not None:
+        return device
 
     if _component_type(parent) == "RV32IMExecuteStage":
         named = {child.get_name(): child for child in children}
@@ -1688,7 +1668,7 @@ class LayoutManager:
         for kind in dict.fromkeys((re.sub(r"\[[^\]]*\]$", "", component_type), component_type)):
             defaults.update({**COMPONENT_LAYOUT_DEFAULTS.get(kind, {}), **sram_layout.defaults(kind),
                              **memory_device_layout.defaults(kind), **cache_layout.defaults(kind),
-                             **rv32i_layout.defaults(kind),
+                             **rv32i_layout.defaults(kind), **device_layout.defaults(kind),
                              **register_file_layout.defaults(kind)})
         for key, value in defaults.items():
             if key not in layout:
@@ -1922,6 +1902,43 @@ SCENARIO_ALIASES_TO_CANONICAL = _scenario_aliases_to_canonical()
 DEFAULT_SCENARIO = "ripple-carry-adder-w8" if "ripple-carry-adder-w8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
 
 
+def _alias_key(value: str) -> str:
+    return value.strip().lower().replace("_", "-")
+
+
+# Every alias of a scenario (as SCENARIOS accepts them) -> its catalog profile.
+SCENARIO_FIDELITY = {
+    _alias_key(alias): option["fidelity"]
+    for option in SCENARIO_OPTIONS
+    for alias in {option["key"], option["className"], scenario_default_alias(option["className"]),
+                  *aliases_for(option["className"]),
+                  *PREFERRED_SCENARIO_ALIASES.get(option["className"], [])}
+}
+
+
+def default_fidelity(scenario: str) -> str:
+    """The fidelity profile a scenario opens in (its catalog `fidelity`)."""
+    try:
+        return SCENARIO_FIDELITY[_alias_key(scenario)]
+    except KeyError:
+        raise KeyError(f"No fidelity profile for scenario {scenario!r}") from None
+
+
+def class_fidelity(class_name: str) -> str:
+    """The catalog profile of a registered test ('' if it is not a scenario)."""
+    return next((o["fidelity"] for o in SCENARIO_OPTIONS if o["className"] == class_name), "")
+
+
+def scenario_topology(class_name: str, overrides: dict[str, str] | None = None):
+    """A scenario's hierarchy as the visualizer opens it (its catalog profile),
+    built without simulating: what saved layouts are keyed by."""
+    return circuit_backend.create_layout_topology(class_name, overrides or {}, class_fidelity(class_name))
+
+
+def resolve_fidelity(scenario: str, fidelity: str | None) -> str:
+    return normalize_fidelity(fidelity if fidelity is not None else default_fidelity(scenario))
+
+
 # The timing profile is one setting of the whole C++ library. A session sets
 # it while its circuit is built and simulated (the whole run happens then;
 # scrubbing reads the recorded history), under one lock shared by every
@@ -1967,8 +1984,10 @@ class CircuitSession:
         profile_revision: int = 0,
         profile_overrides: dict[str, str] | None = None,
         timing: str = "unit",
+        fidelity: str | None = None,
     ):
         self.timing = normalize_timing(timing)
+        self.fidelity = resolve_fidelity(scenario_key, fidelity)
         with active_timing(self.timing):
             self._build(scenario_key, layout_manager, profile_revision, profile_overrides)
 
@@ -1983,9 +2002,16 @@ class CircuitSession:
         )
 
         self.test_scenario = SCENARIOS[self.scenario_key]()
+        self.fidelity_restrictions = circuit_backend.scenario_fidelity_restrictions(self.test_scenario)
+        if not self.profile_overrides and self.fidelity in self.fidelity_restrictions:
+            raise ValueError(self.fidelity_restrictions[self.fidelity])
         self.profile_editable = bool(
             self.test_scenario.supports_build_profile()
         )
+        # A fixed scenario (no build profile) is shown as built; its
+        # catalog profile is only a label.
+        if self.profile_editable:
+            self.test_scenario.set_build_profile(circuit_backend.fidelity_preset(self.fidelity))
         if self.profile_overrides:
             if not self.profile_editable:
                 raise ValueError(
@@ -2003,6 +2029,8 @@ class CircuitSession:
         self.root = self.test_scenario.get_root()
         if not self.root:
             raise RuntimeError("C++ test scenario did not produce a root component")
+        if not self.profile_overrides and self.profile_editable:
+            circuit_backend.validate_fidelity_preset(self.root, self.fidelity)
         self.profile_fingerprint = _component_profile_fingerprint(self.root)
         self.layout_key = scenario_layout_key(self.scenario_key, self.root)
 
@@ -2146,6 +2174,9 @@ class CircuitSession:
             device_kind = _device_view_kind(component)
             if device_kind:
                 component_data["deviceViewKind"] = device_kind
+            abstraction = circuit_backend.visual_abstraction_kind(component.get_contract_id()) if hasattr(circuit_backend, 'visual_abstraction_kind') else ''
+            if abstraction:
+                component_data['visualAbstraction'] = abstraction
             if _supports_register_view(component):
                 component_data["registerView"] = True
             if available_fidelities:
@@ -2504,6 +2535,11 @@ class CircuitSession:
                 "revision": self.profile_revision,
                 "exactOverrides": self.profile_overrides,
                 "fingerprint": self.profile_fingerprint,
+                "fidelityPreset": self.fidelity,
+                "presetVersion": 1,
+                "custom": bool(self.profile_overrides),
+                "availablePresets": list(FIDELITY_PRESETS),
+                **({"unavailablePresets": self.fidelity_restrictions} if self.fidelity_restrictions else {}),
             },
             "stats": {
                 "componentCount": len(self.components),
@@ -2616,14 +2652,14 @@ class CircuitSession:
 class SessionStore:
     def __init__(self) -> None:
         self.layout_manager = LayoutManager(LAYOUT_PATH)
-        self.profile_store = ProfileStore(PROFILE_PATH)
+        self.profile_store = ProfileStore(PROFILE_PATH, default_fidelity)
         try:
             configured_limit = int(os.environ.get("VISUALIZER_V2_MAX_SESSIONS", "2"))
         except ValueError:
             configured_limit = 2
         self.max_sessions = max(1, configured_limit)
         self.sessions: OrderedDict[str, CircuitSession] = OrderedDict()
-        self.active_sessions: dict[str, str] = {}
+        self.active_sessions: dict[tuple[str, str, str], str] = {}
         self.lock = threading.RLock()
 
     def _reload_layout_if_changed(self) -> None:
@@ -2635,7 +2671,7 @@ class SessionStore:
 
     def _remember(self, session: CircuitSession) -> CircuitSession:
         self.sessions[session.session_id] = session
-        self.active_sessions[(session.scenario_key, session.timing)] = session.session_id
+        self.active_sessions[(session.scenario_key, session.timing, session.fidelity)] = session.session_id
         self.sessions.move_to_end(session.session_id)
         while len(self.sessions) > self.max_sessions:
             expired_id, _ = self.sessions.popitem(last=False)
@@ -2650,19 +2686,23 @@ class SessionStore:
         self,
         scenario_key: str,
         timing: str = "unit",
+        fidelity: str | None = None,
     ) -> CircuitSession:
-        revision, overrides = self.profile_store.get(scenario_key)
+        fidelity = resolve_fidelity(scenario_key, fidelity)
+        revision, overrides = self.profile_store.get(profile_storage_key(scenario_key, fidelity))
         return self._remember(CircuitSession(
             scenario_key,
             self.layout_manager,
             profile_revision=revision,
             profile_overrides=overrides,
             timing=timing,
+            fidelity=fidelity,
         ))
 
-    def get(self, scenario: str, core_fidelity: str | None = None, timing: str | None = None) -> CircuitSession:
+    def get(self, scenario: str, core_fidelity: str | None = None, timing: str | None = None, fidelity: str | None = None) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
         timing = normalize_timing(timing)
+        fidelity = resolve_fidelity(scenario_key, fidelity)
         if core_fidelity and (
             not re.fullmatch(r"rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+", scenario_key)
             or core_fidelity not in ("structural", "behavioral")
@@ -2670,9 +2710,9 @@ class SessionStore:
             raise ValueError("core_fidelity requires an RV32I program and structural or behavioral")
         with self.lock:
             self._reload_layout_if_changed()
-            session_id = self.active_sessions.get((scenario_key, timing))
+            session_id = self.active_sessions.get((scenario_key, timing, fidelity))
             session = self.sessions.get(session_id or "")
-            revision, overrides = self.profile_store.get(scenario_key)
+            revision, overrides = self.profile_store.get(profile_storage_key(scenario_key, fidelity))
             if core_fidelity:
                 overrides = {**overrides, "RV32I_PROGRAM_ROOT.CORE": core_fidelity}
             if (
@@ -2681,11 +2721,12 @@ class SessionStore:
                 or session.profile_overrides != overrides
             ):
                 if not core_fidelity:
-                    return self._new_for_saved_profile(scenario_key, timing)
+                    return self._new_for_saved_profile(scenario_key, timing, fidelity)
                 return self._remember(CircuitSession(
                     scenario_key, self.layout_manager,
                     profile_revision=revision, profile_overrides=overrides,
                     timing=timing,
+                    fidelity=fidelity,
                 ))
             self.sessions.move_to_end(session.session_id)
             return session
@@ -2706,14 +2747,17 @@ class SessionStore:
         expected_revision: int,
         overrides: dict[str, str],
         timing: str | None = None,
+        fidelity: str | None = None,
     ) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
+        fidelity = resolve_fidelity(scenario_key, fidelity)
+        storage_key = profile_storage_key(scenario_key, fidelity)
         normalized = validate_overrides(overrides)
         with self.lock:
             self._reload_layout_if_changed()
-            current = self.get(scenario_key, timing=timing)
+            current = self.get(scenario_key, timing=timing, fidelity=fidelity)
             current_revision, saved = self.profile_store.get(
-                scenario_key
+                storage_key
             )
             if expected_revision != current_revision:
                 raise ValueError(
@@ -2726,8 +2770,8 @@ class SessionStore:
                     "component fidelity changes"
                 )
 
-            for path, fidelity in normalized.items():
-                if saved.get(path) == fidelity:
+            for path, requested_fidelity in normalized.items():
+                if saved.get(path) == requested_fidelity:
                     continue
                 component = current.component_handles.get(path)
                 if component is None:
@@ -2736,10 +2780,10 @@ class SessionStore:
                         f"'{path}'"
                     )
                 available = component.get_available_fidelities()
-                if fidelity not in available:
+                if requested_fidelity not in available:
                     raise ValueError(
                         f"Component '{path}' does not provide "
-                        f"{fidelity} fidelity"
+                        f"{requested_fidelity} fidelity"
                     )
 
             candidate = CircuitSession(
@@ -2748,9 +2792,10 @@ class SessionStore:
                 profile_revision=current_revision + 1,
                 profile_overrides=normalized,
                 timing=current.timing,
+                fidelity=fidelity,
             )
             next_revision = self.profile_store.replace(
-                scenario_key,
+                storage_key,
                 current_revision,
                 normalized,
             )
@@ -2768,11 +2813,12 @@ class SessionStore:
         parent_id: str,
         child_name: str | None = None,
         layout: dict[str, Any] | None = None,
+        session_id: str | None = None,
     ) -> dict[str, Any]:
         scenario_key = normalize_scenario(scenario)
         with self.lock:
             self._reload_layout_if_changed()
-            session = self.get(scenario_key)
+            session = self.get_by_id(session_id) if session_id else self.get(scenario_key)
             return session.default_child_layouts(
                 parent_id, child_name, layout)
 
@@ -2859,7 +2905,8 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 core_fidelity = query.get("core_fidelity", [None])[0]
                 timing = query.get("timing", [None])[0]
-                json_response(self, STORE.get(scenario, core_fidelity, timing).topology_response())
+                fidelity = query.get('fidelity', [None])[0]
+                json_response(self, STORE.get(scenario, core_fidelity, timing, fidelity).topology_response())
             elif path == "/api/state":
                 index = int(query.get("index", [0])[0])
                 session_id = query.get("session", [""])[0]
@@ -2870,7 +2917,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                         query.get(
                             "scenario",
                             [DEFAULT_SCENARIO],
-                        )[0], timing=query.get("timing", [None])[0])
+                        )[0], timing=query.get("timing", [None])[0], fidelity=query.get('fidelity', [None])[0])
                 )
                 json_response(self, session.state_at_index(index))
             elif path == "/api/component-state":
@@ -2886,7 +2933,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                         query.get(
                             "scenario",
                             [DEFAULT_SCENARIO],
-                        )[0], timing=query.get("timing", [None])[0])
+                        )[0], timing=query.get("timing", [None])[0], fidelity=query.get('fidelity', [None])[0])
                 )
                 json_response(
                     self,
@@ -2951,6 +2998,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                     revision,
                     validate_overrides(overrides),
                     timing,
+                    payload.get('fidelity'),
                 )
                 json_response(
                     self,
@@ -2981,6 +3029,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                     parent_id,
                     child_name,
                     layout,
+                    payload.get('session'),
                 ),
             )
         except Exception as exc:

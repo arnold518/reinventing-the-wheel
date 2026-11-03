@@ -55,7 +55,7 @@ class TimingTables(unittest.TestCase):
         # The 8-bit ripple adder: A -> C_OUT, as stored for each profile.
         html = mkdocs_timing.render("word.ripple-carry-adder.8.behavioral")
         row = re.search(r"A → C_OUT</th>(.*?)</tr>", html).group(1)
-        self.assertEqual(re.findall(r"<td>(.*?)</td>", row), ["3–18", "102–936", "71–652"])
+        self.assertEqual(re.findall(r"<td>(.*?)</td>", row), ["2–17", "102–936", "71–652"])
         # A clocked part shows clock-to-output, setup and its internal period.
         html = mkdocs_timing.render("storage.register.32.behavioral.word")
         for label in ("CLK ↑ → Q", "D before CLK ↑", "Shortest internal clock period"):
@@ -74,7 +74,7 @@ class TimingTables(unittest.TestCase):
     def test_selected_rows(self):
         # One chosen path: its latest change in each profile.
         html = mkdocs_timing.render_rows("Carry | word.ripple-carry-adder.8.behavioral | A → C_OUT")
-        self.assertEqual(re.findall(r"<td>(.*?)</td>", html), ["18", "936", "652"])
+        self.assertEqual(re.findall(r"<td>(.*?)</td>", html), ["17", "936", "652"])
         with self.assertRaises(ValueError):
             mkdocs_timing.render_rows("Carry | word.ripple-carry-adder.8.behavioral | A → Nothing")
         with self.assertRaises(ValueError):
@@ -98,7 +98,9 @@ class TimingTables(unittest.TestCase):
                 paragraphs += 1
                 with self.subTest(page=str(page.relative_to(ROOT))):
                     self.assertIsNone(timing_pages.search(block), block[:80])
-        self.assertEqual(paragraphs, 16)
+        # New component chapters can add timing paragraphs; validate every
+        # paragraph above while retaining the original coverage floor.
+        self.assertGreaterEqual(paragraphs, 16)
 
 
 if __name__ == "__main__":

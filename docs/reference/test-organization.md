@@ -11,16 +11,20 @@ the [tests and scenarios guide](../guides/tests-and-scenarios.md).
 
 ## Visualizer catalog
 
-`visualizer-v2/static/scenarios.json` supplies group names, component titles,
-stable aliases, all 22 RV32I fixed-program titles and the dedicated RV32IM
-program titles. Python and JavaScript read this
-same file. Display names are independent of C++ test IDs, scenario URLs and
+`visualizer-v2/static/scenarios.json` supplies group names and order, component
+titles and ranks, stable aliases, each scenario's default fidelity profile,
+all 22 RV32I fixed-program titles and the dedicated RV32IM program titles. Python and JavaScript read the same file.
+Display names are independent of C++ test IDs, scenario URLs and
 saved layout/profile keys. An unclassified visible component fails the catalog
 test instead of silently appearing in an arbitrary group.
 
-The menu groups logic, wiring, arithmetic and logic components by function, memory
-technologies and interfaces, registers, RV32I building blocks/stages, and
-developer circuits. Programs
+The menu follows foundations, ALU, memory technologies/interfaces, registers,
+RV32I building blocks/stages and programs, RV32IM components and programs,
+then Device I/O, with developer circuits last. Every component has an explicit
+rank within its group; supporting parts precede complete devices/cores and
+widths increase numerically. Python and JavaScript apply the same ordering,
+including deterministic core/prediction tie breaks for program variants. The
+visible menu retains these ranks rather than alphabetizing titles. RV32I programs
 are shown once in functional (01–08), fault (09–16) and performance (17–22)
 groups. Separate selectors choose single-cycle, baseline or advanced execution
 and the advanced core's five prediction policies. Every policy/program pair is
@@ -39,6 +43,19 @@ Simulator-history checks, representative-slice verification and standalone
 width sweeps stay in CTest but are excluded from the menu: they do not build
 a visible root during setup. Recorded width scenarios expose their declared
 configuration, checkpoint rows and explorer fidelity controls.
+
+Headless sweeps (`AdderWidthSweepTest`, `RV32IALUSweepTest`, `WordGateSweepTest`,
+`RV32IPipelineControlSweepTest`, `MulDivGateLevelTest` and the 16/32-bit grid in
+`ALUWidthContractTest`) declare no contract of their own. A sweep that the
+catalog names as a contract owner (`AdderWidthSweepTest`, `WordGateSweepTest`)
+must be in the registry's headless set, or it becomes a visualizer scenario. Each contract
+has exactly one logical owner, and `BuiltinComponentCatalogInventoryTest`
+enforces that. For the word families, `contractOwner` and `equivalenceOwner`
+in `src/modules/composite/WordDatapath.cpp` choose the catalog evidence: the
+recorded `ALU<W>` and 16-bit adder scenarios group under
+`ALUWidthContractTest`, so it owns those contracts, while
+`ALUFidelityContractTest` (`ALU<8>`) and `AdderWidthSweepTest` (16/32-bit
+adders) are named as behavioral equivalence evidence.
 
 Visible multi-component fixtures may extend `SimulationTest` instead of
 `ComponentScenarioTest`. Their `setupCircuit()` must only construct and wire
@@ -81,7 +98,10 @@ CTest) and `tests/web/` (browser and WebAssembly checks).
 `tests/web-tests.json` inventories every standalone browser/WASM test, its
 arguments, prerequisites, timeout and suite membership. `tools/run-web-tests.py`
 executes them serially and writes per-test logs and `results.json` into a new
-directory. The runner passes the selected artifact's example rows to browser
+directory. A check whose external fixture is named by `requires_env` (for
+example `TickRecordingBrowserTest` and `CIRCUITSIM_TICK_RECORDING_FILE`) is
+reported as skipped, not failed, when that variable is unset; the summary
+counts skipped checks separately. The runner passes the selected artifact's example rows to browser
 checks, preventing accidental validation against another build's examples.
 GitHub Pages CI and cleanup browser validation use this runner.
 

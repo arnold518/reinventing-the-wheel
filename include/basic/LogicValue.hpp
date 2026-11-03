@@ -1,7 +1,10 @@
 #pragma once
+#include <cstdint>
 #include <ostream>
 
-enum class LogicValue
+// One byte per bit: every stored value array and vector is a quarter of the
+// int-sized default.
+enum class LogicValue : uint8_t
 {
     LOW = 0,
     HIGH = 1,

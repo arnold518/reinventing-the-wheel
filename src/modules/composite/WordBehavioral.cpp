@@ -103,13 +103,13 @@ template<size_t W> FamilyFactory factory(Unit u) {
 }
 }
 
-// Compact forms exist where they are characterized: every unit at 8 bits,
-// both adders at every width, and zero detection at 32 bits.
+// Every unit has a compact form at 8, 16 and 32 bits: the width-generic
+// value model of its own gates (CompactFormEquivalenceTest compares the
+// 16/32-bit forms with their gates; the 8-bit ones have their own tests).
 FamilyFactory behavioralFactory(Unit u,size_t width) {
-    const bool adder=u==Unit::RippleAdder || u==Unit::PrefixAdder;
     if(width==8)return factory<8>(u);
-    if(width==16 && adder)return factory<16>(u);
-    if(width==32 && (adder || u==Unit::Zero))return factory<32>(u);
+    if(width==16)return factory<16>(u);
+    if(width==32)return factory<32>(u);
     return {};
 }
 FamilyFactory controlBehavioralFactory() {

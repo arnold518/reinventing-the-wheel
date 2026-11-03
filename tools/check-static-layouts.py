@@ -6,8 +6,8 @@ it), in the side margins where the pins are drawn, or past the bottom.
 
 The native server computes a missing child placement when it builds a
 session; the static site cannot, and stops with "Missing layout for …".
-This replays the browser's own lookup (`getLayoutFor` / `getChildLayout` in
-`visualizer-v2/static/app.js`) on `layout.json` for every component of every
+This replays the browser's own lookup (`normalizeLayoutPayload`,
+`getLayoutFor` / `getChildLayout` in `visualizer-v2/static/app.js`) on `layout.json` for every component of every
 visualizable scenario, building topologies only (no simulation).
 
 Usage: python3 tools/check-static-layouts.py [SCENARIO_ALIAS ...]
@@ -116,10 +116,15 @@ def narrow(entry: dict, children) -> bool:
 
 
 def missing_in(layout: dict, alias: str, class_name: str) -> list[str]:
-    root = circuit_backend.create_layout_topology(class_name)
+    root = server.scenario_topology(class_name)
     if root is None:
         return [f"{alias}: no topology"]
     root_key = server.scenario_layout_key(alias, root)
+    # As `normalizeLayoutPayload` in app.js: a profile with no root entry of
+    # its own starts from the scenario's plain entry.
+    roots = layout.get("root_layouts", {})
+    if root_key not in roots and alias in roots:
+        root_key = alias
     problems = []
 
     def visit(component, depth, path=""):

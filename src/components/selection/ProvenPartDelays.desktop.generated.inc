@@ -21,148 +21,57 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"bus.word.address-router.32.behavioral", [] {
+{"bus.bridge.16.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on bus.word.address-router.32.structural";
+    t.evidence = "proven on bus.bridge.16.structural";
     t.arcs = {
-        Arc{"BUTTONS_REQ_READY", "BUTTONS_RSP_READY", {211, 211}},
-        Arc{"BUTTONS_REQ_READY", "RSP_VALID", {390, 390}},
-        Arc{"BUTTONS_RSP_READ_DATA", "RSP_READ_DATA", {213, 213}},
-        Arc{"BUTTONS_RSP_STATUS", "RSP_STATUS", {213, 213}},
-        Arc{"BUTTONS_RSP_VALID", "RSP_VALID", {249, 249}},
-        Arc{"CONSOLE_REQ_READY", "CONSOLE_RSP_READY", {211, 211}},
-        Arc{"CONSOLE_REQ_READY", "RSP_VALID", {390, 390}},
-        Arc{"CONSOLE_RSP_READ_DATA", "RSP_READ_DATA", {355, 355}},
-        Arc{"CONSOLE_RSP_STATUS", "RSP_STATUS", {355, 355}},
-        Arc{"CONSOLE_RSP_VALID", "RSP_VALID", {249, 249}},
-        Arc{"DISPLAY_REQ_READY", "DISPLAY_RSP_READY", {211, 211}},
-        Arc{"DISPLAY_REQ_READY", "RSP_VALID", {354, 354}},
-        Arc{"DISPLAY_RSP_READ_DATA", "RSP_READ_DATA", {142, 142}},
-        Arc{"DISPLAY_RSP_STATUS", "RSP_STATUS", {142, 142}},
-        Arc{"DISPLAY_RSP_VALID", "RSP_VALID", {213, 213}},
-        Arc{"RAM_REQ_READY", "RAM_RSP_READY", {211, 211}},
-        Arc{"RAM_REQ_READY", "RSP_VALID", {390, 390}},
-        Arc{"RAM_RSP_READ_DATA", "RSP_READ_DATA", {426, 426}},
-        Arc{"RAM_RSP_STATUS", "RSP_STATUS", {426, 426}},
-        Arc{"RAM_RSP_VALID", "RSP_VALID", {249, 249}},
-        Arc{"RSP_READY", "BUTTONS_RSP_READY", {70, 70}},
-        Arc{"RSP_READY", "CONSOLE_RSP_READY", {70, 70}},
-        Arc{"RSP_READY", "DISPLAY_RSP_READY", {70, 70}},
-        Arc{"RSP_READY", "RAM_RSP_READY", {70, 70}},
-        Arc{"RSP_READY", "TIMER_RSP_READY", {70, 70}},
-        Arc{"RSP_READY", "VIDEO_RSP_READY", {70, 70}},
-        Arc{"TIMER_REQ_READY", "RSP_VALID", {390, 390}},
-        Arc{"TIMER_REQ_READY", "TIMER_RSP_READY", {211, 211}},
-        Arc{"TIMER_RSP_READ_DATA", "RSP_READ_DATA", {284, 284}},
-        Arc{"TIMER_RSP_STATUS", "RSP_STATUS", {284, 284}},
-        Arc{"TIMER_RSP_VALID", "RSP_VALID", {249, 249}},
-        Arc{"VIDEO_REQ_READY", "RSP_VALID", {354, 354}},
-        Arc{"VIDEO_REQ_READY", "VIDEO_RSP_READY", {211, 211}},
-        Arc{"VIDEO_RSP_READ_DATA", "RSP_READ_DATA", {71, 71}},
-        Arc{"VIDEO_RSP_STATUS", "RSP_STATUS", {71, 71}},
-        Arc{"VIDEO_RSP_VALID", "RSP_VALID", {213, 213}},
+        Arc{"M_REQ_READY", "S_REQ_READY", {0, 0}},
+        Arc{"M_RSP_READ_DATA", "S_RSP_READ_DATA", {0, 0}},
+        Arc{"M_RSP_STATUS", "S_RSP_STATUS", {0, 0}},
+        Arc{"M_RSP_VALID", "S_RSP_VALID", {0, 0}},
+        Arc{"S_REQ_ADDR", "M_REQ_ADDR", {0, 0}},
+        Arc{"S_REQ_OP", "M_REQ_OP", {0, 0}},
+        Arc{"S_REQ_VALID", "M_REQ_VALID", {0, 0}},
+        Arc{"S_REQ_WRITE_DATA", "M_REQ_WRITE_DATA", {0, 0}},
+        Arc{"S_REQ_WRITE_MASK", "M_REQ_WRITE_MASK", {0, 0}},
+        Arc{"S_RSP_READY", "M_RSP_READY", {0, 0}},
     };
-    t.clock = "CLK";
-    t.clock_outputs.push_back("BUTTONS_CLK");
-    t.clock_outputs.push_back("CONSOLE_CLK");
-    t.clock_outputs.push_back("DISPLAY_CLK");
-    t.clock_outputs.push_back("RAM_CLK");
-    t.clock_outputs.push_back("TIMER_CLK");
-    t.clock_outputs.push_back("VIDEO_CLK");
-    t.launches["BUTTONS_REQ_ADDR"] = {91, 120};
-    t.launches["BUTTONS_REQ_OP"] = {91, 120};
-    t.launches["BUTTONS_REQ_VALID"] = {161, 246};
-    t.launches["BUTTONS_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["BUTTONS_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["BUTTONS_RSP_READY"] = {196, 457};
-    t.launches["CONSOLE_REQ_ADDR"] = {91, 120};
-    t.launches["CONSOLE_REQ_OP"] = {91, 120};
-    t.launches["CONSOLE_REQ_VALID"] = {161, 246};
-    t.launches["CONSOLE_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["CONSOLE_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["CONSOLE_RSP_READY"] = {196, 457};
-    t.launches["DISPLAY_REQ_ADDR"] = {91, 120};
-    t.launches["DISPLAY_REQ_OP"] = {91, 120};
-    t.launches["DISPLAY_REQ_VALID"] = {161, 246};
-    t.launches["DISPLAY_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["DISPLAY_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["DISPLAY_RSP_READY"] = {196, 457};
-    t.launches["RAM_REQ_ADDR"] = {91, 120};
-    t.launches["RAM_REQ_OP"] = {91, 120};
-    t.launches["RAM_REQ_VALID"] = {161, 246};
-    t.launches["RAM_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["RAM_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["RAM_RSP_READY"] = {196, 457};
-    t.launches["REQ_READY"] = {147, 176};
-    t.launches["RSP_READ_DATA"] = {162, 546};
-    t.launches["RSP_STATUS"] = {162, 567};
-    t.launches["RSP_VALID"] = {161, 636};
-    t.launches["TIMER_REQ_ADDR"] = {91, 120};
-    t.launches["TIMER_REQ_OP"] = {91, 120};
-    t.launches["TIMER_REQ_VALID"] = {161, 246};
-    t.launches["TIMER_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["TIMER_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["TIMER_RSP_READY"] = {196, 457};
-    t.launches["VIDEO_REQ_ADDR"] = {91, 120};
-    t.launches["VIDEO_REQ_OP"] = {91, 120};
-    t.launches["VIDEO_REQ_VALID"] = {161, 246};
-    t.launches["VIDEO_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["VIDEO_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["VIDEO_RSP_READY"] = {196, 457};
-    t.setup["BUTTONS_REQ_READY"] = 748;
-    t.setup["BUTTONS_RSP_VALID"] = 607;
-    t.setup["CONSOLE_REQ_READY"] = 748;
-    t.setup["CONSOLE_RSP_VALID"] = 607;
-    t.setup["DISPLAY_REQ_READY"] = 712;
-    t.setup["DISPLAY_RSP_VALID"] = 571;
-    t.setup["RAM_REQ_READY"] = 748;
-    t.setup["RAM_RSP_VALID"] = 607;
-    t.setup["REQ_ADDR"] = 1123;
-    t.setup["REQ_OP"] = 803;
-    t.setup["REQ_VALID"] = 302;
-    t.setup["REQ_WRITE_DATA"] = 231;
-    t.setup["REQ_WRITE_MASK"] = 670;
-    t.setup["RSP_READY"] = 358;
-    t.setup["TIMER_REQ_READY"] = 748;
-    t.setup["TIMER_RSP_VALID"] = 607;
-    t.setup["VIDEO_REQ_READY"] = 712;
-    t.setup["VIDEO_RSP_VALID"] = 571;
-    t.internal_period = 994;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"bus.word.instruction-guard.32.behavioral", [] {
+{"bus.bridge.32.behavioral", [] {
     PartDelays t;
-    t.evidence = "proven on bus.word.instruction-guard.32.structural";
+    t.evidence = "proven on bus.bridge.32.structural";
     t.arcs = {
-        Arc{"MEM_REQ_READY", "MEM_RSP_READY", {211, 211}},
-        Arc{"MEM_REQ_READY", "RSP_VALID", {282, 282}},
-        Arc{"MEM_RSP_READ_DATA", "RSP_READ_DATA", {71, 71}},
-        Arc{"MEM_RSP_STATUS", "RSP_STATUS", {71, 71}},
-        Arc{"MEM_RSP_VALID", "RSP_VALID", {141, 141}},
-        Arc{"RSP_READY", "MEM_RSP_READY", {70, 70}},
+        Arc{"M_REQ_READY", "S_REQ_READY", {0, 0}},
+        Arc{"M_RSP_READ_DATA", "S_RSP_READ_DATA", {0, 0}},
+        Arc{"M_RSP_STATUS", "S_RSP_STATUS", {0, 0}},
+        Arc{"M_RSP_VALID", "S_RSP_VALID", {0, 0}},
+        Arc{"S_REQ_ADDR", "M_REQ_ADDR", {0, 0}},
+        Arc{"S_REQ_OP", "M_REQ_OP", {0, 0}},
+        Arc{"S_REQ_VALID", "M_REQ_VALID", {0, 0}},
+        Arc{"S_REQ_WRITE_DATA", "M_REQ_WRITE_DATA", {0, 0}},
+        Arc{"S_REQ_WRITE_MASK", "M_REQ_WRITE_MASK", {0, 0}},
+        Arc{"S_RSP_READY", "M_RSP_READY", {0, 0}},
     };
-    t.clock = "CLK";
-    t.clock_outputs.push_back("MEM_CLK");
-    t.launches["MEM_REQ_ADDR"] = {91, 120};
-    t.launches["MEM_REQ_OP"] = {91, 120};
-    t.launches["MEM_REQ_VALID"] = {161, 246};
-    t.launches["MEM_REQ_WRITE_DATA"] = {91, 120};
-    t.launches["MEM_REQ_WRITE_MASK"] = {91, 120};
-    t.launches["MEM_RSP_READY"] = {196, 457};
-    t.launches["REQ_READY"] = {147, 176};
-    t.launches["RSP_READ_DATA"] = {162, 191};
-    t.launches["RSP_STATUS"] = {162, 212};
-    t.launches["RSP_VALID"] = {161, 528};
-    t.setup["MEM_REQ_READY"] = 640;
-    t.setup["MEM_RSP_VALID"] = 499;
-    t.setup["REQ_ADDR"] = 980;
-    t.setup["REQ_OP"] = 803;
-    t.setup["REQ_VALID"] = 302;
-    t.setup["REQ_WRITE_DATA"] = 231;
-    t.setup["REQ_WRITE_MASK"] = 670;
-    t.setup["RSP_READY"] = 358;
-    t.internal_period = 886;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"bus.bridge.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on bus.bridge.8.structural";
+    t.arcs = {
+        Arc{"M_REQ_READY", "S_REQ_READY", {0, 0}},
+        Arc{"M_RSP_READ_DATA", "S_RSP_READ_DATA", {0, 0}},
+        Arc{"M_RSP_STATUS", "S_RSP_STATUS", {0, 0}},
+        Arc{"M_RSP_VALID", "S_RSP_VALID", {0, 0}},
+        Arc{"S_REQ_ADDR", "M_REQ_ADDR", {0, 0}},
+        Arc{"S_REQ_OP", "M_REQ_OP", {0, 0}},
+        Arc{"S_REQ_VALID", "M_REQ_VALID", {0, 0}},
+        Arc{"S_REQ_WRITE_DATA", "M_REQ_WRITE_DATA", {0, 0}},
+        Arc{"S_REQ_WRITE_MASK", "M_REQ_WRITE_MASK", {0, 0}},
+        Arc{"S_RSP_READY", "M_RSP_READY", {0, 0}},
+    };
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -265,6 +174,285 @@
     t.setup["RSP_READY"] = 393;
     t.internal_period = 1038;
     t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"logic.and.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.10.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.11.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.12.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.13.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.14.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.15.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.17.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.18.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.19.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.2.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.20.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.21.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.22.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.23.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.24.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.25.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.26.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.27.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.28.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.29.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.3.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.30.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.31.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.5.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.6.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.7.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
+    return t;
+}()},
+{"logic.and.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.and.9.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {35, 35}},
+        Arc{"B", "OUT", {35, 35}},
+    };
     return t;
 }()},
 {"logic.decoder.5.full.behavioral", [] {
@@ -407,6 +595,54 @@
     };
     return t;
 }()},
+{"logic.mux.16.1.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.16.1.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {284, 284}},
+        Arc{"IN1", "OUT", {284, 284}},
+        Arc{"IN10", "OUT", {284, 284}},
+        Arc{"IN11", "OUT", {284, 284}},
+        Arc{"IN12", "OUT", {284, 284}},
+        Arc{"IN13", "OUT", {284, 284}},
+        Arc{"IN14", "OUT", {284, 284}},
+        Arc{"IN15", "OUT", {284, 284}},
+        Arc{"IN2", "OUT", {284, 284}},
+        Arc{"IN3", "OUT", {284, 284}},
+        Arc{"IN4", "OUT", {284, 284}},
+        Arc{"IN5", "OUT", {284, 284}},
+        Arc{"IN6", "OUT", {284, 284}},
+        Arc{"IN7", "OUT", {284, 284}},
+        Arc{"IN8", "OUT", {284, 284}},
+        Arc{"IN9", "OUT", {284, 284}},
+        Arc{"SEL", "OUT", {71, 305}},
+    };
+    return t;
+}()},
+{"logic.mux.16.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.16.16.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {284, 284}},
+        Arc{"IN1", "OUT", {284, 284}},
+        Arc{"IN10", "OUT", {284, 284}},
+        Arc{"IN11", "OUT", {284, 284}},
+        Arc{"IN12", "OUT", {284, 284}},
+        Arc{"IN13", "OUT", {284, 284}},
+        Arc{"IN14", "OUT", {284, 284}},
+        Arc{"IN15", "OUT", {284, 284}},
+        Arc{"IN2", "OUT", {284, 284}},
+        Arc{"IN3", "OUT", {284, 284}},
+        Arc{"IN4", "OUT", {284, 284}},
+        Arc{"IN5", "OUT", {284, 284}},
+        Arc{"IN6", "OUT", {284, 284}},
+        Arc{"IN7", "OUT", {284, 284}},
+        Arc{"IN8", "OUT", {284, 284}},
+        Arc{"IN9", "OUT", {284, 284}},
+        Arc{"SEL", "OUT", {71, 305}},
+    };
+    return t;
+}()},
 {"logic.mux.16.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on logic.mux.16.32.structural";
@@ -431,6 +667,74 @@
     };
     return t;
 }()},
+{"logic.mux.16.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.16.4.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {284, 284}},
+        Arc{"IN1", "OUT", {284, 284}},
+        Arc{"IN10", "OUT", {284, 284}},
+        Arc{"IN11", "OUT", {284, 284}},
+        Arc{"IN12", "OUT", {284, 284}},
+        Arc{"IN13", "OUT", {284, 284}},
+        Arc{"IN14", "OUT", {284, 284}},
+        Arc{"IN15", "OUT", {284, 284}},
+        Arc{"IN2", "OUT", {284, 284}},
+        Arc{"IN3", "OUT", {284, 284}},
+        Arc{"IN4", "OUT", {284, 284}},
+        Arc{"IN5", "OUT", {284, 284}},
+        Arc{"IN6", "OUT", {284, 284}},
+        Arc{"IN7", "OUT", {284, 284}},
+        Arc{"IN8", "OUT", {284, 284}},
+        Arc{"IN9", "OUT", {284, 284}},
+        Arc{"SEL", "OUT", {71, 305}},
+    };
+    return t;
+}()},
+{"logic.mux.16.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.16.8.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {284, 284}},
+        Arc{"IN1", "OUT", {284, 284}},
+        Arc{"IN10", "OUT", {284, 284}},
+        Arc{"IN11", "OUT", {284, 284}},
+        Arc{"IN12", "OUT", {284, 284}},
+        Arc{"IN13", "OUT", {284, 284}},
+        Arc{"IN14", "OUT", {284, 284}},
+        Arc{"IN15", "OUT", {284, 284}},
+        Arc{"IN2", "OUT", {284, 284}},
+        Arc{"IN3", "OUT", {284, 284}},
+        Arc{"IN4", "OUT", {284, 284}},
+        Arc{"IN5", "OUT", {284, 284}},
+        Arc{"IN6", "OUT", {284, 284}},
+        Arc{"IN7", "OUT", {284, 284}},
+        Arc{"IN8", "OUT", {284, 284}},
+        Arc{"IN9", "OUT", {284, 284}},
+        Arc{"SEL", "OUT", {71, 305}},
+    };
+    return t;
+}()},
+{"logic.mux.2.1.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.2.1.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {71, 71}},
+        Arc{"B", "OUT", {71, 71}},
+        Arc{"SEL", "OUT", {71, 92}},
+    };
+    return t;
+}()},
+{"logic.mux.2.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.2.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {71, 71}},
+        Arc{"B", "OUT", {71, 71}},
+        Arc{"SEL", "OUT", {71, 92}},
+    };
+    return t;
+}()},
 {"logic.mux.2.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on logic.mux.2.32.structural";
@@ -438,6 +742,106 @@
         Arc{"A", "OUT", {71, 71}},
         Arc{"B", "OUT", {71, 71}},
         Arc{"SEL", "OUT", {71, 92}},
+    };
+    return t;
+}()},
+{"logic.mux.2.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.2.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {71, 71}},
+        Arc{"B", "OUT", {71, 71}},
+        Arc{"SEL", "OUT", {71, 92}},
+    };
+    return t;
+}()},
+{"logic.mux.2.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.2.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {71, 71}},
+        Arc{"B", "OUT", {71, 71}},
+        Arc{"SEL", "OUT", {71, 92}},
+    };
+    return t;
+}()},
+{"logic.mux.32.1.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.32.1.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {355, 355}},
+        Arc{"IN1", "OUT", {355, 355}},
+        Arc{"IN10", "OUT", {355, 355}},
+        Arc{"IN11", "OUT", {355, 355}},
+        Arc{"IN12", "OUT", {355, 355}},
+        Arc{"IN13", "OUT", {355, 355}},
+        Arc{"IN14", "OUT", {355, 355}},
+        Arc{"IN15", "OUT", {355, 355}},
+        Arc{"IN16", "OUT", {355, 355}},
+        Arc{"IN17", "OUT", {355, 355}},
+        Arc{"IN18", "OUT", {355, 355}},
+        Arc{"IN19", "OUT", {355, 355}},
+        Arc{"IN2", "OUT", {355, 355}},
+        Arc{"IN20", "OUT", {355, 355}},
+        Arc{"IN21", "OUT", {355, 355}},
+        Arc{"IN22", "OUT", {355, 355}},
+        Arc{"IN23", "OUT", {355, 355}},
+        Arc{"IN24", "OUT", {355, 355}},
+        Arc{"IN25", "OUT", {355, 355}},
+        Arc{"IN26", "OUT", {355, 355}},
+        Arc{"IN27", "OUT", {355, 355}},
+        Arc{"IN28", "OUT", {355, 355}},
+        Arc{"IN29", "OUT", {355, 355}},
+        Arc{"IN3", "OUT", {355, 355}},
+        Arc{"IN30", "OUT", {355, 355}},
+        Arc{"IN31", "OUT", {355, 355}},
+        Arc{"IN4", "OUT", {355, 355}},
+        Arc{"IN5", "OUT", {355, 355}},
+        Arc{"IN6", "OUT", {355, 355}},
+        Arc{"IN7", "OUT", {355, 355}},
+        Arc{"IN8", "OUT", {355, 355}},
+        Arc{"IN9", "OUT", {355, 355}},
+        Arc{"SEL", "OUT", {71, 376}},
+    };
+    return t;
+}()},
+{"logic.mux.32.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.32.16.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {355, 355}},
+        Arc{"IN1", "OUT", {355, 355}},
+        Arc{"IN10", "OUT", {355, 355}},
+        Arc{"IN11", "OUT", {355, 355}},
+        Arc{"IN12", "OUT", {355, 355}},
+        Arc{"IN13", "OUT", {355, 355}},
+        Arc{"IN14", "OUT", {355, 355}},
+        Arc{"IN15", "OUT", {355, 355}},
+        Arc{"IN16", "OUT", {355, 355}},
+        Arc{"IN17", "OUT", {355, 355}},
+        Arc{"IN18", "OUT", {355, 355}},
+        Arc{"IN19", "OUT", {355, 355}},
+        Arc{"IN2", "OUT", {355, 355}},
+        Arc{"IN20", "OUT", {355, 355}},
+        Arc{"IN21", "OUT", {355, 355}},
+        Arc{"IN22", "OUT", {355, 355}},
+        Arc{"IN23", "OUT", {355, 355}},
+        Arc{"IN24", "OUT", {355, 355}},
+        Arc{"IN25", "OUT", {355, 355}},
+        Arc{"IN26", "OUT", {355, 355}},
+        Arc{"IN27", "OUT", {355, 355}},
+        Arc{"IN28", "OUT", {355, 355}},
+        Arc{"IN29", "OUT", {355, 355}},
+        Arc{"IN3", "OUT", {355, 355}},
+        Arc{"IN30", "OUT", {355, 355}},
+        Arc{"IN31", "OUT", {355, 355}},
+        Arc{"IN4", "OUT", {355, 355}},
+        Arc{"IN5", "OUT", {355, 355}},
+        Arc{"IN6", "OUT", {355, 355}},
+        Arc{"IN7", "OUT", {355, 355}},
+        Arc{"IN8", "OUT", {355, 355}},
+        Arc{"IN9", "OUT", {355, 355}},
+        Arc{"SEL", "OUT", {71, 376}},
     };
     return t;
 }()},
@@ -481,6 +885,110 @@
     };
     return t;
 }()},
+{"logic.mux.32.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.32.4.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {355, 355}},
+        Arc{"IN1", "OUT", {355, 355}},
+        Arc{"IN10", "OUT", {355, 355}},
+        Arc{"IN11", "OUT", {355, 355}},
+        Arc{"IN12", "OUT", {355, 355}},
+        Arc{"IN13", "OUT", {355, 355}},
+        Arc{"IN14", "OUT", {355, 355}},
+        Arc{"IN15", "OUT", {355, 355}},
+        Arc{"IN16", "OUT", {355, 355}},
+        Arc{"IN17", "OUT", {355, 355}},
+        Arc{"IN18", "OUT", {355, 355}},
+        Arc{"IN19", "OUT", {355, 355}},
+        Arc{"IN2", "OUT", {355, 355}},
+        Arc{"IN20", "OUT", {355, 355}},
+        Arc{"IN21", "OUT", {355, 355}},
+        Arc{"IN22", "OUT", {355, 355}},
+        Arc{"IN23", "OUT", {355, 355}},
+        Arc{"IN24", "OUT", {355, 355}},
+        Arc{"IN25", "OUT", {355, 355}},
+        Arc{"IN26", "OUT", {355, 355}},
+        Arc{"IN27", "OUT", {355, 355}},
+        Arc{"IN28", "OUT", {355, 355}},
+        Arc{"IN29", "OUT", {355, 355}},
+        Arc{"IN3", "OUT", {355, 355}},
+        Arc{"IN30", "OUT", {355, 355}},
+        Arc{"IN31", "OUT", {355, 355}},
+        Arc{"IN4", "OUT", {355, 355}},
+        Arc{"IN5", "OUT", {355, 355}},
+        Arc{"IN6", "OUT", {355, 355}},
+        Arc{"IN7", "OUT", {355, 355}},
+        Arc{"IN8", "OUT", {355, 355}},
+        Arc{"IN9", "OUT", {355, 355}},
+        Arc{"SEL", "OUT", {71, 376}},
+    };
+    return t;
+}()},
+{"logic.mux.32.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.32.8.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {355, 355}},
+        Arc{"IN1", "OUT", {355, 355}},
+        Arc{"IN10", "OUT", {355, 355}},
+        Arc{"IN11", "OUT", {355, 355}},
+        Arc{"IN12", "OUT", {355, 355}},
+        Arc{"IN13", "OUT", {355, 355}},
+        Arc{"IN14", "OUT", {355, 355}},
+        Arc{"IN15", "OUT", {355, 355}},
+        Arc{"IN16", "OUT", {355, 355}},
+        Arc{"IN17", "OUT", {355, 355}},
+        Arc{"IN18", "OUT", {355, 355}},
+        Arc{"IN19", "OUT", {355, 355}},
+        Arc{"IN2", "OUT", {355, 355}},
+        Arc{"IN20", "OUT", {355, 355}},
+        Arc{"IN21", "OUT", {355, 355}},
+        Arc{"IN22", "OUT", {355, 355}},
+        Arc{"IN23", "OUT", {355, 355}},
+        Arc{"IN24", "OUT", {355, 355}},
+        Arc{"IN25", "OUT", {355, 355}},
+        Arc{"IN26", "OUT", {355, 355}},
+        Arc{"IN27", "OUT", {355, 355}},
+        Arc{"IN28", "OUT", {355, 355}},
+        Arc{"IN29", "OUT", {355, 355}},
+        Arc{"IN3", "OUT", {355, 355}},
+        Arc{"IN30", "OUT", {355, 355}},
+        Arc{"IN31", "OUT", {355, 355}},
+        Arc{"IN4", "OUT", {355, 355}},
+        Arc{"IN5", "OUT", {355, 355}},
+        Arc{"IN6", "OUT", {355, 355}},
+        Arc{"IN7", "OUT", {355, 355}},
+        Arc{"IN8", "OUT", {355, 355}},
+        Arc{"IN9", "OUT", {355, 355}},
+        Arc{"SEL", "OUT", {71, 376}},
+    };
+    return t;
+}()},
+{"logic.mux.4.1.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.4.1.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {142, 142}},
+        Arc{"IN1", "OUT", {142, 142}},
+        Arc{"IN2", "OUT", {142, 142}},
+        Arc{"IN3", "OUT", {142, 142}},
+        Arc{"SEL", "OUT", {71, 163}},
+    };
+    return t;
+}()},
+{"logic.mux.4.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.4.16.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {142, 142}},
+        Arc{"IN1", "OUT", {142, 142}},
+        Arc{"IN2", "OUT", {142, 142}},
+        Arc{"IN3", "OUT", {142, 142}},
+        Arc{"SEL", "OUT", {71, 163}},
+    };
+    return t;
+}()},
 {"logic.mux.4.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on logic.mux.4.32.structural";
@@ -490,6 +998,62 @@
         Arc{"IN2", "OUT", {142, 142}},
         Arc{"IN3", "OUT", {142, 142}},
         Arc{"SEL", "OUT", {71, 163}},
+    };
+    return t;
+}()},
+{"logic.mux.4.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.4.4.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {142, 142}},
+        Arc{"IN1", "OUT", {142, 142}},
+        Arc{"IN2", "OUT", {142, 142}},
+        Arc{"IN3", "OUT", {142, 142}},
+        Arc{"SEL", "OUT", {71, 163}},
+    };
+    return t;
+}()},
+{"logic.mux.4.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.4.8.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {142, 142}},
+        Arc{"IN1", "OUT", {142, 142}},
+        Arc{"IN2", "OUT", {142, 142}},
+        Arc{"IN3", "OUT", {142, 142}},
+        Arc{"SEL", "OUT", {71, 163}},
+    };
+    return t;
+}()},
+{"logic.mux.8.1.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.8.1.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {213, 213}},
+        Arc{"IN1", "OUT", {213, 213}},
+        Arc{"IN2", "OUT", {213, 213}},
+        Arc{"IN3", "OUT", {213, 213}},
+        Arc{"IN4", "OUT", {213, 213}},
+        Arc{"IN5", "OUT", {213, 213}},
+        Arc{"IN6", "OUT", {213, 213}},
+        Arc{"IN7", "OUT", {213, 213}},
+        Arc{"SEL", "OUT", {71, 234}},
+    };
+    return t;
+}()},
+{"logic.mux.8.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.8.16.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {213, 213}},
+        Arc{"IN1", "OUT", {213, 213}},
+        Arc{"IN2", "OUT", {213, 213}},
+        Arc{"IN3", "OUT", {213, 213}},
+        Arc{"IN4", "OUT", {213, 213}},
+        Arc{"IN5", "OUT", {213, 213}},
+        Arc{"IN6", "OUT", {213, 213}},
+        Arc{"IN7", "OUT", {213, 213}},
+        Arc{"SEL", "OUT", {71, 234}},
     };
     return t;
 }()},
@@ -506,6 +1070,1402 @@
         Arc{"IN6", "OUT", {213, 213}},
         Arc{"IN7", "OUT", {213, 213}},
         Arc{"SEL", "OUT", {71, 234}},
+    };
+    return t;
+}()},
+{"logic.mux.8.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.8.4.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {213, 213}},
+        Arc{"IN1", "OUT", {213, 213}},
+        Arc{"IN2", "OUT", {213, 213}},
+        Arc{"IN3", "OUT", {213, 213}},
+        Arc{"IN4", "OUT", {213, 213}},
+        Arc{"IN5", "OUT", {213, 213}},
+        Arc{"IN6", "OUT", {213, 213}},
+        Arc{"IN7", "OUT", {213, 213}},
+        Arc{"SEL", "OUT", {71, 234}},
+    };
+    return t;
+}()},
+{"logic.mux.8.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.mux.8.8.structural";
+    t.arcs = {
+        Arc{"IN0", "OUT", {213, 213}},
+        Arc{"IN1", "OUT", {213, 213}},
+        Arc{"IN2", "OUT", {213, 213}},
+        Arc{"IN3", "OUT", {213, 213}},
+        Arc{"IN4", "OUT", {213, 213}},
+        Arc{"IN5", "OUT", {213, 213}},
+        Arc{"IN6", "OUT", {213, 213}},
+        Arc{"IN7", "OUT", {213, 213}},
+        Arc{"SEL", "OUT", {71, 234}},
+    };
+    return t;
+}()},
+{"logic.nand.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.10.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.11.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.12.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.13.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.14.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.15.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.17.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.18.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.19.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.2.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.20.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.21.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.22.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.23.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.24.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.25.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.26.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.27.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.28.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.29.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.3.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.30.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.31.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.5.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.6.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.7.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nand.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nand.9.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {28, 28}},
+        Arc{"B", "OUT", {28, 28}},
+    };
+    return t;
+}()},
+{"logic.nor.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.10.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.11.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.12.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.13.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.14.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.15.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.17.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.18.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.19.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.2.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.20.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.21.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.22.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.23.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.24.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.25.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.26.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.27.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.28.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.29.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.3.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.30.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.31.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.5.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.6.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.7.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.nor.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.nor.9.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {33, 33}},
+        Arc{"B", "OUT", {33, 33}},
+    };
+    return t;
+}()},
+{"logic.not.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.10.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.11.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.12.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.13.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.14.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.15.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.16.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.17.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.18.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.19.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.2.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.20.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.21.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.22.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.23.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.24.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.25.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.26.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.27.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.28.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.29.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.3.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.30.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.31.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.32.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.4.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.5.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.6.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.7.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.8.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.not.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.not.9.structural";
+    t.arcs = {
+        Arc{"IN", "OUT", {21, 21}},
+    };
+    return t;
+}()},
+{"logic.or.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.10.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.11.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.12.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.13.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.14.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.15.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.17.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.18.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.19.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.2.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.20.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.21.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.22.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.23.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.24.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.25.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.26.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.27.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.28.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.29.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.3.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.30.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.31.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.5.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.6.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.7.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.or.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.or.9.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {36, 36}},
+        Arc{"B", "OUT", {36, 36}},
+    };
+    return t;
+}()},
+{"logic.xor.10.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.10.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.11.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.11.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.12.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.12.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.13.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.13.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.14.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.14.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.15.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.15.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.17.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.17.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.18.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.18.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.19.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.19.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.2.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.2.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.20.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.20.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.21.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.21.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.22.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.22.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.23.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.23.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.24.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.24.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.25.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.25.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.26.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.26.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.27.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.27.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.28.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.28.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.29.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.29.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.3.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.3.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.30.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.30.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.31.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.31.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.4.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.4.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.5.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.5.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.6.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.6.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.7.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.7.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.8.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"logic.xor.9.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on logic.xor.9.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {84, 84}},
+        Arc{"B", "OUT", {84, 84}},
     };
     return t;
 }()},
@@ -15964,6 +17924,97 @@
     t.arcs_by_control[31] = {{"OP", "EQ", {106, 126}}, {"OP", "LT_SIGNED", {106, 126}}, {"OP", "LT_UNSIGNED", {106, 126}}, {"OP", "OUT", {127, 307}}, };
     return t;
 }()},
+{"rv32i.alu.add-sub.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.add-sub.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {251, 475}},
+        Arc{"A", "OUT", {155, 524}},
+        Arc{"A", "OVERFLOW", {335, 559}},
+        Arc{"B", "C_OUT", {335, 559}},
+        Arc{"B", "OUT", {239, 608}},
+        Arc{"B", "OVERFLOW", {419, 643}},
+        Arc{"SUB", "C_OUT", {71, 559}},
+        Arc{"SUB", "OUT", {84, 608}},
+        Arc{"SUB", "OVERFLOW", {155, 643}},
+    };
+    return t;
+}()},
+{"rv32i.alu.compare.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.compare.structural";
+    t.arcs = {
+        Arc{"CARRY_IN", "LT_UNSIGNED", {56, 56}},
+        Arc{"CARRY_IN", "SLTU_RESULT", {56, 56}},
+        Arc{"DIFF", "EQ", {236, 236}},
+        Arc{"DIFF", "LT_SIGNED", {119, 119}},
+        Arc{"DIFF", "SLT_RESULT", {119, 119}},
+        Arc{"ENABLE", "EQ", {35, 35}},
+        Arc{"ENABLE", "LT_SIGNED", {35, 35}},
+        Arc{"ENABLE", "LT_UNSIGNED", {35, 35}},
+        Arc{"ENABLE", "SLTU_RESULT", {35, 35}},
+        Arc{"ENABLE", "SLT_RESULT", {35, 35}},
+        Arc{"OVERFLOW_IN", "LT_SIGNED", {119, 119}},
+        Arc{"OVERFLOW_IN", "SLT_RESULT", {119, 119}},
+    };
+    return t;
+}()},
+{"rv32i.alu.control.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.control.structural";
+    t.arcs = {
+        Arc{"OP", "HIGH_HALF", {0, 0}},
+        Arc{"OP", "LOCAL_OP", {0, 0}},
+        Arc{"OP", "OUT_OF_RANGE", {0, 0}},
+        Arc{"OP", "SHIFT_ARITHMETIC", {0, 0}},
+        Arc{"OP", "SHIFT_LEFT", {21, 21}},
+        Arc{"OP", "SUB", {71, 126}},
+    };
+    return t;
+}()},
+{"rv32i.alu.logic.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.logic.structural";
+    t.arcs = {
+        Arc{"A", "AND_OUT", {35, 35}},
+        Arc{"A", "OR_OUT", {36, 36}},
+        Arc{"A", "XOR_OUT", {84, 84}},
+        Arc{"B", "AND_OUT", {35, 35}},
+        Arc{"B", "OR_OUT", {36, 36}},
+        Arc{"B", "XOR_OUT", {84, 84}},
+    };
+    return t;
+}()},
+{"rv32i.alu.result-select.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.result-select.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {179, 179}},
+        Arc{"AND_RESULT", "OUT", {179, 179}},
+        Arc{"ARITHMETIC_RESULT", "OUT", {179, 179}},
+        Arc{"B", "OUT", {71, 71}},
+        Arc{"HIGH_HALF", "OUT", {176, 377}},
+        Arc{"LOCAL_OP", "OUT", {176, 377}},
+        Arc{"OR_RESULT", "OUT", {179, 179}},
+        Arc{"OUT_OF_RANGE", "OUT", {127, 307}},
+        Arc{"SHIFT_RESULT", "OUT", {179, 179}},
+        Arc{"SLTU_RESULT", "OUT", {179, 179}},
+        Arc{"SLT_RESULT", "OUT", {179, 179}},
+        Arc{"XOR_RESULT", "OUT", {179, 179}},
+    };
+    return t;
+}()},
+{"rv32i.alu.shifter.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu.shifter.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {212, 497}},
+        Arc{"ARITHMETIC", "OUT", {212, 496}},
+        Arc{"B", "OUT", {142, 447}},
+        Arc{"LEFT", "OUT", {71, 518}},
+    };
+    return t;
+}()},
 {"rv32i.baseline.control.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.baseline.control.structural";
@@ -27033,6 +29084,44 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"word.add-sub.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.add-sub.16.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {215, 404}},
+        Arc{"A", "OUT", {155, 453}},
+        Arc{"A", "OVERFLOW", {119, 572}},
+        Arc{"B", "C_OUT", {299, 488}},
+        Arc{"B", "OUT", {239, 537}},
+        Arc{"B", "OVERFLOW", {224, 656}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+        Arc{"C_IN", "OVERFLOW", {274, 274}},
+        Arc{"SUB", "C_OUT", {299, 488}},
+        Arc{"SUB", "OUT", {239, 537}},
+        Arc{"SUB", "OVERFLOW", {224, 656}},
+    };
+    return t;
+}()},
+{"word.add-sub.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.add-sub.32.structural";
+    t.arcs = {
+        Arc{"A", "C_OUT", {251, 475}},
+        Arc{"A", "OUT", {155, 524}},
+        Arc{"A", "OVERFLOW", {119, 643}},
+        Arc{"B", "C_OUT", {335, 559}},
+        Arc{"B", "OUT", {239, 608}},
+        Arc{"B", "OVERFLOW", {224, 727}},
+        Arc{"C_IN", "C_OUT", {71, 71}},
+        Arc{"C_IN", "OUT", {84, 155}},
+        Arc{"C_IN", "OVERFLOW", {274, 274}},
+        Arc{"SUB", "C_OUT", {335, 559}},
+        Arc{"SUB", "OUT", {239, 608}},
+        Arc{"SUB", "OVERFLOW", {224, 727}},
+    };
+    return t;
+}()},
 {"word.add-sub.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on word.add-sub.8.structural";
@@ -27069,6 +29158,36 @@
     };
     return t;
 }()},
+{"word.alu-flag-unit.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu-flag-unit.16.structural";
+    t.arcs = {
+        Arc{"ARITHMETIC", "CARRY", {71, 71}},
+        Arc{"ARITHMETIC", "OVERFLOW", {35, 35}},
+        Arc{"ARITH_CARRY", "CARRY", {71, 71}},
+        Arc{"ARITH_OVERFLOW", "OVERFLOW", {35, 35}},
+        Arc{"RESULT", "NEGATIVE", {36, 36}},
+        Arc{"RESULT", "ZERO", {165, 165}},
+        Arc{"SHIFT", "CARRY", {71, 71}},
+        Arc{"SHIFT_CARRY", "CARRY", {71, 71}},
+    };
+    return t;
+}()},
+{"word.alu-flag-unit.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu-flag-unit.32.structural";
+    t.arcs = {
+        Arc{"ARITHMETIC", "CARRY", {71, 71}},
+        Arc{"ARITHMETIC", "OVERFLOW", {35, 35}},
+        Arc{"ARITH_CARRY", "CARRY", {71, 71}},
+        Arc{"ARITH_OVERFLOW", "OVERFLOW", {35, 35}},
+        Arc{"RESULT", "NEGATIVE", {36, 36}},
+        Arc{"RESULT", "ZERO", {201, 201}},
+        Arc{"SHIFT", "CARRY", {71, 71}},
+        Arc{"SHIFT_CARRY", "CARRY", {71, 71}},
+    };
+    return t;
+}()},
 {"word.alu-flag-unit.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on word.alu-flag-unit.8.structural";
@@ -27081,6 +29200,44 @@
         Arc{"RESULT", "ZERO", {129, 129}},
         Arc{"SHIFT", "CARRY", {71, 71}},
         Arc{"SHIFT_CARRY", "CARRY", {71, 71}},
+    };
+    return t;
+}()},
+{"word.alu-result-selector.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu-result-selector.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {107, 107}},
+        Arc{"ARITHMETIC_ENABLE", "OUT", {143, 143}},
+        Arc{"ARITHMETIC_RESULT", "OUT", {143, 143}},
+        Arc{"B", "OUT", {107, 107}},
+        Arc{"COMPARE_ENABLE", "OUT", {143, 143}},
+        Arc{"COMPARE_RESULT", "OUT", {143, 143}},
+        Arc{"LOGIC_ENABLE", "OUT", {143, 143}},
+        Arc{"LOGIC_RESULT", "OUT", {143, 143}},
+        Arc{"PASS_A_ENABLE", "OUT", {107, 107}},
+        Arc{"PASS_B_ENABLE", "OUT", {107, 107}},
+        Arc{"SHIFT_ENABLE", "OUT", {143, 143}},
+        Arc{"SHIFT_RESULT", "OUT", {143, 143}},
+    };
+    return t;
+}()},
+{"word.alu-result-selector.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu-result-selector.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {107, 107}},
+        Arc{"ARITHMETIC_ENABLE", "OUT", {143, 143}},
+        Arc{"ARITHMETIC_RESULT", "OUT", {143, 143}},
+        Arc{"B", "OUT", {107, 107}},
+        Arc{"COMPARE_ENABLE", "OUT", {143, 143}},
+        Arc{"COMPARE_RESULT", "OUT", {143, 143}},
+        Arc{"LOGIC_ENABLE", "OUT", {143, 143}},
+        Arc{"LOGIC_RESULT", "OUT", {143, 143}},
+        Arc{"PASS_A_ENABLE", "OUT", {107, 107}},
+        Arc{"PASS_B_ENABLE", "OUT", {107, 107}},
+        Arc{"SHIFT_ENABLE", "OUT", {143, 143}},
+        Arc{"SHIFT_RESULT", "OUT", {143, 143}},
     };
     return t;
 }()},
@@ -27100,6 +29257,62 @@
         Arc{"PASS_B_ENABLE", "OUT", {107, 107}},
         Arc{"SHIFT_ENABLE", "OUT", {143, 143}},
         Arc{"SHIFT_RESULT", "OUT", {143, 143}},
+    };
+    return t;
+}()},
+{"word.alu.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu.16.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {461, 807}},
+        Arc{"A", "NEGATIVE", {143, 1472}},
+        Arc{"A", "OUT", {107, 1436}},
+        Arc{"A", "OVERFLOW", {402, 939}},
+        Arc{"A", "ZERO", {272, 1601}},
+        Arc{"B", "CARRY", {177, 807}},
+        Arc{"B", "NEGATIVE", {143, 1472}},
+        Arc{"B", "OUT", {107, 1436}},
+        Arc{"B", "OVERFLOW", {507, 939}},
+        Arc{"B", "ZERO", {272, 1601}},
+        Arc{"C_IN", "CARRY", {390, 390}},
+        Arc{"C_IN", "NEGATIVE", {582, 1090}},
+        Arc{"C_IN", "OUT", {475, 1054}},
+        Arc{"C_IN", "OVERFLOW", {557, 557}},
+        Arc{"C_IN", "ZERO", {640, 1219}},
+        Arc{"OP", "CARRY", {177, 1297}},
+        Arc{"OP", "INVALID_OP", {141, 233}},
+        Arc{"OP", "NEGATIVE", {248, 1962}},
+        Arc{"OP", "OUT", {212, 1926}},
+        Arc{"OP", "OVERFLOW", {176, 1429}},
+        Arc{"OP", "ZERO", {377, 2091}},
+    };
+    return t;
+}()},
+{"word.alu.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.alu.32.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {532, 878}},
+        Arc{"A", "NEGATIVE", {143, 1543}},
+        Arc{"A", "OUT", {107, 1507}},
+        Arc{"A", "OVERFLOW", {402, 1010}},
+        Arc{"A", "ZERO", {308, 1708}},
+        Arc{"B", "CARRY", {177, 878}},
+        Arc{"B", "NEGATIVE", {143, 1543}},
+        Arc{"B", "OUT", {107, 1507}},
+        Arc{"B", "OVERFLOW", {507, 1010}},
+        Arc{"B", "ZERO", {308, 1708}},
+        Arc{"C_IN", "CARRY", {390, 461}},
+        Arc{"C_IN", "NEGATIVE", {582, 1090}},
+        Arc{"C_IN", "OUT", {475, 1054}},
+        Arc{"C_IN", "OVERFLOW", {557, 557}},
+        Arc{"C_IN", "ZERO", {676, 1255}},
+        Arc{"OP", "CARRY", {177, 1368}},
+        Arc{"OP", "INVALID_OP", {141, 233}},
+        Arc{"OP", "NEGATIVE", {248, 2033}},
+        Arc{"OP", "OUT", {212, 1997}},
+        Arc{"OP", "OVERFLOW", {176, 1500}},
+        Arc{"OP", "ZERO", {413, 2198}},
     };
     return t;
 }()},
@@ -27164,6 +29377,46 @@
     t.arcs_by_control[31] = {{"OP", "CARRY", {177, 413}}, {"OP", "INVALID_OP", {141, 176}}, {"OP", "NEGATIVE", {248, 521}}, {"OP", "OUT", {212, 485}}, {"OP", "OVERFLOW", {176, 377}}, {"OP", "ZERO", {341, 614}}, };
     return t;
 }()},
+{"word.arithmetic-unit.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.arithmetic-unit.16.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {463, 736}},
+        Arc{"A", "OUT", {403, 785}},
+        Arc{"A", "OVERFLOW", {367, 904}},
+        Arc{"B", "CARRY", {547, 736}},
+        Arc{"B", "OUT", {487, 785}},
+        Arc{"B", "OVERFLOW", {472, 904}},
+        Arc{"C_IN", "CARRY", {319, 319}},
+        Arc{"C_IN", "OUT", {332, 403}},
+        Arc{"C_IN", "OVERFLOW", {522, 522}},
+        Arc{"OP", "CARRY", {127, 757}},
+        Arc{"OP", "INVALID_OP", {71, 213}},
+        Arc{"OP", "OUT", {127, 806}},
+        Arc{"OP", "OVERFLOW", {127, 925}},
+    };
+    return t;
+}()},
+{"word.arithmetic-unit.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.arithmetic-unit.32.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {499, 807}},
+        Arc{"A", "OUT", {403, 856}},
+        Arc{"A", "OVERFLOW", {367, 975}},
+        Arc{"B", "CARRY", {583, 807}},
+        Arc{"B", "OUT", {487, 856}},
+        Arc{"B", "OVERFLOW", {472, 975}},
+        Arc{"C_IN", "CARRY", {319, 319}},
+        Arc{"C_IN", "OUT", {332, 403}},
+        Arc{"C_IN", "OVERFLOW", {522, 522}},
+        Arc{"OP", "CARRY", {127, 828}},
+        Arc{"OP", "INVALID_OP", {71, 213}},
+        Arc{"OP", "OUT", {127, 877}},
+        Arc{"OP", "OVERFLOW", {127, 996}},
+    };
+    return t;
+}()},
 {"word.arithmetic-unit.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on word.arithmetic-unit.8.structural";
@@ -27184,6 +29437,34 @@
     };
     return t;
 }()},
+{"word.barrel-shifter.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.barrel-shifter.16.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {390, 390}},
+        Arc{"A", "OUT", {283, 532}},
+        Arc{"B", "CARRY", {106, 340}},
+        Arc{"B", "OUT", {177, 482}},
+        Arc{"C_IN", "CARRY", {319, 319}},
+        Arc{"OP", "CARRY", {106, 645}},
+        Arc{"OP", "OUT", {106, 787}},
+    };
+    return t;
+}()},
+{"word.barrel-shifter.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.barrel-shifter.32.structural";
+    t.arcs = {
+        Arc{"A", "CARRY", {461, 461}},
+        Arc{"A", "OUT", {283, 603}},
+        Arc{"B", "CARRY", {106, 411}},
+        Arc{"B", "OUT", {177, 553}},
+        Arc{"C_IN", "CARRY", {390, 390}},
+        Arc{"OP", "CARRY", {106, 716}},
+        Arc{"OP", "OUT", {106, 858}},
+    };
+    return t;
+}()},
 {"word.barrel-shifter.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on word.barrel-shifter.8.structural";
@@ -27198,6 +29479,32 @@
     };
     return t;
 }()},
+{"word.compare-select.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.compare-select.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {284, 284}},
+        Arc{"B", "OUT", {284, 284}},
+        Arc{"CARRY_IN", "OUT", {234, 326}},
+        Arc{"DIFF", "OUT", {297, 389}},
+        Arc{"OP", "OUT", {71, 234}},
+        Arc{"OVERFLOW_IN", "OUT", {297, 389}},
+    };
+    return t;
+}()},
+{"word.compare-select.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.compare-select.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {284, 284}},
+        Arc{"B", "OUT", {284, 284}},
+        Arc{"CARRY_IN", "OUT", {234, 326}},
+        Arc{"DIFF", "OUT", {297, 414}},
+        Arc{"OP", "OUT", {71, 234}},
+        Arc{"OVERFLOW_IN", "OUT", {297, 389}},
+    };
+    return t;
+}()},
 {"word.compare-select.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on word.compare-select.8.structural";
@@ -27208,6 +29515,26 @@
         Arc{"DIFF", "OUT", {297, 389}},
         Arc{"OP", "OUT", {71, 234}},
         Arc{"OVERFLOW_IN", "OUT", {297, 389}},
+    };
+    return t;
+}()},
+{"word.logic-unit.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.logic-unit.16.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {234, 318}},
+        Arc{"B", "OUT", {248, 318}},
+        Arc{"OP", "OUT", {71, 234}},
+    };
+    return t;
+}()},
+{"word.logic-unit.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.logic-unit.32.structural";
+    t.arcs = {
+        Arc{"A", "OUT", {234, 318}},
+        Arc{"B", "OUT", {248, 318}},
+        Arc{"OP", "OUT", {71, 234}},
     };
     return t;
 }()},
@@ -27305,6 +29632,14 @@
         Arc{"B", "OUT", {155, 665}},
         Arc{"C_IN", "C_OUT", {568, 568}},
         Arc{"C_IN", "OUT", {84, 581}},
+    };
+    return t;
+}()},
+{"word.zero-detect.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on word.zero-detect.16.structural";
+    t.arcs = {
+        Arc{"A", "ZERO", {165, 165}},
     };
     return t;
 }()},

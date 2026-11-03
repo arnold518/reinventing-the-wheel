@@ -86,7 +86,7 @@ struct Comparison {
             <<", pin bits "<<rt.bit_count<<" -> "<<ft.bit_count<<'\n';
     }
     template<size_t W> void drive(const std::shared_ptr<WireBase>& wire,const Bits& value) {
-        sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(time,std::dynamic_pointer_cast<Wire<W>>(wire),value));
+        sim.scheduleEvent(std::make_shared<WireUpdateEvent>(time,std::dynamic_pointer_cast<Wire<W>>(wire),value));
     }
     void row(const Values& values) {
         for(const auto& [name,value]:values) {

@@ -27,7 +27,7 @@ export function aliasesFor(name, catalog) {
 
 export function scenarioOptions(descriptors, catalog) {
   if (catalog.schema !== 1) throw new Error('Unsupported scenario catalog');
-  return descriptors.filter(d => d.visualizable).map(d => {
+  const options = descriptors.filter(d => d.visualizable).map(d => {
     const name = d.name, identity = programIdentity(name);
     const base = {key: aliasesFor(name, catalog)[0], className: name};
     if (identity) {
@@ -35,20 +35,28 @@ export function scenarioOptions(descriptors, catalog) {
       const p = catalog.programs.find(p => p.id === workload);
       if (!p) throw new Error(`Program missing from scenario catalog: ${name}`);
       return {...base, title: `${String(identity.number).padStart(2, '0')} · ${p.title}`, group: p.group,
-        workload, core: identity.core, policy: identity.policy};
+        workload, core: identity.core, policy: identity.policy, order: p.order, fidelity: p.fidelity};
     }
     const component = catalog.components[name];
     if (!component) throw new Error(`Component missing from scenario catalog: ${name}`);
     return {...base, ...component};
   });
+  const groups = new Map(catalog.groups.map((group,index) => [group.id,index]));
+  const cores = {single: 0, baseline: 1, advanced: 2};
+  const policies = {'not-taken': 0, taken: 1, 'backward-taken': 2, 'one-bit': 3, 'two-bit': 4};
+  return options.sort((a,b) => (groups.get(a.group) ?? groups.size) - (groups.get(b.group) ?? groups.size)
+    || a.order - b.order || (cores[a.core] ?? 0) - (cores[b.core] ?? 0)
+    || (policies[a.policy] ?? 0) - (policies[b.policy] ?? 0)
+    || a.className.localeCompare(b.className, 'en', {numeric: true}));
 }
 
 // A fixed program occupies one menu row. Core and prediction choose the
 // existing registered scenario; aliases/layout/profile identities do not move.
 export function menuOptions(options, groups) {
   const visible = options.filter(o => !o.workload || o.core === 'single');
-  return groups.map(group => ({...group, options: visible.filter(o => o.group === group.id)
-    .sort((a, b) => a.title.localeCompare(b.title, 'en', {numeric: true}))})).filter(g => g.options.length);
+  // The shared option builder already applies semantic component/program
+  // ranks. Alphabetizing here would silently override that order.
+  return groups.map(group => ({...group, options: visible.filter(o => o.group === group.id)})).filter(g => g.options.length);
 }
 
 export function findScenario(options, value, catalog) {

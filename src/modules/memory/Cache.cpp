@@ -1,3 +1,4 @@
+#include "modules/composite/WordBuilder.hpp"
 #include "modules/memory/Cache.hpp"
 #include "modules/memory/MemoryController.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
@@ -267,17 +268,14 @@ public:
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override {
         StructuralWiring w(builder);
-        auto expected = builder.addNewComponent<BitSplitter<W>>("EXPECTED_BITS");
-        auto stored = builder.addNewComponent<BitSplitter<W>>("STORED_BITS");
-        w.connect(getInputPin<W>("EXPECTED"), expected->template getInputPin<W>("IN"));
-        w.connect(getInputPin<W>("STORED"), stored->template getInputPin<W>("IN"));
-        std::vector<PinPtr> unequal;
-        for (size_t i = 0; i < W; ++i)
-            unequal.push_back(w.binary<XORGate>("DIFFER_" + std::to_string(i),
-                expected->getOutputPin("OUT_" + std::to_string(i)),
-                stored->getOutputPin("OUT_" + std::to_string(i))));
-        auto equal = w.invert("EQUAL", w.reduce("ANY_DIFFERENCE", unequal, false));
-        w.connect(w.both("HIT", equal, getInputPin("VALID")), getOutputPin("HIT"));
+        // XOR every bit (one XORGate<W>), then ZeroDetect<W>: the same OR
+        // tree and inverter that tell "no bit differs".
+        auto differ = builder.add(circuit::word::gate(circuit::word::GateKind::Xor, W), "DIFFER");
+        w.connect(getInputPin<W>("EXPECTED"), differ->getInputPinDynamic("A"));
+        w.connect(getInputPin<W>("STORED"), differ->getInputPinDynamic("B"));
+        auto equal = builder.add(circuit::word::family(circuit::word::Unit::Zero, W), "EQUAL");
+        w.connect(differ->getOutputPinDynamic("OUT"), equal->getInputPinDynamic("A"));
+        w.connect(w.both("HIT", equal->getOutputPin("ZERO"), getInputPin("VALID")), getOutputPin("HIT"));
         w.finish();
     }
 private:
@@ -304,6 +302,7 @@ public:
           type_(std::string(dirty ? "CacheDirtyLineState<" : "CacheLineState<") + std::to_string(sets) + ">") {}
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override {
+        if (circuit::word::gateWidth(sets_)) { buildWords(builder); return; }
         StructuralWiring w(builder);
         auto addr = builder.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
         w.connect(getInputPin<32>("ADDRESS"), addr->getInputPin<32>("IN"));
@@ -345,6 +344,57 @@ public:
         w.finish();
     }
 private:
+    // At 4, 8, 16 or 32 sets the per-set next-state logic is word gates over
+    // the sets (the same AND/OR/NOT per set); set decoding, the state bits and
+    // the final OR trees stay per set.
+    void buildWords(ComponentBuilder& builder) {
+        using circuit::word::GateKind;
+        circuit::word::WordBuilder n(*this, builder, sets_);
+        auto addr = n.split<32>("ADDRESS_BITS", n.input("ADDRESS"));
+        auto clear_all = n.binary<ORGate>("RESET_OR_INVALIDATE", n.input("RST"), n.input("INVALIDATE"));
+        circuit::word::WordBuilder::Bits selected, valid_q, dirty_q;
+        std::vector<std::shared_ptr<IOComponent>> valid_cells, dirty_cells;
+        const auto cell = [&](const std::string& name, auto& cells, auto& outputs) {
+            auto c = n.add(circuit::families::ClockedStateBit, name);
+            n.connect(n.input("CLK"), c->getInputPinDynamic("CLK"));
+            n.connect(clear_all, c->getInputPinDynamic("RST"));
+            cells.push_back(c); outputs.push_back(c->getOutputPinDynamic("Q"));
+        };
+        for (size_t set = 0; set < sets_; ++set) {
+            const auto id = std::to_string(set);
+            circuit::word::WordBuilder::Bits bits;
+            for (size_t i = 0; i < std::countr_zero(sets_); ++i) {
+                auto bit = addr[offset_ + i];
+                bits.push_back((set & (size_t{1} << i)) ? bit : n.invert("NOT_SET_" + id + "_" + std::to_string(i), bit));
+            }
+            selected.push_back(n.reduce("SELECT_" + id, bits, true));
+            cell("VALID_" + id, valid_cells, valid_q);
+            if (dirty_) cell("DIRTY_" + id, dirty_cells, dirty_q);
+        }
+        auto select = n.joinBits("SELECTED", selected);
+        auto valid = n.joinBits("VALID_Q", valid_q);
+        auto clear = n.maskBus("CLEAR", select, n.input("CLEAR"));
+        auto mark = n.maskBus("MARK", select, n.input("MARK"));
+        auto keep = n.wordGate(GateKind::And, "KEEP", valid, n.wordGate(GateKind::Not, "NOT_CLEAR", clear));
+        auto next = n.splitBits("NEXT_BITS", n.wordGate(GateKind::Or, "NEXT", keep, mark));
+        for (size_t set = 0; set < sets_; ++set) n.connect(next[set], valid_cells[set]->getInputPinDynamic("D"));
+        n.connect(n.reduce("VALID", n.splitBits("SELECTED_VALID_BITS",
+            n.wordGate(GateKind::And, "SELECTED_VALID", select, valid)), false), n.output("VALID"));
+        if (dirty_) {
+            auto dirty = n.joinBits("DIRTY_Q", dirty_q);
+            const auto spread = [&](const char* pin) { return n.broadcast(std::string(pin) + "_WORD", n.input(pin), sets_); };
+            auto refill = n.wordGate(GateKind::Or, "CLEAN_OR_REFILL",
+                n.wordGate(GateKind::Or, "CLEAN_OR_CLEAR", spread("CLEAN"), spread("CLEAR")), spread("MARK"));
+            auto cleaned = n.wordGate(GateKind::And, "CLEANED", refill, select);
+            auto set_dirty = n.maskBus("SET_DIRTY", select, n.input("SET_DIRTY"));
+            auto keep_dirty = n.wordGate(GateKind::And, "KEEP_DIRTY", dirty, n.wordGate(GateKind::Not, "NOT_CLEANED", cleaned));
+            auto next_dirty = n.splitBits("NEXT_DIRTY_BITS", n.wordGate(GateKind::Or, "NEXT_DIRTY", set_dirty, keep_dirty));
+            for (size_t set = 0; set < sets_; ++set) n.connect(next_dirty[set], dirty_cells[set]->getInputPinDynamic("D"));
+            n.connect(n.reduce("DIRTY", n.splitBits("SELECTED_DIRTY_BITS",
+                n.wordGate(GateKind::And, "SELECTED_DIRTY", select, dirty)), false), n.output("DIRTY"));
+        }
+        n.finish();
+    }
     size_t sets_, offset_;
     bool dirty_;
     std::string type_;

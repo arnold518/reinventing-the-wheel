@@ -7,6 +7,56 @@ import {upgradeDefaultLayout} from '../../visualizer-v2/static/layout_migration.
 const source = readFileSync(new URL('../../visualizer-v2/static/wasm_worker.js', import.meta.url), 'utf8');
 const context = vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('function migrateProfileOverrides('), source.indexOf('function normalizeProfileStore(')), context);
+const oldDevices = {
+  'SYNCHRONOUS_FIFO_ROOT.HEAD': 'structural',
+  'SYNCHRONOUS_FIFO_ROOT.SLOT_2.BIT_0': 'structural',
+  'CONSOLE_DEVICE_ROOT.TX_FIFO.COUNT_STATE': 'structural',
+  'CONSOLE_DEVICE_ROOT.PORT.OP': 'structural',
+  'DEVICE_REGISTER_PORT_W32_ROOT.PENDING': 'structural',
+  'ADDRESS_ROUTER_W32_ROOT.OWNER_2': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.FETCH_GUARD.HELD_ADDR': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.TIMER.COUNTER.DIVIDER': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.DISPLAY.FRAME_COUNTER': 'structural',
+  'FRAMEBUFFER_DISPLAY_ROOT.FRAME_COUNTER': 'structural',
+  'CLOCKED_COUNTER_ROOT.DIVIDER': 'structural',
+  'SYNCHRONOUS_FIFO_ROOT.POINTERS.HEAD': 'behavioral',
+  'UNRELATED.HEAD': 'structural',
+};
+const groupedDevices = {
+  'SYNCHRONOUS_FIFO_ROOT.POINTERS.HEAD': 'behavioral',
+  'SYNCHRONOUS_FIFO_ROOT.STORAGE.SLOT_2.BIT_0': 'structural',
+  'CONSOLE_DEVICE_ROOT.TX_FIFO.CONTROL.COUNT_STATE': 'structural',
+  'CONSOLE_DEVICE_ROOT.PORT.REQUEST.OP': 'structural',
+  'DEVICE_REGISTER_PORT_W32_ROOT.CONTROL.PENDING': 'structural',
+  'ADDRESS_ROUTER_W32_ROOT.REQUEST.OWNER_2': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.FETCH_GUARD.REQUEST.HELD_ADDR': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.TIMER.COUNTER.TICK_CONTROL.PHASE': 'structural',
+  'RV32IM_DEVICE_SYSTEM_ROOT.DISPLAY.FRAME_CONTROL.FRAME_COUNTER': 'structural',
+  'FRAMEBUFFER_DISPLAY_ROOT.FRAME_CONTROL.FRAME_COUNTER': 'structural',
+  'CLOCKED_COUNTER_ROOT.TICK_CONTROL.PHASE': 'structural',
+  'UNRELATED.HEAD': 'structural',
+};
+assert.deepEqual(JSON.parse(JSON.stringify(context.migrateProfileOverrides(oldDevices))),groupedDevices);
+assert.deepEqual(JSON.parse(JSON.stringify(context.migrateProfileOverrides(groupedDevices))),groupedDevices);
+assert.deepEqual(JSON.parse(execFileSync('/usr/bin/python3',['-c',
+  'import sys,json;sys.path.insert(0,"visualizer-v2");from profile_store import migrate_component_paths;print(json.dumps(migrate_component_paths(json.loads(sys.argv[1]))))',JSON.stringify(oldDevices)],
+  {cwd:new URL('../..',import.meta.url),timeout:10000})),groupedDevices);
+const deviceLayouts=JSON.parse(readFileSync(new URL('../../visualizer-v2/layout.json',import.meta.url)));
+let deviceStyles=0;
+for(const store of [deviceLayouts.type_layouts,deviceLayouts.root_layouts,...Object.values(deviceLayouts.profile_layouts)]) {
+  for(const entry of Object.values(store)) {
+    if(entry.layout_revision!=='device-io-groups-v1'||!entry.previous_default)continue;
+    const saved={...structuredClone(entry.previous_default),color:[12,34,56,190]};
+    const migrated=upgradeDefaultLayout(entry,saved);
+    for(const key of ['aspect_ratio','min_aspect_ratio','title_bar_ratio','pin_size_ratio','boundary_area_ratio'])
+      if(entry[key]!==undefined)assert.equal(migrated[key],entry[key]);
+    assert.deepEqual(migrated.color,saved.color);
+    assert.equal(upgradeDefaultLayout(entry,{...saved,aspect_ratio:9.876}).aspect_ratio,9.876);
+    assert.equal(upgradeDefaultLayout(entry,{...saved,layout_mode:'manual'}).layout_mode,'manual');
+    deviceStyles++;
+  }
+}
+assert(deviceStyles>20,deviceStyles);
 const legacy = {
   'RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.REGISTER_FILE.X7': 'behavioral',
   'RV32I_PROGRAM_ROOT.CORE.REGISTER_FILE.X7.BIT_31.STATE': 'behavioral',

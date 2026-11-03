@@ -120,7 +120,7 @@ void controllingFeedback(bool dual) {
     bool evidence=false;for(const auto& s:proof.state_evidence)evidence|=s.find("controlling-value")!=std::string::npos;
     check(evidence,"Feedback proof must record its controlling-value rule");
     Simulator sim;sim.setHistoryRecordingEnabled(false);
-    auto drive=[&](const std::string& n,SimulationTime t,LogicValue value){sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(t,inputs[n],value));};
+    auto drive=[&](const std::string& n,SimulationTime t,LogicValue value){sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,inputs[n],value));};
     for(const auto& [n,p]:inputs)drive(n,0,n=="RST"?H:L);
     SimulationTest::scheduleInitialEventsForTree(root,sim,0);sim.runAndRecord(100);
     drive("RST",101,L);sim.runAndRecord(200);

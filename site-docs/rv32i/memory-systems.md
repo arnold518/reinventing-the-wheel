@@ -10,8 +10,12 @@ chapter 3:
 - the [two-port memory arbiter](../memory/controllers.md#353-twoportmemoryarbiterw);
 - [caches](../memory/caches.md).
 
-Each arrangement runs one program in the simulator, so you can follow a
-request from the core to memory. Their measured speed over DRAM is in
+Arrangements B to D-ID are one [memory subsystem](../system/5.3.md)
+(`MemorySubsystem`, child `MEMORY` of the program root) configured with
+different caches: the core's `IMEM_` and `DMEM_` ports connect to its `I_` and
+`D_` ports, and its parts are `INSTRUCTION_CACHE`, `DATA_CACHE`, `ARBITER`,
+`SHARED_CACHE` and `RAM`, as configured. Each arrangement runs one program in
+the simulator, so you can follow a request from the core to memory. Their measured speed over DRAM is in
 [§ 4.8](experiments.md#memory-systems).
 
 <!-- diagram: cache-topologies -->
@@ -54,9 +58,9 @@ the advanced core's ordinary program scenario.
 
 ## B. One shared memory
 
-Both ports connect to `MEMORY_ARBITER`: `IMEM_` to its `I_` port and
-`DMEM_` to its `D_` port. The arbiter's `MEM_` port connects to
-`SHARED_MEMORY`. One request at a time passes the arbiter. When both ports
+Inside `MEMORY`, both ports reach `ARBITER`: `IMEM_` its `I_` port and
+`DMEM_` its `D_` port. The arbiter's `MEM_` port connects to `RAM`. One
+request at a time passes the arbiter. When both ports
 ask in the same cycle, the side that did not go last goes first. A response
 returns to the port that owns the request in flight, so the other port waits
 while it is served.
@@ -67,9 +71,9 @@ while it is served.
 
 ## C-ID. First-level caches
 
-`IMEM_` connects to `INSTRUCTION_CACHE` and `DMEM_` to `DATA_CACHE`. The
-caches' `MEM_` ports connect to the arbiter's `I_` and `D_` ports, and the
-arbiter to `SHARED_MEMORY`. A hit is answered by its cache and never reaches
+Inside `MEMORY`, `IMEM_` reaches `INSTRUCTION_CACHE` and `DMEM_`
+`DATA_CACHE`. The caches' `MEM_` ports connect to the arbiter's `I_` and `D_`
+ports, and the arbiter to `RAM`. A hit is answered by its cache and never reaches
 the arbiter; only misses and the data cache's writes to memory compete for
 it. The instruction cache is read-only.
 
@@ -79,8 +83,8 @@ it. The instruction cache is read-only.
 
 ## D-0. A shared second-level cache
 
-The ports connect to the arbiter as in B. The arbiter's `MEM_` port connects
-to `SHARED_CACHE`, and the cache's `MEM_` port to `SHARED_MEMORY`. Every
+The ports reach the arbiter as in B. The arbiter's `MEM_` port connects to
+`SHARED_CACHE`, and the cache's `MEM_` port to `RAM`. Every
 request passes the arbiter first; the shared cache then answers fetches and
 data accesses alike, so the two sides share its lines.
 

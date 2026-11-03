@@ -7,6 +7,7 @@ version-specific guidance against the current source before applying it.
 | --- | --- |
 | [Adding a component](adding-a-component.md) | Build and document a new component |
 | [Running tests and scenarios](tests-and-scenarios.md) | Find, run and publish existing scenario coverage |
+| [Local preview](local-preview.md) | Serve and recover the bounded documentation and visualizer preview |
 | [Selective layout refresh](automatic-layout-refresh.md) | Refresh saved visualizer layouts |
 | [Delay model explained](delay-model-explained.md) | Understand the delay model and its dated results |
 

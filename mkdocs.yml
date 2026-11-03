@@ -10,6 +10,7 @@ site_dir: site
 strict: true
 
 hooks:
+  - tools/mkdocs_recordings.py
   - tools/mkdocs_examples.py
   - tools/mkdocs_rv32i.py
   - tools/mkdocs_diagrams.py
@@ -108,8 +109,14 @@ copyright: Copyright &copy; 2026 Jaemin Park
 
 nav:
   - Home: index.md
-  - Time and Delay: timing.md
-  - Word components: components/word-components.md
+  - Basic:
+      - basic/index.md
+      - 1.1. Engine: basic/1.1.md
+      - 1.2. Time and Delay: basic/1.2.md
+      - 1.3. Logic Gates: basic/1.3.md
+      - 1.4. Wiring and Constants: basic/1.4.md
+      - 1.5. Selection and Decoding: basic/1.5.md
+      - 1.6. Clock Generator: basic/1.6.md
   - ALU:
       - 2.1. Arithmetic Components: alu/2.1.md
       - 2.2. Logic Operations: alu/2.2.md
@@ -270,34 +277,32 @@ nav:
           - 4.6.6. Complete Advanced Core: rv32i/4.6/core.md
       - 4.7. Memory Systems: rv32i/memory-systems.md
       - 4.8. Experiment Results: rv32i/experiments.md
-  - RV32IM:
-      - rv32im/index.md
-      - MultiplyStep: rv32im/multiply-step.md
-      - DivideStep: rv32im/divide-step.md
-      - Multiplier<W>: rv32im/multiplier.md
-      - Divider<W>: rv32im/divider.md
-      - MulDivUnit<W>: rv32im/muldiv.md
-      - RV32IMDecodeControl: rv32im/decode-control.md
-      - RV32IMDecodeStage: rv32im/decode-stage.md
-      - RV32IMExecuteStage: rv32im/execute-stage.md
-      - RV32IMPipelineCoordinator: rv32im/coordinator.md
-      - RV32IMFiveStageCore: rv32im/core.md
-      - Recorded programs: rv32im/programs.md
-      - RV32IMDeviceSystem: rv32im/device-system.md
-      - Recorded games: rv32im/recorded-games.md
-  - Device I/O:
-      - device-io/index.md
-      - AddressRouter<W>: device-io/address-router.md
-      - BusErrorTarget<W>: device-io/error-target.md
-      - InstructionAccessGuard<W>: device-io/instruction-guard.md
-      - DeviceRegisterPort<W>: device-io/register-port.md
-      - ClockedCounter: device-io/counter.md
-      - SynchronousFifo: device-io/fifo.md
-      - ConsoleDevice: device-io/console.md
-      - TimerDevice: device-io/timer.md
-      - ButtonDevice: device-io/buttons.md
-      - IndexedPixelSelector<W>: device-io/pixel-selector.md
-      - FramebufferDisplay: device-io/framebuffer.md
+  - Computer System:
+      - system/index.md
+      - 5.1. RV32IM Core:
+          - system/5.1/index.md
+          - 5.1.1. Multiply and Divide Units: system/5.1/arithmetic.md
+          - 5.1.2. Pipeline Parts: system/5.1/pipeline.md
+          - 5.1.3. RV32IMFiveStageCore: system/5.1/core.md
+          - 5.1.4. Recorded Programs: system/5.1/programs.md
+      - 5.2. Buses:
+          - system/5.2/index.md
+          - 5.2.1. BusRouter&lt;W&gt;: system/5.2/router.md
+          - 5.2.2. Bus&lt;W&gt;: system/5.2/bus.md
+          - 5.2.3. BusBridge&lt;W&gt;: system/5.2/bridge.md
+      - 5.3. Memory Subsystem: system/5.3.md
+      - 5.4. Devices:
+          - system/5.4/index.md
+          - 5.4.1. Registers: system/5.4/registers.md
+          - 5.4.2. Counter and Queue: system/5.4/state.md
+          - 5.4.3. Console: system/5.4/console.md
+          - 5.4.4. Timer: system/5.4/timer.md
+          - 5.4.5. Buttons: system/5.4/buttons.md
+          - 5.4.6. Display: system/5.4/display.md
+          - 5.4.7. LED Panel: system/5.4/leds.md
+      - 5.5. System Description: system/5.5.md
+      - 5.6. Games: system/5.6.md
+      - 5.7. Experiments: system/5.7.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

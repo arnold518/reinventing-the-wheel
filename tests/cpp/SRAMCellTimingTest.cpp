@@ -41,7 +41,7 @@ struct Bench {
     // Two bits per input: 0, 1, X, Z.
     void drive(unsigned vector, size_t at) {
         for (size_t i = 0; i < 4; ++i)
-            sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(at, in[i], LogicValue((vector >> (2 * i)) & 3)));
+            sim.scheduleEvent(std::make_shared<WireUpdateEvent>(at, in[i], LogicValue((vector >> (2 * i)) & 3)));
     }
     std::pair<LogicValue, LogicValue> outputs() const { return {q->getValueVector()[0], q_bar->getValueVector()[0]}; }
     // Store a bit, then rest at `vector`.

@@ -13,8 +13,12 @@ const std::vector<TimingProfile>& profiles() {
         std::vector<TimingProfile> list;
         TimingProfile unit;
         unit.name = "unit";
-        unit.description = "Every gate and memory primitive one tick; the splitter one tick. The timing of all results before realistic profiles.";
+        unit.description = "Every gate and memory primitive one tick; wiring (the splitter) no delay.";
         unit.sources = "none: an abstract unit";
+        // A splitter is wiring, as in the realistic profiles. Until 2026-10-27
+        // "unit" charged it one tick, an artifact that made a word regrouping
+        // of the same gates time differently from a zero-delay Rewire split.
+        unit.splitter = 0;
         list.push_back(unit);
 
         // Gate delays in picoseconds: an inverter driving four copies of

@@ -4,6 +4,7 @@
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Rewire.hpp"
+#include "../composite/WordSliceBuilder.hpp"  // private header, relative so test programs can include this file
 
 namespace circuit::memory_detail {
 // A bus mux is an explicit hierarchy group, not a behavioral storage element.
@@ -22,6 +23,17 @@ public:
             auto left=w.both("A_BIT",w.invert("NOT_SELECT",getInputPin("SEL")),getInputPin("A"));
             auto right=w.both("B_BIT",getInputPin("SEL"),getInputPin("B"));
             w.connect(w.either("SELECT",left,right),getOutputPin("OUT"));w.finish();return;
+        }
+        if(circuit::word::gateWidth(width_)) {
+            // Word gates: the same per-bit AND/AND/OR with one select inverter,
+            // the select (and its inverse) spread across the word by wiring.
+            using circuit::word::GateKind;
+            circuit::detail::WordSliceBuilder n(*this,b);
+            auto no=n.invert("NOT_SELECT",n.input("SEL"));
+            auto left=n.wordGate(GateKind::And,"A",n.broadcast("NOT_SELECT_WORD",no,width_),n.input("A"));
+            auto right=n.wordGate(GateKind::And,"B",n.broadcast("SELECT_WORD",n.input("SEL"),width_),n.input("B"));
+            n.connect(n.wordGate(GateKind::Or,"SELECT",left,right),n.output("OUT"));
+            n.finish();return;
         }
         auto a = memory_device::bitAdapter(b,"A_BITS",width_,true);
         auto d = memory_device::bitAdapter(b,"B_BITS",width_,true);

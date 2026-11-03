@@ -8,10 +8,11 @@
 
 int main(int argc,char** argv) {
     try {
-        if(argc!=3)throw std::invalid_argument("Usage: RecordedCircuitProbe <guest> <new-output.json>");
+        if(argc<3||argc>4)throw std::invalid_argument("Usage: RecordedCircuitProbe <guest> <new-output.json> [gate|logic|visual|compact]");
         const std::filesystem::path output=argv[2];
         if(std::filesystem::exists(output))throw std::invalid_argument("Output already exists");
         auto fixture=circuit::runtime::recordedGuestFixture(argv[1]);
+        fixture.options.fidelity_profile=argc==4?argv[3]:"compact";
         std::unique_ptr<circuit::visualizer::VisualizerSession> view;
         std::string topology,scopes;std::vector<std::string> checkpoints;
         size_t retained=0;

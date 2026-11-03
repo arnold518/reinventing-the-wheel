@@ -213,9 +213,10 @@ class DocumentationExamplesTest(unittest.TestCase):
                     self.assertEqual(behavior_headings[-2:], ["C++ example", "Unknown inputs"])
                     self.assertEqual(behavior_headings.count("C++ example"), 1)
                     self.assertEqual(implementation_headings[0], "Structural implementation")
-                    has_behavioral = component not in {"HalfAdder", "FullAdder", "SRLatch", "GatedDLatch", "DFlipFlop",
-                        "SRAMBitlinePair", "SRAMRowDecoder", "SRAMPrecharge", "SRAMWriteDriver",
-                        "SRAMSenseAmplifier", "SRAMColumnSelector<W>", "SRAMAccessControl<W>", "SRAMOutputBuffer<W>"}
+                    # HalfAdder, FullAdder and the combinational SRAM peripherals
+                    # have the gate-list compact form (2026-10-28).
+                    has_behavioral = component not in {"SRLatch", "GatedDLatch", "DFlipFlop",
+                        "SRAMBitlinePair", "SRAMSenseAmplifier", "SRAMAccessControl<W>", "SRAMOutputBuffer<W>"}
                     self.assertEqual(implementation_headings.count("Behavioral implementation"), int(has_behavioral))
                     if has_behavioral:
                         self.assertEqual(implementation_headings[-1], "Behavioral implementation")

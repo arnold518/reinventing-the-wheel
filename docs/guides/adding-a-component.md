@@ -63,6 +63,21 @@ call `finish()` to create deterministic nets. A component input cannot be
 wired directly to its own output; use `Rewire` for a pass-through. Include
 `ComponentBuilder.tpp` in the `.cpp`, not the public header.
 
+For bit-level recipes, `circuit::structural::Logic`
+(`include/components/StructuralLogic.hpp`) builds gates from bit vectors. It
+adds a split or join Rewire only where gates need the bits. A one-bit split or
+join, a repeated split of one source and a join of a complete split in order
+return the existing pin. The underlying `StructuralNetBuilder` never splits a
+join's output again (it reuses the join's bits), builds one Rewire for a join
+of bits from several words, and `finish()` removes adapters that drive
+nothing, so no split is wired straight into a join. A parent input that
+reaches a parent output through `wire`, `drive` or `out` gets one zero-delay
+`PASS_<output>` Rewire. Skipped adapters still use up their `SPLIT_n`/`JOIN_n`
+numbers, so the other child names stay stable. The former full split/join
+("Legacy") construction is retired. A new register device is a register table
+(`deviceRegisterTable`) plus its core; see [§ 5.4](../../site-docs/system/5.4/index.md). A new adapter child needs a saved layout
+placement; run `tools/check-static-layouts.py` for the affected scenarios.
+
 Create components through `Component::create<T>()`,
 `Component::createWithContext<T>()` or the builder. A plain
 `std::make_shared<T>` bypasses pin and internal construction. Keep names and
@@ -100,6 +115,15 @@ settled checkpoint checks final values; add a focused timing test when an
 exact transition time, setup, hold or intermediate pulse matters. The shared
 `ComponentTestRunner` builds separate trees for available fidelities, checks
 expectations, and compares their public output snapshots.
+
+A few recorded rows are not enough for a word-wide or multi-width part. Add a
+headless sweep with `FidelitySweep` (`include/tests/SettledSweep.hpp`) for
+every supported width: directed boundary and carry/propagation patterns,
+seeded random vectors and single X/Z inputs, against an independent integer
+reference and between both forms. Check once that it can fail: introduce a
+deliberate local fault that the recorded rows miss, confirm the sweep fails,
+then revert it. Keep the sweep out of the scenario that a site marker names,
+so the published table stays unchanged.
 
 Add its `entry<...>` in `src/tests/TestRegistry.cpp` and its name in the
 matching `SIMULATION_TESTS` list in `tests/CMakeLists.txt`, in the same order.
@@ -202,8 +226,15 @@ group only if callers need to instantiate that C++ class directly from Python.
 The private templates are in `ModuleBindingHelpers.hpp`; `ModulesBinding.cpp`
 calls the bounded compilation groups in registration order.
 
-For a visible scenario, add a stable alias, title and group in
-`visualizer-v2/static/scenarios.json`. Check
+For a visible scenario, add a stable alias, title, group and `fidelity` (the
+profile it opens in) in `visualizer-v2/static/scenarios.json`. Choose the
+profile that shows the part as it is meant to be read at a size the browser
+plays well: `gate` for small parts built from gates; `logic` when compact
+registers keep a stage or device readable; `visual` when memory, register or
+device pictures carry the meaning; `compact` when the part's compact children
+are the point. Compare part counts of the candidates
+(`server.scenario_topology`) before choosing. Its saved layouts are keyed to that
+profile, so fill them after choosing it. Check
 `VisualizerScenarioCatalogTest` so the new registry entry is classified and
 resolves by alias. When the topology or profile changes, generate and review
 its saved layout using `visualizer-v2/recalculate_layouts.py`; preview with
@@ -282,7 +313,8 @@ Explain any structural/behavioral difference in transient signals or supported
 four-state domain. Use actual test expectations for examples: the
 `simulator-examples` marker is replaced with verified scenario rows by
 `tools/mkdocs_examples.py`. `tools/build-pages.sh` regenerates rows from the
-WASM scenario before the strict MkDocs build. Do not type or copy a second
+WASM scenario before the strict MkDocs build, under the scenario's catalog
+fidelity profile, so the table matches what the embedded simulator opens. Do not type or copy a second
 example table by hand. Match the alias to `scenarios.json`, and use the exact
 registered test name. Follow a neighboring page's simulator iframe/link
 pattern and run its relevant documentation test if the chapter has one.
@@ -319,6 +351,21 @@ state belong in this observer. Preserve existing default keys and provide a
 migration before renaming a persisted variant. Device queue/router/display
 checks exercise this path in both viewer adapters.
 
+### Intentional floorplans
+
+Automatic layout keeps every child placed, not readable: a one-bit constant
+can come out as large as a datapath. A part whose children have a natural
+flow gets an intentional floorplan. Computer-system parts use
+`visualizer-v2/device_layout.py`: `placements()` returns child positions for
+the machine, a bus, the memory subsystem, the device roots, and small fixed
+grids (`_PART_GRIDS`) such as the register port, FIFO and clocked counter;
+each slot fits and centres its child. Keep the slots inside the parent's
+content area (the static check flags `OUTSIDE`), then refill with
+`recalculate_layouts.py --fill-missing <aliases> --reflow-types <types>`.
+Give a group of a new family its own palette prefix ahead of any broader
+prefix: the palette takes the first matching prefix, and a child drawn in its
+parent's colour cannot be told apart.
+
 ### Optional register and device views
 
 Register files implement `RegisterStateView` to expose their register image at
@@ -328,8 +375,10 @@ register count should not require another type-name check in the frontend.
 
 Devices can implement `DeviceView` to advertise `deviceViewKind()` and, for
 a display, `deviceSurfaceShape()` (width, height, byte stride and storage-word
-bytes). Current kinds are `display`, `keyboard`, `queue`, `console` and
-`timer`. This selects an existing observer; the implementation must also
+bytes). Current kinds are `display`, `keyboard`, `queue`, `console`,
+`timer`, `leds` and `bus`. A device contract whose compact form should show
+its picture under the Visual preset is also listed in
+`visualAbstractionKind` (`FidelityPresets.cpp`). This selects an existing observer; the implementation must also
 retain that observer's pin/state contract in `DeviceInspector.cpp`. A new
 kind needs a matching inspector and shared `device_view.js` renderer, with
 native/WASM and recorded-rewind checks. Preserve four-state/known-bit data
@@ -337,6 +386,14 @@ and validate geometry before allocating a frame. Type-name fallbacks support
 older modules and recordings; new implementations use the capability.
 
 These views observe state. They do not advance the simulator or inject input.
-See the public [word component reference](../../site-docs/components/word-components.md)
-and [device foundation](../reference/rv32im-device-foundation.md) for supported
+See the public [basic parts](../../site-docs/basic/index.md)
+and [computer system contracts](../reference/computer-system.md) for supported
 widths, parameters and the fixed game-register ABI.
+
+Behavioral IO compositions require explicit `BehavioralComposition` validation.
+Reuse proven smaller models and structural control builders; reject ordinary
+structural gate children in the compact composition. Keep public observer
+boundaries, compare both fidelities in the contract tests and derive delays
+for each compiled control model. A composed root does not invent a second
+whole-device delay table. See the named-preset reference for the four device
+compositions.

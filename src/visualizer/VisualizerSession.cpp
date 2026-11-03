@@ -1,4 +1,5 @@
 #include "visualizer/VisualizerSession.hpp"
+#include "components/selection/FidelityPresets.hpp"
 #include "visualizer/MemoryInspector.hpp"
 #include "visualizer/DeviceInspector.hpp"
 
@@ -26,6 +27,7 @@
 #include <cctype>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <iomanip>
 #include <limits>
 #include <set>
@@ -35,6 +37,11 @@
 
 namespace circuit::visualizer {
 namespace {
+// The one memory behind a two-port arbiter: the memory subsystem's RAM.
+bool sharedMemory(const std::shared_ptr<Component>& component) {
+    const auto parent = component ? component->getParent() : nullptr;
+    return component->getName() == "RAM" && parent && std::string(parent->getTypeName()) == "MemorySubsystem";
+}
 
 std::atomic<size_t> next_session_id{1};
 
@@ -248,7 +255,8 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     }
     const bool named_variants = type.starts_with("Cache") || type == "RV32IPredictionEntry" ||
                                 type.starts_with("RV32IPredictionTable<") || type == "RV32IBranchPredictor" ||
-                                type.starts_with("MemoryTimer<") || type.starts_with("ClockedCounter<");
+                                type.starts_with("MemoryTimer<") || type.starts_with("ClockedCounter<") ||
+                                type.starts_with("DRAMCommandControl<") || type.starts_with("NORFlashCommandControl<");
     if (named_variants && !children.empty()) {
         // Child names and types: a 4-set and a 2-set cache controller share
         // every name but not every type.
@@ -377,6 +385,59 @@ std::string memoryWordJson(
     return out;
 }
 
+// A fidelity preset and exact-path overrides, as the visualizer applies them.
+// The visualizer always names a preset (each scenario opens in its catalog
+// profile); a fixed scenario (one that takes no build profile) is shown as
+// built, its preset only a label. An empty preset keeps the test's own build
+// profile: for tests and the example-row generator, never offered in the
+// visualizer. Returns whether the scenario accepts profiles.
+bool applyVisualizerProfile(SimulationTest& test, const std::string& fidelity_preset,
+                            const std::map<std::string, std::string>& exact_overrides) {
+    const bool editable = test.supportsBuildProfile();
+    if(exact_overrides.empty()){
+        if(auto scenario=dynamic_cast<circuit::test::ComponentScenarioTest*>(&test)){
+            const auto restrictions=circuit::fidelityPresetRestrictions(scenario->getSpec().contract_id);
+            if(auto reason=restrictions.find(fidelity_preset);reason!=restrictions.end())
+                throw std::invalid_argument(reason->second);
+        }
+        const auto own=test.unavailableFidelityPresets();
+        if(auto reason=own.find(fidelity_preset);reason!=own.end())
+            throw std::invalid_argument(reason->second);
+    }
+    if(!fidelity_preset.empty()){
+        const auto names=circuit::fidelityPresetNames();
+        if(std::find(names.begin(),names.end(),fidelity_preset)==names.end())
+            throw std::invalid_argument("Unknown fidelity profile: "+fidelity_preset);
+        if(editable)test.setBuildProfile(circuit::fidelityPreset(fidelity_preset,circuit::builtinComponentCatalog()));
+    }
+    if (!exact_overrides.empty()) {
+        if (!editable) {
+            throw std::invalid_argument("Scenario does not accept component fidelity changes");
+        }
+        auto profile = test.getBuildProfile();
+        std::vector<circuit::ProfileRule> rules;
+        rules.reserve(exact_overrides.size());
+        for (const auto& [path, requested] : exact_overrides) {
+            circuit::Fidelity fidelity;
+            if (requested == "structural") {
+                fidelity = circuit::Fidelity::Structural;
+            } else if (requested == "behavioral") {
+                fidelity = circuit::Fidelity::Behavioral;
+            } else {
+                throw std::invalid_argument(
+                    "Fidelity for '" + path + "' must be structural or behavioral");
+            }
+            rules.push_back(circuit::preferFidelity(
+                fidelity,
+                circuit::ProfileSelector::exactPath(path),
+                "visualizer exact-path override"));
+        }
+        test.setBuildProfile(circuit::withProfileOverrides(
+            std::move(profile), std::move(rules), "visualizer-wasm"));
+    }
+    return editable;
+}
+
 } // namespace
 
 std::vector<SimulationTime> memoryActivityTimestamps(const std::shared_ptr<Component>& root) {
@@ -411,7 +472,7 @@ MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Sim
         }
     }
     for (auto current = component; current; current = current->getParent()) {
-        if (current->getName() != "SHARED_MEMORY") continue;
+        if (!sharedMemory(current)) continue;
         // A request is told apart by the arbiter: when the arbiter drives the
         // memory, by its grant at the accepting edge; with a shared cache
         // between them, by the side whose request the arbiter has in flight
@@ -515,7 +576,7 @@ std::string MemoryInspector::stateJson(size_t index, SimulationTime time, const 
     object.boolean("supported", true);
     std::string role = scenario == "rv32i-program-loader" ? "instruction" : "generic";
     for (std::shared_ptr<Component> current = component_; current; current = current->getParent()) {
-        if (current->getName() == "SHARED_MEMORY" && arbiter_) { role = "unified"; break; }
+        if (sharedMemory(current) && arbiter_) { role = "unified"; break; }
         if (current->getName() == "INSTRUCTION_MEMORY") { role = "instruction"; break; }
         if (current->getName() == "DATA_MEMORY") { role = "data"; break; }
     }
@@ -713,43 +774,21 @@ VisualizerSession::VisualizerSession(
     std::string registered_test_name,
     std::string scenario_key,
     std::map<std::string, std::string> exact_overrides,
-    size_t profile_revision)
+    size_t profile_revision,std::string fidelity_preset)
     : registered_test_name_(std::move(registered_test_name)),
       scenario_key_(std::move(scenario_key)),
+      fidelity_preset_(std::move(fidelity_preset)),
       exact_overrides_(std::move(exact_overrides)),
       profile_revision_(profile_revision) {
     test_ = createTestByName(registered_test_name_);
     if (!test_) {
         throw std::invalid_argument("Unknown simulation test: " + registered_test_name_);
     }
-    profile_editable_ = test_->supportsBuildProfile();
-    if (!exact_overrides_.empty()) {
-        if (!profile_editable_) {
-            throw std::invalid_argument("Scenario does not accept component fidelity changes");
-        }
-        auto profile = test_->getBuildProfile();
-        std::vector<circuit::ProfileRule> rules;
-        rules.reserve(exact_overrides_.size());
-        for (const auto& [path, requested] : exact_overrides_) {
-            circuit::Fidelity fidelity;
-            if (requested == "structural") {
-                fidelity = circuit::Fidelity::Structural;
-            } else if (requested == "behavioral") {
-                fidelity = circuit::Fidelity::Behavioral;
-            } else {
-                throw std::invalid_argument(
-                    "Fidelity for '" + path + "' must be structural or behavioral");
-            }
-            rules.push_back(circuit::preferFidelity(
-                fidelity,
-                circuit::ProfileSelector::exactPath(path),
-                "visualizer exact-path override"));
-        }
-        test_->setBuildProfile(circuit::withProfileOverrides(
-            std::move(profile), std::move(rules), "visualizer-wasm"));
-    }
+    profile_editable_ = applyVisualizerProfile(*test_, fidelity_preset_, exact_overrides_);
 
     test_->setupCircuit();
+    if(exact_overrides_.empty() && profile_editable_ && !fidelity_preset_.empty())
+        circuit::validateFidelityPreset(test_->getRoot(),fidelity_preset_);
     test_->preparePrecomputedSimulation();
     root_ = test_->getRoot();
     if (!root_) throw std::runtime_error("C++ test scenario did not produce a root component");
@@ -796,13 +835,17 @@ VisualizerSession::VisualizerSession(std::shared_ptr<Component> root,
 }
 
 std::string VisualizerSession::topologySlicesJson() const {
-    std::vector<std::string> slices,ids;
+    std::vector<std::string> slices;
+    forEachTopologySlice([&](const std::string& slice){slices.push_back(slice);});
+    return arrayJson(slices,[](const auto& item){return item;});
+}
+void VisualizerSession::forEachTopologySlice(const std::function<void(const std::string&)>& consume)const{
+    std::vector<std::string> ids;
     for(const auto& component:components_) {
         ids.push_back(component.id);
-        if(ids.size()==512){slices.push_back(topologySliceJson(ids));ids.clear();}
+        if(ids.size()==512){consume(topologySliceJson(ids));ids.clear();}
     }
-    if(!ids.empty())slices.push_back(topologySliceJson(ids));
-    return arrayJson(slices,[](const auto& item){return item;});
+    if(!ids.empty())consume(topologySliceJson(ids));
 }
 
 std::string VisualizerSession::currentCheckpointJson(SimulationTime time) {
@@ -820,6 +863,16 @@ std::string VisualizerSession::currentCheckpointJson(SimulationTime time) {
             states.raw(component.id,componentStateJson(0,component.id));
     }
     states.end();checkpoint.end();return result;
+}
+
+void VisualizerSession::forEachPin(const std::function<void(size_t, const std::shared_ptr<PinBase>&)>& consume) const {
+    for (const auto& pin : pins_) consume(pin.state_index, pin.handle);
+}
+void VisualizerSession::forEachWire(const std::function<void(size_t, const std::shared_ptr<WireBase>&)>& consume) const {
+    for (const auto& wire : wires_) consume(wire.state_index, wire.handle);
+}
+void VisualizerSession::forEachComponent(const std::function<void(const std::shared_ptr<Component>&)>& consume) const {
+    for (const auto& component : components_) consume(component.handle);
 }
 
 std::string VisualizerSession::exampleRowsJson() const {
@@ -1271,6 +1324,8 @@ std::string VisualizerSession::topologyResponseJson() {
         item.string("id", record.id);
         item.string("name", record.name);
         item.string("type", record.type);
+        const auto abstraction=circuit::visualAbstractionKind(component->getContractId());
+        if(!abstraction.empty())item.string("visualAbstraction",abstraction);
         const auto device_kind=deviceViewKind(component);
         if(!device_kind.empty())item.string("deviceViewKind",device_kind);
         if(std::dynamic_pointer_cast<RegisterStateView>(component))item.boolean("registerView",true);
@@ -1359,6 +1414,18 @@ std::string VisualizerSession::topologyResponseJson() {
     profile.number("revision", profile_revision_);
     profile.raw("exactOverrides", overrides_json);
     profile.string("fingerprint", profile_fingerprint);
+    profile.string("fidelityPreset",fidelity_preset_);
+    profile.number("presetVersion",1);
+    profile.boolean("custom",!exact_overrides_.empty());
+    profile.raw("availablePresets",stringArray(circuit::fidelityPresetNames()));
+    auto restrictions=circuit::fidelityPresetRestrictions(root_->getContractId());
+    // The scenario's own reasons replace its root contract's.
+    if(test_)for(const auto& [name,reason]:test_->unavailableFidelityPresets())restrictions[name]=reason;
+    if(!restrictions.empty()){
+        profile.key("unavailablePresets");JsonObject unavailable(out);
+        for(const auto& [name,reason]:restrictions)unavailable.string(name,reason);
+        unavailable.end();
+    }
     profile.end();
     object.key("stats");
     JsonObject stats(out);
@@ -1368,6 +1435,39 @@ std::string VisualizerSession::topologyResponseJson() {
     stats.number("timestampCount", timestamps_.size());
     stats.end();
     object.end();
+    return out;
+}
+
+std::string VisualizerSession::previewComponentsJson(
+    const std::string& registered_test_name,
+    const std::map<std::string, std::string>& exact_overrides,
+    const std::string& fidelity_preset) {
+    auto test = createTestByName(registered_test_name);
+    if (!test) throw std::invalid_argument("Unknown simulation test: " + registered_test_name);
+    applyVisualizerProfile(*test, fidelity_preset, exact_overrides);
+    test->setupCircuit();  // Builds only; nothing is scheduled or simulated.
+    const auto root = test->getRoot();
+    if (!root) throw std::runtime_error("C++ test scenario did not produce a root component");
+    std::string out = "{\"components\":[";
+    size_t count = 0;
+    std::function<void(const std::shared_ptr<Component>&, std::optional<size_t>)> walk =
+        [&](const std::shared_ptr<Component>& component, std::optional<size_t> parent) {
+            const size_t index = count++;
+            if (index) out += ',';
+            JsonObject item(out);
+            item.string("id", component->getID());
+            item.string("name", component->getName());
+            item.string("type", component->getTypeName());
+            if (parent) item.number("parentIndex", *parent); else item.null("parentIndex");
+            item.string("fidelity", component->getSelectedFidelity());
+            const auto available = component->getAvailableFidelities();
+            if (!available.empty()) item.raw("availableFidelities", stringArray(available));
+            if (component->isProfileSelectable()) item.boolean("profileSelectable", true);
+            item.end();
+            for (const auto& child : component->getChildren()) walk(child, index);
+        };
+    walk(root, std::nullopt);
+    out += "]}";
     return out;
 }
 

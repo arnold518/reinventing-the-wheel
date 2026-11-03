@@ -106,35 +106,52 @@ size_t Rewire::getTotalOutputBits() const {
     return total;
 }
 
-void Rewire::evaluate(SimulationTime current_time, Simulator& simulator) {
-    std::map<std::string, std::vector<LogicValue>> output_values;
-    for (const auto& output : outputs) {
-        output_values[output.name] = std::vector<LogicValue>(output.width, getUnmappedValue());
-    }
-
+void Rewire::resolveRoutes() {
+    input_pins_.clear();
+    output_pins_.clear();
+    routes_.clear();
+    for (const auto& input : inputs) input_pins_.push_back(getInputPinDynamic(input.name));
+    for (const auto& output : outputs) output_pins_.push_back(getOutputPinDynamic(output.name));
+    auto index = [](const std::vector<WireSpec>& specs, const std::string& name) {
+        for (size_t i = 0; i < specs.size(); ++i) if (specs[i].name == name) return i;
+        return specs.size();
+    };
     for (const auto& mapping : bit_mappings) {
-        auto input_pin = getInputPinDynamic(mapping.src_wire);
-        if (!input_pin) {
-            continue;
-        }
+        const auto input = index(inputs, mapping.src_wire);
+        const auto output = index(outputs, mapping.dst_wire);
+        // A mapping from a missing input leaves its output bit unmapped.
+        if (input == inputs.size() || !input_pins_[input] || output == outputs.size()) continue;
+        routes_.push_back({input, mapping.src_bit, output, mapping.dst_bit});
+    }
+    routes_resolved_ = true;
+}
 
-        output_values[mapping.dst_wire][mapping.dst_bit] = input_pin->getBit(mapping.src_bit);
+void Rewire::evaluate(SimulationTime current_time, Simulator& simulator) {
+    if (!routes_resolved_) resolveRoutes();
+    const LogicValue unmapped = getUnmappedValue();
+    output_values_.resize(outputs.size());
+    for (size_t index = 0; index < outputs.size(); ++index) {
+        output_values_[index] = PackedLogic::filled(unmapped, outputs[index].width);
     }
 
-    for (const auto& output : outputs) {
-        auto output_pin = getOutputPinDynamic(output.name);
+    for (const auto& route : routes_) {
+        output_values_[route.output].set(route.dst_bit, input_pins_[route.input]->getBit(route.src_bit));
+    }
+
+    for (size_t index = 0; index < outputs.size(); ++index) {
+        const auto& output_pin = output_pins_[index];
         if (!output_pin) {
             continue;
         }
 
-        const auto& values = output_values[output.name];
-        output_pin->setValueFromVector(values);
+        const size_t width = outputs[index].width;
+        const auto& value = output_values_[index];
+        output_pin->setPacked(value.resized(width, output_pin->getWidth()));
         if (auto wire = output_pin->getExternalWireBase()) {
-            if (auto event = makeWireUpdateEvent(checkedTimeAdd(current_time, getDelay()), wire, values)) {
-                simulator.scheduleEvent(event);
-            }
+            simulator.scheduleEvent(circuit::makeEvent<WireUpdateEvent>(checkedTimeAdd(current_time, getDelay()), wire,
+                value.resized(width, wire->getWidth())));
         } else {
-            simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output_pin, values);
+            simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output_pin, value.toVector(width));
         }
     }
 }

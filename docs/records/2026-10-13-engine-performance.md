@@ -1,6 +1,6 @@
 # Engine performance: measurement and plan
 
-Started: 2026-10-13. Status: open. Code state: `github-pages` at `448e4e3`, with an uncommitted documentation reorganisation in the working tree. No source file was changed by this work.
+Started: 2026-10-13. Status: closed (superseded 2026-10-27). Code state: `github-pages` at `448e4e3`, with an uncommitted documentation reorganisation in the working tree. No source file was changed by this work.
 
 ## Summary
 
@@ -192,3 +192,12 @@ fidelity.
 - The native visualizer path (history on) and the WebAssembly build were not
   measured.
 - No test was run; nothing in the repository was built.
+
+## 2026-10-27 — Closed as superseded
+
+The [2026-10-26 engine performance investigation](2026-10-26-engine-performance.md)
+measured and replaced this plan. Its pin-handle estimate did not hold: the
+implemented gate input caches gave 0.7–1.2% lower CPU, not 1.5–2×. The three
+open decisions above (simulator-owned index tables, event-count changes,
+phase order) are carried into that record's 2026-10-27 plan as owner
+decisions. This record is frozen.

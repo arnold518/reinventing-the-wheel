@@ -65,7 +65,7 @@ public:
         pin->setValueFromVector(value);
         const auto wire = pin->getExternalWire();
         if (!wire) { sim.recordPinChange(time, pin, value); return; }
-        std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent<W>>(time, wire, value);
+        std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent>(time, wire, value);
         pending_.push_back(event);
         sim.scheduleEvent(std::move(event));
     }
@@ -106,7 +106,7 @@ public:
         current_ = value; published_ = true;
         if (!pin) return;
         pin->setValueFromVector(value);
-        if (const auto wire = pin->getExternalWire()) sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t, wire, value));
+        if (const auto wire = pin->getExternalWire()) sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t, wire, value));
         else sim.recordPinChange(t, pin, value);
     }
     const std::vector<LogicValue>& value() const { return current_; }

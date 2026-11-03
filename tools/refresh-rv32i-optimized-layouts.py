@@ -25,7 +25,7 @@ def refresh(path):
     representatives = {}
     roots = {}
     for test in ("RV32IBitPatternMatcherTest", "RV32IExecuteStageTest", "RV32IPredictionPathTest"):
-        root = server.circuit_backend.create_layout_topology(test)
+        root = server.scenario_topology(test)
         roots[server.scenario_canonical_alias(test)] = root
         for component, _ in layouts._walk(root):
             if component.get_type_name() in KINDS:

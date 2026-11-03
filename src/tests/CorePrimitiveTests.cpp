@@ -143,7 +143,7 @@ void expectWireAt(Simulator& sim,
 }
 
 void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, LogicValue value) {
-    sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, value));
+    sim.scheduleEvent(std::make_shared<WireUpdateEvent>(time, wire, value));
 }
 
 void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
@@ -315,15 +315,15 @@ void SimulatorDrainUntilIdleTest::verifyResults() {
 
     auto same_time_high = std::make_shared<Wire<>>(
         "SAME_TIME_HIGH");
-    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent>(
         200, same_time_high, LogicValue::LOW));
-    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent>(
         200, same_time_high, LogicValue::HIGH));
     auto same_time_low = std::make_shared<Wire<>>(
         "SAME_TIME_LOW");
-    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent>(
         200, same_time_low, LogicValue::HIGH));
-    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent>(
         200, same_time_low, LogicValue::LOW));
     const auto same_time_drained =
         local_sim.drainUntilIdle(200, 100);

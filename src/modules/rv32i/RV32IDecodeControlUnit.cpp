@@ -461,24 +461,51 @@ public:
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& b) override {
         circuit::detail::StructuralWiring w(b);
-        std::vector<Rewire::WireSpec> outputs;
-        std::vector<Rewire::BitMap> mappings;
-        for (size_t i = 0; i < patterns().size(); ++i) {
-            outputs.push_back({patterns()[i].name, 1});
-            mappings.emplace_back(i < 32 ? "MATCH_LO" : "MATCH_HI", i % 32, patterns()[i].name, 0);
+        // Which recognition lines each output bit ORs (inverted when its
+        // default is 1). A bit that is one line, uninverted, is taken from the
+        // match words by OUTPUT_BITS itself: no picking Rewire feeding a
+        // packing Rewire.
+        std::vector<std::vector<size_t>> terms(width_);
+        bool gated = false;
+        for (size_t bit = 0; bit < width_; ++bit) {
+            const bool fallback = ((default_ >> bit) & 1U) != 0;
+            for (size_t i = 0; i < values_.size(); ++i)
+                if ((((values_[i] >> bit) & 1U) != 0) != fallback) terms[bit].push_back(i);
+            gated = gated || terms[bit].size() > 1 || (terms[bit].size() == 1 && fallback);
         }
-        auto matches = b.addNewComponent<Rewire>("MATCH_BITS",
-            std::vector<Rewire::WireSpec>{{"MATCH_LO",32},{"MATCH_HI",8}}, outputs, mappings);
-        for (auto pin : {"MATCH_LO", "MATCH_HI"})
-            w.connect(getInputPinDynamic(pin), matches->getInputPinDynamic(pin));
+        const auto direct = [&](size_t bit) { return terms[bit].size() == 1 && ((default_ >> bit) & 1U) == 0; };
+        std::shared_ptr<Rewire> matches;
+        if (gated) {
+            std::vector<Rewire::WireSpec> outputs;
+            std::vector<Rewire::BitMap> mappings;
+            for (size_t i = 0; i < patterns().size(); ++i) {
+                outputs.push_back({patterns()[i].name, 1});
+                mappings.emplace_back(i < 32 ? "MATCH_LO" : "MATCH_HI", i % 32, patterns()[i].name, 0);
+            }
+            matches = b.addNewComponent<Rewire>("MATCH_BITS",
+                std::vector<Rewire::WireSpec>{{"MATCH_LO",32},{"MATCH_HI",8}}, outputs, mappings);
+            for (auto pin : {"MATCH_LO", "MATCH_HI"})
+                w.connect(getInputPinDynamic(pin), matches->getInputPinDynamic(pin));
+        }
         std::vector<Rewire::WireSpec> bit_inputs;
         std::vector<Rewire::BitMap> bit_maps;
+        bool uses_lo = false, uses_hi = false;
         for (size_t bit = 0; bit < width_; ++bit) {
+            if (direct(bit)) {
+                const auto line = terms[bit].front();
+                (line < 32 ? uses_lo : uses_hi) = true;
+                bit_maps.emplace_back(line < 32 ? "MATCH_LO" : "MATCH_HI", line % 32, "OUT", bit);
+                continue;
+            }
             bit_inputs.push_back({"BIT_" + std::to_string(bit), 1});
             bit_maps.emplace_back("BIT_" + std::to_string(bit), 0, "OUT", bit);
         }
+        if (uses_lo) bit_inputs.push_back({"MATCH_LO", 32});
+        if (uses_hi) bit_inputs.push_back({"MATCH_HI", 8});
         auto join = b.addNewComponent<Rewire>("OUTPUT_BITS", bit_inputs,
             std::vector<Rewire::WireSpec>{{"OUT", width_}}, bit_maps);
+        if (uses_lo) w.connect(getInputPinDynamic("MATCH_LO"), join->getInputPinDynamic("MATCH_LO"));
+        if (uses_hi) w.connect(getInputPinDynamic("MATCH_HI"), join->getInputPinDynamic("MATCH_HI"));
         // A few output bits use the same adjacent recognition pair. Share
         // those OR nodes within this field while retaining balanced depth.
         std::map<std::pair<std::string,std::string>,
@@ -504,15 +531,14 @@ public:
             return inputs.front();
         };
         for (size_t bit = 0; bit < width_; ++bit) {
+            if (direct(bit)) continue;
             const bool fallback = ((default_ >> bit) & 1U) != 0;
-            std::vector<circuit::detail::StructuralWiring::PinPtr> terms;
-            for (size_t i = 0; i < values_.size(); ++i)
-                if ((((values_[i] >> bit) & 1U) != 0) != fallback)
-                    terms.push_back(matches->getOutputPin(patterns()[i].name));
+            std::vector<circuit::detail::StructuralWiring::PinPtr> lines;
+            for (const auto i : terms[bit]) lines.push_back(matches->getOutputPin(patterns()[i].name));
             const auto prefix = "BIT_" + std::to_string(bit);
-            const bool has_terms = !terms.empty();
-            auto value = terms.empty() ? w.constant(prefix + "_CONSTANT", fallback)
-                                       : reduceShared(prefix + "_OR", std::move(terms));
+            const bool has_terms = !lines.empty();
+            auto value = lines.empty() ? w.constant(prefix + "_CONSTANT", fallback)
+                                       : reduceShared(prefix + "_OR", std::move(lines));
             if (has_terms && fallback) value = w.invert(prefix + "_DEFAULT_NOT", value);
             w.connect(value, join->getInputPin(prefix));
         }

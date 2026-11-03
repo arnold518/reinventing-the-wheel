@@ -32,13 +32,15 @@ def on_serve(server, **_kwargs):
 
 def on_post_build(*, config, **_kwargs):
     """Copy the existing WASM build into MkDocs' temporary served site."""
-    if not (SIMULATOR_SOURCE / "index.html").is_file():
+    source = REPOSITORY_DIR / config["extra"].get("preview_simulator_dir", SIMULATOR_SOURCE)
+    if not (source / "index.html").is_file():
         raise PluginError(
-            "The WebAssembly visualizer has not been built. "
-            "Run ./tools/build-pages.sh once before starting the preview service."
+            f"The WebAssembly visualizer has not been built at {source}. "
+            "Run ./tools/build-pages.sh with the configured build directory "
+            "before starting the preview service."
         )
 
     destination = Path(config.site_dir) / "simulator"
     shutil.rmtree(destination, ignore_errors=True)
-    shutil.copytree(SIMULATOR_SOURCE, destination)
+    shutil.copytree(source, destination)
     (Path(config.site_dir) / ".nojekyll").touch()

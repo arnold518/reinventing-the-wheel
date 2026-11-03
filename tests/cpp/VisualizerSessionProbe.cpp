@@ -1,8 +1,12 @@
+#include "system/Json.hpp"
+#include <fstream>
+#include <iterator>
 #include "visualizer/VisualizerSession.hpp"
 
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -24,12 +28,26 @@ void usage() {
     std::cerr
         << "Usage:\n"
         << "  VisualizerSessionProbe --list\n"
-        << "  VisualizerSessionProbe <topology|state|component|slice|examples> "
+        << "  VisualizerSessionProbe <topology|state|component|slice|examples|preview> "
            "<registered-test> <scenario> [command arguments] "
-           "[--revision N] [--override PATH FID]...\n";
+           "[--revision N] [--fidelity gate|logic|visual|compact|test] [--override PATH FID]...\n";
 }
 
 } // namespace
+
+std::string defaultFidelity(const std::string& registered_test) {
+    std::ifstream file(std::string(CIRCUITSIM_SOURCE_DIR) + "/visualizer-v2/static/scenarios.json");
+    if (!file) throw std::runtime_error("Cannot read the scenario catalog");
+    const auto catalog = circuit::system::Json::parse(std::string(std::istreambuf_iterator<char>(file), {}));
+    if (const auto* entry = catalog.at("components").find(registered_test))
+        return entry->at("fidelity").string("fidelity");
+    if (const auto at = registered_test.find("/program-"); at != std::string::npos) {
+        const auto id = registered_test.substr(at + 1, std::string("program-00").size());
+        for (const auto& program : catalog.at("programs").array("programs"))
+            if (program.at("id").string("id") == id) return program.at("fidelity").string("fidelity");
+    }
+    throw std::invalid_argument("No catalog fidelity for " + registered_test);
+}
 
 int main(int argc, char** argv) {
     try {
@@ -67,17 +85,25 @@ int main(int argc, char** argv) {
                 owner_ids.emplace_back(argv[cursor++]);
             }
             if (owner_ids.empty()) throw std::invalid_argument("slice requires at least one owner id");
-        } else if (command != "topology" && command != "examples") {
+        } else if (command != "topology" && command != "examples" && command != "preview") {
             throw std::invalid_argument("Unknown command: " + command);
         }
 
         size_t revision = 0;
+        // Without --fidelity, the scenario's own profile from the catalog
+        // (programs too), as the visualizer opens it; "test" keeps
+        // the test's own build profile (the WebAssembly bridge's default,
+        // which tools/run-web-tests.py selects for its parity checks).
+        std::optional<std::string> requested_fidelity;
         int64_t address = -1;
         size_t count = 64;
         std::map<std::string, std::string> overrides;
         while (cursor < static_cast<size_t>(argc)) {
             const std::string option = argv[cursor++];
-            if (option == "--address" || option == "--count") {
+            if(option=="--fidelity"){
+                if(cursor>=static_cast<size_t>(argc))throw std::invalid_argument("--fidelity requires a preset");
+                requested_fidelity=argv[cursor++];
+            } else if (option == "--address" || option == "--count") {
                 if (cursor >= static_cast<size_t>(argc)) throw std::invalid_argument("Missing memory page argument");
                 if (option == "--address") address = static_cast<int64_t>(parseIndex(argv[cursor++]));
                 else count = parseIndex(argv[cursor++]);
@@ -97,11 +123,21 @@ int main(int argc, char** argv) {
             }
         }
 
+        const char* probe_default = std::getenv("CIRCUITSIM_PROBE_DEFAULT_FIDELITY");
+        std::string fidelity = requested_fidelity ? *requested_fidelity
+                             : probe_default ? std::string(probe_default) : defaultFidelity(registered_test);
+        if (fidelity == "test") fidelity.clear();  // the test's own build profile
+
+        if (command == "preview") {
+            // Build-only part list; no session, nothing simulated.
+            std::cout << VisualizerSession::previewComponentsJson(registered_test, overrides, fidelity) << '\n';
+            return EXIT_SUCCESS;
+        }
         VisualizerSession session(
             registered_test,
             scenario,
             std::move(overrides),
-            revision);
+            revision,fidelity);
         if (command == "topology") {
             std::cout << session.topologyResponseJson();
         } else if (command == "examples") {

@@ -114,12 +114,16 @@ def main() -> None:
         # inherit the proportions of the largest one. Styles remain reusable.
         manager = server.LayoutManager(Path(directory) / "rewire-layout.json")
         manager.type_layouts["Rewire"] = {"aspect_ratio": 9, "min_aspect_ratio": 9, "color": [1, 2, 3, 190]}
+        # The read-valid broadcast is one 1-bit input and one W-bit output, so
+        # every width shares one pin configuration and one layout key.
+        rewires = []
         for width in (8, 16, 32):
             memory = circuit_backend.create_ff_memory("M", width, 1, fidelity="structural")
             read = next(c for c in memory.get_children() if c.get_name() == "READ_SELECT")
-            rewire = next(c for c in read.get_children() if c.get_type_name() == "Rewire")
-            key = f"Rewire<in=1,out={width}>"
-            assert server._component_layout_type(rewire) == key
+            rewires.append((memory, next(c for c in read.get_children() if c.get_type_name() == "Rewire")))
+        key = "Rewire<in=1,out=1>"
+        assert all(server._component_layout_type(rewire) == key for _, rewire in rewires)
+        for _, rewire in rewires[:1]:
             assert "aspect_ratio" not in manager.get_layout_for_component(rewire)
             manager.ensure_component_layout_defaults(rewire)
             minimum = manager.minimum_aspect_for_component(rewire)

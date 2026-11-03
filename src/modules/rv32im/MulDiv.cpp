@@ -83,14 +83,14 @@ const ComponentFamily& divideStep(size_t width) {
 }
 MultiplyStep::MultiplyStep(std::string name,size_t width):IOComponent(std::move(name),[width](IOComponent*p){stepPins(p,width,false);}),width_(width),type_("MultiplyStep<"+std::to_string(width)+">"){}
 void MultiplyStep::buildInternals(ComponentBuilder& b) {
-    Logic l(b);auto a=l.split(getInputPinDynamic("A"));for(auto&x:a)x=l.land({x,getInputPin("BIT")});
-    auto [sum,carry]=l.add({l.split(getInputPinDynamic("HI")),a,l.bit(false)});
-    l.drive(sum,getOutputPinDynamic("SUM"));l.out(carry,getOutputPin("CARRY"));l.finish();
+    Logic l(b);auto a=l.mask(l.split(getInputPinDynamic("A")),getInputPin("BIT"));
+    auto [sum,carry]=l.addToWord(getInputPinDynamic("HI"),a,false);
+    l.wire(sum,getOutputPinDynamic("SUM"));l.out(carry,getOutputPin("CARRY"));l.finish();
 }
 DivideStep::DivideStep(std::string name,size_t width):IOComponent(std::move(name),[width](IOComponent*p){stepPins(p,width,true);}),width_(width),type_("DivideStep<"+std::to_string(width)+">"){}
 void DivideStep::buildInternals(ComponentBuilder& b) {
     Logic l(b);auto r=l.split(getInputPinDynamic("REMAINDER"));auto high=r.back();
-    r=l.shiftLeft(r,getInputPin("BIT"));auto [difference,carry]=l.sub({r,l.split(getInputPinDynamic("DIVISOR"))});
+    r=l.shiftLeft(r,getInputPin("BIT"));auto [difference,carry]=l.subtractWord(r,getInputPinDynamic("DIVISOR"));
     auto ge=l.lor({high,carry});l.drive(l.mux({ge,r,difference}),getOutputPinDynamic("NEXT_REMAINDER"));
     l.out(ge,getOutputPin("QUOTIENT_BIT"));l.finish();
 }

@@ -222,10 +222,12 @@ takes its delays path by path from its table.
 With the cores' real memory sizes the certified periods (FF memory) are
 stored per profile in `CERTIFIED_CORE_PERIODS`
 (`include/analysis/ExperimentClock.hpp`) and checked by
-`RV32IProfileSweepTest`: `unit` 166 / 80 / 94, `embedded` 7,164 / 3,354 /
+`RV32IProfileSweepTest`: `unit` 142 / 68 / 80, `embedded` 7,164 / 3,354 /
 4,104 ps, `desktop` 4,986 / 2,334 / 2,858 ps (single-cycle, baseline,
-advanced). Earlier `unit` values of the advanced core (98, then 100) are
-history in the realistic-timing progress record.
+advanced). The `unit` values were 166 / 80 / 94 until 2026-10-27, when the bus
+splitter stopped costing a tick in `unit` (the advanced core was 82 until the
+`unit` tables got their second pass the same day); earlier advanced-core values (98,
+then 100) are history in the realistic-timing progress record.
 
 ### How the analysis reaches memory parts
 

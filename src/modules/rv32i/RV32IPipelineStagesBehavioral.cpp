@@ -9,6 +9,7 @@
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "modules/storage/RegisterFileBehavioral.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
+#include <algorithm>
 #include "RV32IPipelineStagesInternal.hpp"
 #include "RV32IPipelineRules.hpp"
 

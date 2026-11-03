@@ -1,6 +1,8 @@
-import createCircuitSimModule from "./circuitsim_wasm.js?v=9";
-import { upgradeDefaultLayout } from "./layout_migration.mjs?v=4";
+import createCircuitSimModule from "./circuitsim_wasm.js?v=13";
+import {completeProfileLayouts} from "./profile_layouts.mjs?v=1";
+import { LAYOUT_CHANGES_FORMAT, layoutChanges, mergeLayout, mergeLayoutStores } from "./layout_changes.mjs?v=3";
 import { defaultAlias, aliasesFor as catalogAliasesFor, scenarioOptions as makeScenarioOptions } from './scenario_catalog.mjs';
+import {normalizeFidelityPreset,profileStorageKey} from './fidelity_profiles.mjs';
 
 const DB_NAME = "circuitsim-visualizer-v2";
 const DB_VERSION = 1;
@@ -12,9 +14,12 @@ let scenarioCatalog = null;
 let modulePromise = null;
 let bridge = null;
 let defaultLayout = null;
+let currentDefaults = null;
+let wasmModule = null;
 let defaultProfiles = { schema_version: 1, scenarios: {} };
 let palette = null;
 let currentLayout = null;
+let previewComponentsById = new Map();
 let currentPayload = null;
 let currentScenario = null;
 let descriptors = [];
@@ -83,7 +88,31 @@ function migrateProfileOverrides(overrides, rootName = null) {
     (_, prefix, child) => prefix + '.' + (
       ['BUSY_STATE','DONE_STATE','ITERATION'].includes(child) ? 'CONTROL' :
       ['LOW_OR_QUOTIENT','HIGH_OR_REMAINDER','STEP'].includes(child) ? 'DATAPATH' : 'OPERANDS') + '.' + child);
-  const currentPath = path => stagePath(ffPath(arithmeticPath(rootPath(path))))
+  const devicePath = path => {
+    const parts=path.split('.');
+    if(!/^(CLOCKED_COUNTER|SYNCHRONOUS_FIFO|DEVICE_REGISTER_PORT|BUS_ERROR_TARGET|ADDRESS_ROUTER|INSTRUCTION_ACCESS_GUARD|CONSOLE_DEVICE|TIMER_DEVICE|BUTTON_DEVICE|FRAMEBUFFER_DISPLAY|RV32IM_DEVICE_SYSTEM).*_ROOT$/.test(parts[0]))return path;
+    for(let index=0;index<parts.length-1;index++) {
+      const name=parts[index],child=parts[index+1];let move=null;
+      if(name==='PORT'||(index===0&&name.startsWith('DEVICE_REGISTER_PORT'))) {
+        if(['OP','ADDRESS','DATA','MASK','CHECKED_STATUS'].includes(child))move=['REQUEST',child];
+        else if(['PENDING','EXECUTED'].includes(child))move=['CONTROL',child];
+      } else if(['TX_FIFO','EVENTS'].includes(name)||(index===0&&name.startsWith('SYNCHRONOUS_FIFO'))) {
+        if(['HEAD','TAIL'].includes(child))move=['POINTERS',child];
+        else if(['COUNT_STATE','OVERFLOW_STATE'].includes(child))move=['CONTROL',child];
+        else if(/^SLOT_\d+$/.test(child))move=['STORAGE',child];
+      } else if(name==='COUNTER'||(index===0&&name.startsWith('CLOCKED_COUNTER'))) {
+        if(child==='DIVIDER')move=['TICK_CONTROL','PHASE'];
+      } else if(['DATA_ROUTER','FETCH_GUARD'].includes(name)||(index===0&&/^(ADDRESS_ROUTER|INSTRUCTION_ACCESS_GUARD)/.test(name))) {
+        if(['BUSY','SENT'].includes(child))move=['CONTROL',child];
+        else if(child==='STATUS'||/^(HELD_|OWNER_)/.test(child))move=['REQUEST',child];
+      } else if(name==='DISPLAY'||(index===0&&name.startsWith('FRAMEBUFFER_DISPLAY'))) {
+        if(child==='FRAME_COUNTER')move=['FRAME_CONTROL',child];
+      }
+      if(move)return [...parts.slice(0,index+1),...move,...parts.slice(index+2)].join('.');
+    }
+    return path;
+  };
+  const currentPath = path => devicePath(stagePath(ffPath(arithmeticPath(rootPath(path)))))
     .replace(/^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.STORAGE$/, '$1')
     .replace(
       /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(?:STORAGE\.)?(CELL_([0-9]|[12][0-9]|3[01])|DATA|OUTPUT|D_SPLIT|Q_JOIN)(?=\.|$)/,
@@ -103,10 +132,19 @@ function normalizeProfileStore(value) {
   if (!value || value.schema_version !== 1 || !value.scenarios || typeof value.scenarios !== "object") {
     return normalized;
   }
-  for (const [scenario, entry] of Object.entries(value.scenarios)) {
+  for (let [scenario, entry] of Object.entries(value.scenarios)) {
     if (!entry || typeof entry !== "object") continue;
+    const baseScenario=scenario.split('::')[0];
+    // A profile saved before every scenario had a named fidelity profile
+    // belongs to the scenario's default profile.
+    if (!scenario.includes('::')) {
+      const descriptor = scenariosByAlias.get(baseScenario.toLowerCase().replaceAll('_', '-'));
+      if (!descriptor) continue;
+      scenario = `${scenario}::${defaultFidelity(descriptor)}`;
+      if (scenario in value.scenarios) continue;
+    }
     const rootName = Object.entries(scenarioCatalog?.components || {}).find(
-      ([test]) => test === scenario || (scenarioCatalog.aliases?.[test] || []).includes(scenario),
+      ([test]) => test === baseScenario || (scenarioCatalog.aliases?.[test] || []).includes(baseScenario),
     )?.[1]?.root;
     normalized.scenarios[scenario] = {
       revision: Math.max(0, Number.isInteger(entry.revision) ? entry.revision : 0),
@@ -126,47 +164,6 @@ function colorForLayoutType(layoutType) {
 }
 
 function aliasesFor(name) { return catalogAliasesFor(name, scenarioCatalog); }
-function mergeLayout(base, override) {
-  // Only the two reorganized ALUs need a one-time child-topology reflow.
-  // Keep styling and all unrelated/user-adjusted current-topology layouts.
-  const regroupedAlu = base?.children?.CONTROL && base?.children?.RESULT_SELECT;
-  const legacyAlu = override?.children?.OPERATION_DECODER || override?.children?.RESULT_LOW_MUX;
-  return {
-    ...(base || {}),
-    ...(override || {}),
-    children: {
-      ...(((base || {}).children) || {}),
-      ...((regroupedAlu && legacyAlu) ? {} : (((override || {}).children) || {})),
-    },
-  };
-}
-
-// A saved browser snapshot can predate newly shipped component layouts.
-// Fill missing defaults, reflow recognized legacy ALU child topologies, and
-// keep other saved settings and placements.
-function mergeLayoutStores(defaults, saved) {
-  const mergeEntries = (base = {}, overrides = {}, fallback = {}) => Object.fromEntries(
-    [...new Set([...Object.keys(base), ...Object.keys(overrides)])].map(
-      key => [key, mergeLayout(base[key], upgradeDefaultLayout(base[key] || fallback[key], overrides[key]))],
-    ),
-  );
-  const profiles = {};
-  for (const key of new Set([
-    ...Object.keys(defaults.profile_layouts || {}),
-    ...Object.keys(saved.profile_layouts || {}),
-  ])) {
-    profiles[key] = mergeEntries(defaults.profile_layouts?.[key], saved.profile_layouts?.[key], defaults.type_layouts);
-  }
-  return {
-    ...defaults,
-    ...saved,
-    default_settings: { ...defaults.default_settings, ...saved.default_settings },
-    type_layouts: mergeEntries(defaults.type_layouts, saved.type_layouts),
-    root_layouts: mergeEntries(defaults.root_layouts, saved.root_layouts),
-    profile_layouts: profiles,
-  };
-}
-
 function componentLayout(component, layout, layoutKey) {
   const types = layout.type_layouts || {};
   const base = { ...(types[component.type] || {}) };
@@ -193,7 +190,7 @@ function componentLayout(component, layout, layoutKey) {
   return mergeLayout(typed, ((layout.root_layouts || {})[layoutKey]) || {});
 }
 
-function enrichPayload(payload, layout) {
+function enrichPayload(payload, layout, attachLayout = true) {
   const settings = layout.default_settings || {};
   for (const component of payload.components || []) {
     const entry = componentLayout(component, layout, payload.layoutKey);
@@ -211,7 +208,7 @@ function enrichPayload(payload, layout) {
     );
     component.color = clone(entry.color || colorForLayoutType(component.layoutType || component.type));
   }
-  payload.layout = clone(layout);
+  if(attachLayout)payload.layout = clone(layout);
   payload.runtime = "wasm";
   return payload;
 }
@@ -271,10 +268,11 @@ async function initialize() {
       fetch(new URL('./scenarios.json', import.meta.url)),
     ]);
     const module = await createCircuitSimModule({
-      locateFile: (path) => new URL(`${path}?v=9`, import.meta.url).toString(),
+      locateFile: (path) => new URL(`${path}?v=11`, import.meta.url).toString(),
       print: (...args) => console.log("[CircuitSim WASM]", ...args),
       printErr: (...args) => console.error("[CircuitSim WASM]", ...args),
     });
+    wasmModule=module;
     bridge = new module.WasmVisualizer();
     descriptors = JSON.parse(bridge.visualizableTestsJson())
       .filter((item) => item.visualizable && !NON_VISUALIZABLE.has(item.name));
@@ -329,16 +327,25 @@ async function localProfileStore() {
   ));
 }
 
-async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null, timing = null) {
+// The fidelity profile a scenario opens in (its catalog `fidelity`).
+function defaultFidelity(descriptor) {
+  const option = scenarioOptions.find(o => o.className === descriptor.name);
+  if (!option?.fidelity) throw new Error(`No fidelity profile for scenario '${descriptor.key}'`);
+  return option.fidelity;
+}
+
+async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null, timing = null, fidelity = null) {
   const descriptor = normalizeScenario(scenarioValue);
+  fidelity=normalizeFidelityPreset(fidelity || defaultFidelity(descriptor));
   // The timing profile the circuit is built and simulated under.
   bridge.setTimingProfile(timing || "unit");
+  bridge.setFidelityProfile(fidelity);
   if (coreFidelity && (!/^rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+$/.test(descriptor.key)
       || !["structural", "behavioral"].includes(coreFidelity))) {
     throw new TypeError("core_fidelity requires an RV32I program and structural or behavioral");
   }
   const store = await profileStore();
-  const saved = store.scenarios[descriptor.key] || { revision: 0, exact_overrides: {} };
+  const saved = store.scenarios[profileStorageKey(descriptor.key,fidelity)] || { revision: 0, exact_overrides: {} };
   const revision = requestedRevision == null ? Number(saved.revision || 0) : requestedRevision;
   const overrides = { ...(requestedOverrides == null ? (saved.exact_overrides || {}) : requestedOverrides) };
   if (coreFidelity) overrides["RV32I_PROGRAM_ROOT.CORE"] = coreFidelity;
@@ -347,9 +354,15 @@ async function loadScenario(scenarioValue, requestedOverrides = null, requestedR
     bridge.setProfileOverride(path, fidelity);
   }
   const payload = JSON.parse(bridge.loadScenario(descriptor.name, descriptor.key, revision));
-  currentLayout = mergeLayoutStores(defaultLayout, await loadStored(LAYOUT_KEY, defaultLayout));
+  currentDefaults=clone(defaultLayout);
+  enrichPayload(payload,currentDefaults,false);
+  completeProfileLayouts(payload,currentDefaults,componentLayout);
+  currentLayout = mergeLayoutStores(currentDefaults, await loadStored(LAYOUT_KEY, defaultLayout));
+  enrichPayload(payload,currentLayout,false);
+  completeProfileLayouts(payload,currentLayout,componentLayout);
   currentScenario = descriptor;
-  currentPayload = enrichPayload(payload, currentLayout);
+  payload.layout=clone(currentLayout);
+  currentPayload = payload;
   currentPayload.timing = JSON.parse(bridge.timingProfileJson());
   return currentPayload;
 }
@@ -362,7 +375,7 @@ function defaultPlacements(body) {
   if (!currentPayload) throw new Error("Load a scenario before requesting layouts");
   const parent = currentPayload.components.find((component) => component.id === body.parentId);
   if (!parent) throw new Error(`Unknown parent component '${body.parentId}'`);
-  const entry = componentLayout(parent, defaultLayout, currentPayload.layoutKey);
+  const entry = componentLayout(parent, currentDefaults || defaultLayout, currentPayload.layoutKey);
   const parentIndex = currentPayload.components.indexOf(parent);
   const childIndexes = [];
   currentPayload.components.forEach((component, index) => {
@@ -419,7 +432,7 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
-    return JSON.stringify(await loadScenario(query.get("scenario") || "ripple-carry-adder-w8", null, null, query.get("core_fidelity"), query.get("timing")));
+    return JSON.stringify(await loadScenario(query.get("scenario") || "ripple-carry-adder-w8", null, null, query.get("core_fidelity"), query.get("timing"),query.get('fidelity')));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {
@@ -452,8 +465,9 @@ async function handleRequest(message) {
     const body = parseBody(message);
     if (!body.layout || typeof body.layout !== "object") throw new Error("layout must be an object");
     currentLayout = clone(body.layout);
-    await saveStored(LAYOUT_KEY, currentLayout);
-    return JSON.stringify({ ok: true, storage: "indexeddb" });
+    // Store only the edits relative to the shipped layout (layout_changes.mjs).
+    await saveStored(LAYOUT_KEY, layoutChanges(currentDefaults || defaultLayout, currentLayout));
+    return JSON.stringify({ ok: true, storage: "indexeddb", format: LAYOUT_CHANGES_FORMAT });
   }
   if (message.method === "POST" && path === "/api/layout/defaults") {
     const body = parseBody(message);
@@ -471,12 +485,28 @@ async function handleRequest(message) {
       placements: defaultPlacements(body),
     });
   }
+  if (message.method === "POST" && path === "/api/circuit/preview") {
+    // The parts the circuit would have with the draft choices, built without
+    // simulating: the explorer shows them in gray before Apply & Run.
+    const body = parseBody(message);
+    const descriptor = normalizeScenario(body.scenario);
+    bridge.setFidelityProfile(normalizeFidelityPreset(body.fidelity || defaultFidelity(descriptor)));
+    bridge.clearProfileOverrides();
+    for (const [componentPath, fidelity] of Object.entries(body.exactOverrides || {})) {
+      bridge.setProfileOverride(componentPath, fidelity);
+    }
+    const preview = bridge.previewComponentsJson(descriptor.name);
+    previewComponentsById = new Map(JSON.parse(preview).components.map((component) => [component.id, component]));
+    return preview;
+  }
   if (message.method === "POST" && path === "/api/circuit/apply") {
     const body = parseBody(message);
     const descriptor = normalizeScenario(body.scenario);
+    const fidelity=normalizeFidelityPreset(body.fidelity || defaultFidelity(descriptor));
+    const storageKey=profileStorageKey(descriptor.key,fidelity);
     const store = await profileStore();
     const localStore = await localProfileStore();
-    const saved = store.scenarios[descriptor.key] || { revision: 0, exact_overrides: {} };
+    const saved = store.scenarios[storageKey] || { revision: 0, exact_overrides: {} };
     if (Number(body.revision) !== Number(saved.revision || 0)) {
       throw new Error("Profile changed since it was loaded; reload the scenario before applying again");
     }
@@ -487,15 +517,16 @@ async function handleRequest(message) {
       // absent beneath a behavioral parent. Preserve it on expand/collapse;
       // only newly added or changed overrides must target a visible component.
       if (saved.exact_overrides?.[path] === fidelity) continue;
-      const component = componentById.get(path);
+      // A part shown only in the preview may also receive a choice.
+      const component = componentById.get(path) || previewComponentsById.get(path);
       if (!component) throw new Error(`Cannot add an override for unknown component '${path}'`);
       if (!(component.availableFidelities || []).includes(fidelity)) {
         throw new Error(`Component '${path}' does not provide ${fidelity} fidelity`);
       }
     }
     const revision = Number(saved.revision || 0) + 1;
-    const payload = await loadScenario(descriptor.key, overrides, revision, null, body.timing || currentPayload?.timing?.name);
-    localStore.scenarios[descriptor.key] = { revision, exact_overrides: clone(overrides) };
+    const payload = await loadScenario(descriptor.key, overrides, revision, null, body.timing || currentPayload?.timing?.name,fidelity);
+    localStore.scenarios[storageKey] = { revision, exact_overrides: clone(overrides) };
     await saveStored(PROFILE_KEY, localStore);
     return JSON.stringify(payload);
   }
@@ -512,7 +543,14 @@ self.addEventListener("message", async (event) => {
     self.postMessage({
       id: message.id,
       status: error instanceof TypeError ? 400 : 500,
-      body: String(error && error.message ? error.message : error),
+      body: (()=>{
+        if(Array.isArray(error?.message))return String(error.message[1] || error.message[0]);
+        if(error?.message)return String(error.message);
+        if(error?.excPtr && wasmModule?.getExceptionMessage){
+          try{const details=wasmModule.getExceptionMessage(error);return String(details[1] || details[0]);}catch{}
+        }
+        return String(error);
+      })(),
     });
   }
 });

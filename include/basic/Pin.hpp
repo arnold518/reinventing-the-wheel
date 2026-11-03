@@ -2,29 +2,22 @@
 #include "basic/PinBase.hpp"
 #include "basic/WireBase.hpp"
 #include "ForwardDeclarations.hpp"
-#include <array>
 #include <memory>
 
+// A typed handle on a PinBase of WIDTH bits. It holds no state of its own;
+// the type lets typed lookups (getInputPin<W>) check the width once.
 template<size_t WIDTH>
 class Pin : public PinBase, public std::enable_shared_from_this<Pin<WIDTH>> {
-private:
-    std::array<LogicValue, WIDTH> value;
+    static_assert(WIDTH >= 1 && WIDTH <= PackedLogic::kMaxWidth, "Pin width must be 1 to 64 bits");
 
 public:
-    Pin(std::string name, PinType type, std::shared_ptr<Component> owner_comp);
+    Pin(std::string name, PinType type, std::shared_ptr<Component> owner_comp)
+        : PinBase(std::move(name), type, std::move(owner_comp), WIDTH) {}
 
     std::shared_ptr<Wire<WIDTH>> getExternalWire() const;
     std::shared_ptr<Wire<WIDTH>> getInternalWire() const;
-    void connectExternal(const std::shared_ptr<Wire<WIDTH>>& wire);
-    void connectInternal(const std::shared_ptr<Wire<WIDTH>>& wire);
-
-    size_t getWidth() const override;
-    LogicValue getBit(size_t index) const override;
-    void setBit(size_t index, LogicValue bit_value) override;
-    uint64_t getValueAsUInt64() const override;
-    std::vector<LogicValue> getValueAsVector() const override;
-    void setValueFromUInt64(uint64_t new_value) override;
-    void setValueFromVector(const std::vector<LogicValue>& values) override;
+    void connectExternal(const std::shared_ptr<Wire<WIDTH>>& wire) { connectExternalBase(wire); }
+    void connectInternal(const std::shared_ptr<Wire<WIDTH>>& wire) { connectInternalBase(wire); }
 };
 
 #include "basic/Pin.tpp"

@@ -90,11 +90,13 @@ struct Entry {
 constexpr std::array<Unit, 11> all_units{Unit::ALU, Unit::AddSub, Unit::Arithmetic, Unit::Logic, Unit::Shift,
     Unit::Compare, Unit::Flags, Unit::Result, Unit::RippleAdder, Unit::PrefixAdder, Unit::Zero};
 
-// The registered test that owns each family's structural and compact checks.
-std::string verificationOwner(Unit u, size_t width) {
+// The logical test that owns each family's contract. The recorded ALU<W> and
+// 16-bit adder scenarios are grouped under ALUWidthContractTest, so that test
+// owns those contracts; a contract must have exactly one logical owner.
+std::string contractOwner(Unit u, size_t width) {
     if (width == 8) {
         switch (u) {
-        case Unit::ALU: return "ALUFidelityContractTest";
+        case Unit::ALU: return "ALUWidthContractTest";
         case Unit::AddSub: return "AddSubWidth8Test";
         case Unit::Arithmetic: return "ArithmeticUnitWidth8Test";
         case Unit::Logic: return "LogicUnitWidth8Test";
@@ -110,9 +112,22 @@ std::string verificationOwner(Unit u, size_t width) {
     }
     if (width == 32 && u == Unit::PrefixAdder) return "ParallelPrefixAdderWidth32Test";
     if (width == 32 && u == Unit::Zero) return "ZeroDetectWidth32Test";
-    // Compact adders without their own truth table are compared with the gates there.
-    if (u == Unit::RippleAdder || u == Unit::PrefixAdder) return "ALUFidelityContractTest";
-    return u == Unit::ALU ? "ALUWidthContractTest" : "WidthComponentsTest";
+    if (width == 32 && u == Unit::RippleAdder) return "AdderWidthSweepTest";
+    // The gate-level ALU<W> drives every 16/32-bit sub-unit through an edge grid
+    // and random vectors against an independent integer reference.
+    return "ALUWidthContractTest";
+}
+
+// The test that compares a compact form with its gates.
+std::string equivalenceOwner(Unit u, size_t width) {
+    if (u == Unit::ALU && width == 8) return "ALUFidelityContractTest";
+    // Both adders at 16/32 bits are swept against a + b + C_IN in both forms.
+    if ((u == Unit::RippleAdder || u == Unit::PrefixAdder) && width != 8) return "AdderWidthSweepTest";
+    if (width == 32 && u == Unit::Zero) return "ZeroDetectWidth32Test";
+    // The other 16/32-bit compact forms (2026-10-28) run beside their gates on
+    // binary and four-state vectors.
+    if (width != 8) return "CompactFormEquivalenceTest";
+    return contractOwner(u, width);
 }
 }
 
@@ -155,10 +170,10 @@ void registerComponents(ComponentCatalog& catalog) {
     for (size_t width : {8u, 16u, 32u})
         for (auto u : all_units) {
             const auto& f = family(u, width);
-            const auto test = verificationOwner(u, width);
+            const auto test = contractOwner(u, width);
             registration::registerStructural(catalog, f, test, "stable-after-settle");
             if (f.supports(Fidelity::Behavioral))
-                registration::registerBehavioral(catalog, f, test, test, {}, "stable-after-settle");
+                registration::registerBehavioral(catalog, f, test, equivalenceOwner(u, width), {}, "stable-after-settle");
         }
 }
 }

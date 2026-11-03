@@ -122,7 +122,7 @@ def refresh_automatic(layout_path: Path, scenarios: list[str] | None = None, *, 
     for group_index, options in enumerate(groups.values(), 1):
         option = options[0]
         print(f"[{group_index}/{len(groups)}] topology only: {option['className']}", flush=True)
-        root = server.circuit_backend.create_layout_topology(option["className"])
+        root = server.scenario_topology(option["className"])
         if root is None:
             raise RuntimeError(f"No topology for {option['className']}")
         components = list(_walk(root))
@@ -545,7 +545,7 @@ def main() -> None:
                     if layout_type in profile:
                         profile[layout_type]["children"] = copy.deepcopy(placements)
                 if depth == 0:
-                    manager.root_layouts[root_key]["children"] = copy.deepcopy(placements)
+                    manager.root_layouts.setdefault(root_key, {})["children"] = copy.deepcopy(placements)
                 manager.is_dirty = True
             manager.save()
             print(f"Filled missing layouts for {scenario}: {len(session.components)} components", flush=True)

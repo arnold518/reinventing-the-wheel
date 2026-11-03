@@ -366,6 +366,31 @@
       "timeout": 1200
     },
     {
+      "name": "VisualizerExplorerTreeBrowserTest",
+      "file": "VisualizerExplorerTreeBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "smoke",
+        "cleanup"
+      ],
+      "timeout": 600
+    },
+    {
+      "name": "VisualizerLayoutStorageBrowserTest",
+      "file": "VisualizerLayoutStorageBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 600
+    },
+    {
       "name": "VisualizerScenarioBrowserTest",
       "file": "VisualizerScenarioBrowserTest.py",
       "kind": "browser",
@@ -503,15 +528,17 @@
       "timeout": 180
     },
     {
-      "name": "RecordedGameViewerBrowserTest",
-      "file": "RecordedGameViewerBrowserTest.py",
+      "name": "TickRecordingBrowserTest",
+      "file": "TickRecordingBrowserTest.py",
       "kind": "browser",
       "args": [
-        "{base}",
-        "{guest_probe}"
+        "{simulator}"
+      ],
+      "requires_env": [
+        "CIRCUITSIM_TICK_RECORDING_FILE"
       ],
       "suites": [],
-      "timeout": 7200
+      "timeout": 180
     },
     {
       "name": "RV32IMInspectionBrowserTest",
@@ -524,6 +551,41 @@
         "cleanup"
       ],
       "timeout": 600
+    },
+    {
+      "name": "FidelityPresetWasmParityTest",
+      "file": "FidelityPresetWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 300
+    },
+    {
+      "name": "DeviceSystemFidelityBrowserTest",
+      "file": "DeviceSystemFidelityBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "browser",
+        "cleanup"
+      ],
+      "timeout": 600
+    },
+    {
+      "name": "GameScenarioBrowserTest",
+      "file": "GameScenarioBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [],
+      "timeout": 1200
     }
   ]
 }

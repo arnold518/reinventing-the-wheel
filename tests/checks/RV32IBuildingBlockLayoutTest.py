@@ -110,8 +110,11 @@ def main():
                     assert pin.get_owner().get_id() in owners, (kind, wire.get_name(), pin.get_id())
             is_root = component.get_id() == root.get_id()
             if automatic:
-                assert rv32i_layout.placements(kind, {c.get_name(): manager.aspect_for_component(c)
-                    for c in children}, manager.aspect_for_component(component)) is None, (kind,"custom layout override")
+                # The ALU's own parts use connectivity layout; a shared part
+                # inside it (Mux<2,32> in the shifter) keeps its RV32I floorplan.
+                if rv32i_layout.layout_kind(kind) in rv32i_layout.ALU_AUTOMATIC_TYPES:
+                    assert rv32i_layout.placements(kind, {c.get_name(): manager.aspect_for_component(c)
+                        for c in children}, manager.aspect_for_component(component)) is None, (kind,"custom layout override")
                 expected = default_placements(manager, component, layout_key if is_root else None)
                 for child in children:
                     actual = manager.get_child_layout_for_component(component, child.get_name(), scenario_key=layout_key, is_root=is_root)

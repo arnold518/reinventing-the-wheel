@@ -306,8 +306,11 @@ for (const source of [appSource, workerSource]) {
   const c = { type: "Rewire", layoutType: "Rewire<in=1,out=8>", depth: 1, profileFingerprint: "explicit" };
   const sandbox = vm.createContext({ app: { layout } });
   const isApp = source === appSource;
+  // The worker imports mergeLayout from layout_changes.mjs.
+  const layoutChangesSource = fs.readFileSync(path.join(__dirname, "../../visualizer-v2/static/layout_changes.mjs"), "utf8")
+    .replace(/^export /gm, "");
   for (const name of isApp ? ["mergeLayout", "componentLayoutKey", "structureKeyed", "getTypeLayoutFor"] : ["mergeLayout", "componentLayout"])
-    vm.runInContext(extract(source, name), sandbox);
+    vm.runInContext(extract(!isApp && name === "mergeLayout" ? layoutChangesSource : source, name), sandbox);
   const get = () => isApp ? sandbox.getTypeLayoutFor(c) : sandbox.componentLayout(c, layout, "test");
   assert.equal(get().aspect_ratio, undefined);
   assert.equal(get().min_aspect_ratio, undefined);

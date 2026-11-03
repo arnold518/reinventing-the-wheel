@@ -2,6 +2,7 @@
 #include "components/IOComponent.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "modules/device/DeviceComponents.hpp"
+#include "system/Bus.hpp"
 #include "simulator/Simulator.hpp"
 #include <algorithm>
 #include <sstream>
@@ -56,6 +57,7 @@ std::string deviceViewKind(const std::shared_ptr<Component>& component) {
     if(type=="ButtonDevice")return "keyboard";
     if(type=="ConsoleDevice")return "console";
     if(type=="TimerDevice")return "timer";
+    if(type=="LedPanel")return "leds";
     if(type=="SynchronousFifo<8>"||type=="SynchronousFifo<16>"||type=="SynchronousFifo<32>")return "queue";
     return {};
 }
@@ -122,6 +124,31 @@ std::string deviceStateJson(const std::shared_ptr<Component>& component,const Si
         const auto fifo=child(component,"EVENTS");field("count",fifo,"COUNT");field("head",fifo,"DATA");field("overflow",fifo,"OVERFLOW");
     } else if(deviceViewKind(component)=="console") {
         out<<",\"kind\":\"console\"";field("valid",io,"TX_VALID");field("data",io,"TX_DATA");field("count",child(component,"TX_FIFO"),"COUNT");
+    } else if(deviceViewKind(component)=="leds") {
+        out<<",\"kind\":\"leds\"";field("leds",io,"LEDS");
+    } else if(deviceViewKind(component)=="bus") {
+        // Who is talking to whom: each master's request and answer, and each
+        // target port's offered request, at the observed time.
+        const auto bus=std::dynamic_pointer_cast<circuit::system::Bus>(component);
+        if(!bus)throw std::logic_error("Bus view without a bus description");
+        const auto in=[&](const std::string& n){return quotedBits(observed(io->getInputPinDynamic(n)));};
+        const auto outp=[&](const std::string& n){return quotedBits(observed(io->getOutputPinDynamic(n)));};
+        out<<",\"kind\":\"bus\",\"masters\":[";
+        bool first=true;
+        for(const auto& m:bus->description().masters){
+            const auto p=m.name+"_";
+            out<<(first?"":",")<<"{\"name\":"<<quote(m.name)<<",\"valid\":"<<in(p+"REQ_VALID")<<",\"ready\":"<<outp(p+"REQ_READY")
+               <<",\"op\":"<<in(p+"REQ_OP")<<",\"addr\":"<<in(p+"REQ_ADDR")<<",\"rspValid\":"<<outp(p+"RSP_VALID")<<",\"status\":"<<outp(p+"RSP_STATUS")<<"}";
+            first=false;
+        }
+        out<<"],\"targets\":[";first=true;
+        for(const auto& port:bus->description().targetPorts()){
+            const auto p=circuit::system::portPrefix(port);
+            out<<(first?"":",")<<"{\"name\":"<<quote(port)<<",\"valid\":"<<outp(p+"REQ_VALID")<<",\"addr\":"<<outp(p+"REQ_ADDR")
+               <<",\"rspValid\":"<<in(p+"RSP_VALID")<<"}";
+            first=false;
+        }
+        out<<"]";
     } else if(deviceViewKind(component)=="timer") {
         out<<",\"kind\":\"timer\"";field("count",child(component,"COUNTER"),"COUNT");
     } else {

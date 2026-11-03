@@ -1,10 +1,14 @@
 "use strict";
 
 /*
- * Component fidelity explorer.
+ * Component explorer: the tree is the planned fidelity.
  *
- * The tree is derived from the applied circuit. The only persisted experiment
- * state is a sparse map of exact component paths to requested fidelities.
+ * Expanded means "build this part from its parts" (structural), collapsed
+ * means "build it as one block" (behavioral). The arrow edits that plan, and
+ * the canvas follows it at once for parts that exist; Apply & Run rebuilds
+ * the circuit to match. The S/B badge is read-only and shows the fidelity
+ * that is built now. Parts with one form have no arrow. The plan is a sparse
+ * map of exact component paths to requested fidelities.
  * Rows are virtualized so a fully structural CPU never creates tens of
  * thousands of DOM nodes.
  */
@@ -44,6 +48,9 @@
       this.onApply = options.onApply;
       this.onViewportChanged = options.onViewportChanged;
       this.onOpenChanged = options.onOpenChanged;
+      this.onDraftChanged = options.onDraftChanged || (() => {});
+      // Parts that exist only after Apply & Run, from a build-only preview.
+      this.preview = new Map();
 
       this.components = new Map();
       this.rootId = null;
@@ -118,6 +125,7 @@
         this.pendingFocusId = null;
         this.rebuildVisibleRows();
         this.updateStatus();
+        this.onDraftChanged();
       });
       this.toggleButton.addEventListener("click", () => {
         const next = !document.body.classList.contains("explorer-open");
@@ -168,6 +176,7 @@
       };
       this.appliedOverrides = { ...this.profile.exactOverrides };
       this.draftOverrides = { ...this.profile.exactOverrides };
+      this.preview = new Map();  // A new build: earlier previews are stale.
       this.rebuildVisibleRows();
       this.updateStatus();
     }
@@ -197,6 +206,43 @@
         this.appliedOverrides,
         this.draftOverrides,
       );
+    }
+
+    // Build-only preview of the draft: records with id, name, type,
+    // parentIndex, fidelity, availableFidelities and profileSelectable.
+    setPreview(components) {
+      this.preview = new Map();
+      for (const record of components || []) {
+        this.preview.set(record.id, { ...record, childIds: [], preview: true });
+      }
+      const list = components || [];
+      for (const record of list) {
+        if (record.parentIndex == null) continue;
+        const parent = this.preview.get(list[record.parentIndex]?.id);
+        if (parent) parent.childIds.push(record.id);
+      }
+      this.rebuildVisibleRows();
+    }
+
+    // The fidelity built now, independent of the plan.
+    builtMode(component) {
+      if (component.fidelity === "behavioral") return "behavioral";
+      if (component.fidelity === "unspecified") {
+        return component.childIds && component.childIds.length
+          ? "structural"
+          : "fixed";
+      }
+      return "structural";
+    }
+
+    createPlaceholderRow(parent, depth, index) {
+      const row = document.createElement("div");
+      row.className = "explorer-row placeholder";
+      row.style.top = `${index * ROW_HEIGHT}px`;
+      row.style.paddingLeft = `${8 + depth * 14 + 22}px`;
+      row.textContent = "Its parts appear after Apply & Run";
+      row.title = `${parent.id} is built as one block now`;
+      return row;
     }
 
     modeFor(component) {
@@ -234,13 +280,38 @@
         }
       }
 
+      const walkPreview = (record, depth) => {
+        if (!record) return;
+        rows.push({ component: record, depth, preview: true });
+        if (this.modeFor(record) !== "structural") return;
+        if (record.childIds.length) {
+          for (const childId of record.childIds) walkPreview(this.preview.get(childId), depth + 1);
+        } else if (record.fidelity === "behavioral") {
+          rows.push({ placeholder: true, parent: record, depth: depth + 1 });
+        }
+      };
       const walk = (component, depth) => {
         if (!component || (matching && !matching.has(component.id))) {
           return;
         }
         rows.push({ component, depth });
-        if (this.modeFor(component) !== "structural") return;
-        for (const childId of component.childIds || []) {
+        const children = component.childIds || [];
+        const planned = this.modeFor(component) === "structural";
+        // Planned structural but built as one block: its parts exist only
+        // after Apply & Run. Show them from the preview (gray), or a
+        // placeholder until the preview arrives.
+        if (!matching && planned && !children.length && component.fidelity === "behavioral") {
+          const previewed = this.preview.get(component.id);
+          if (previewed && previewed.childIds.length) {
+            for (const childId of previewed.childIds) walkPreview(this.preview.get(childId), depth + 1);
+          } else {
+            rows.push({ placeholder: true, parent: component, depth: depth + 1 });
+          }
+          return;
+        }
+        // A search also finds built parts inside a collapsed part.
+        if (!matching && !planned) return;
+        for (const childId of children) {
           walk(this.components.get(childId), depth + 1);
         }
       };
@@ -281,17 +352,17 @@
       const fragment = document.createDocumentFragment();
 
       for (let index = start; index < end; index += 1) {
-        const { component, depth } = this.visibleRows[index];
-        fragment.appendChild(
-          this.createRow(component, depth, index),
-        );
+        const row = this.visibleRows[index];
+        fragment.appendChild(row.placeholder
+          ? this.createPlaceholderRow(row.parent, row.depth, index)
+          : this.createRow(row.component, row.depth, index, Boolean(row.preview)));
       }
       this.rowsLayer.replaceChildren(fragment);
     }
 
-    createRow(component, depth, index) {
+    createRow(component, depth, index, preview = false) {
       const row = document.createElement("div");
-      row.className = "explorer-row";
+      row.className = preview ? "explorer-row preview" : "explorer-row";
       if (component.id === this.selectedId) {
         row.classList.add("selected");
       }
@@ -304,6 +375,7 @@
         `${component.id}\n${component.type}\n`
         + `${this.modeFor(component)} fidelity`;
       row.addEventListener("click", () => {
+        if (preview) return;  // Not built yet: nothing to show on the canvas.
         this.selectedId = component.id;
         this.onFocus(component.id);
         this.scheduleRender();
@@ -317,19 +389,20 @@
         && available.includes("structural")
         && available.includes("behavioral"),
       );
+      const built = this.builtMode(component);
+      if (!preview && mode !== built) row.classList.add("pending");
       const arrow = document.createElement("button");
       arrow.type = "button";
       arrow.className = "explorer-arrow";
-      arrow.textContent = mode === "structural"
-        ? "▾"
-        : mode === "behavioral"
-          ? "▸"
-          : "•";
+      arrow.textContent = selectable
+        ? mode === "structural" ? "▾" : "▸"
+        : "•";
       arrow.disabled = !selectable;
+      arrow.setAttribute("aria-expanded", String(selectable && mode === "structural"));
       arrow.title = selectable
         ? mode === "structural"
-          ? "Collapse into behavioral fidelity"
-          : "Expand into structural fidelity"
+          ? "Collapse: build as one behavioral block (Apply & Run)"
+          : "Expand: build from its parts (Apply & Run)"
         : "This component has one fixed implementation";
       arrow.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -346,34 +419,50 @@
         }
         this.rebuildVisibleRows();
         this.updateStatus();
+        this.onDraftChanged();
       });
 
       const name = document.createElement("span");
       name.className = "explorer-name";
       name.textContent = component.name;
 
+      // Read-only: the fidelity built and simulated now. A previewed part is
+      // not built, so it has no badge.
       const badge = document.createElement("span");
-      badge.className = `explorer-badge ${mode}`;
+      if (preview) {
+        badge.className = "explorer-badge preview";
+        row.title = `${component.id}\n${component.type}\nbuilt after Apply & Run`;
+        row.append(arrow, name, badge);
+        if (component.id in this.draftOverrides) row.appendChild(this.createResetButton(component));
+        return row;
+      }
+      badge.className = `explorer-badge ${built}`;
       badge.textContent =
-        mode === "structural" ? "S" : mode === "behavioral" ? "B" : "fixed";
+        built === "structural" ? "S" : built === "behavioral" ? "B" : "fixed";
+      badge.title = built === "fixed"
+        ? "One fixed implementation"
+        : `Built ${built}${mode !== built ? `; Apply & Run makes it ${mode}` : ""}`;
 
       row.append(arrow, name, badge);
 
-      if (component.id in this.draftOverrides) {
-        const reset = document.createElement("button");
-        reset.type = "button";
-        reset.className = "explorer-reset";
-        reset.textContent = "↶";
-        reset.title = "Return this component to its inherited profile";
-        reset.addEventListener("click", (event) => {
-          event.stopPropagation();
-          delete this.draftOverrides[component.id];
-          this.rebuildVisibleRows();
-          this.updateStatus();
-        });
-        row.appendChild(reset);
-      }
+      if (component.id in this.draftOverrides) row.appendChild(this.createResetButton(component));
       return row;
+    }
+
+    createResetButton(component) {
+      const reset = document.createElement("button");
+      reset.type = "button";
+      reset.className = "explorer-reset";
+      reset.textContent = "↶";
+      reset.title = "Return this component to its inherited profile";
+      reset.addEventListener("click", (event) => {
+        event.stopPropagation();
+        delete this.draftOverrides[component.id];
+        this.rebuildVisibleRows();
+        this.updateStatus();
+        this.onDraftChanged();
+      });
+      return reset;
     }
 
     updateStatus(message = null, error = false) {

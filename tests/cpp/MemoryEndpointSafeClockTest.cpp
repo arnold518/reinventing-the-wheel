@@ -157,7 +157,7 @@ struct Fixture {
     }
     void schedule(const std::string& n,const Bits& v) {
         const auto& w=wires.at(n);
-        auto add=[&]<size_t W>() {sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(
+        auto add=[&]<size_t W>() {sim.scheduleEvent(std::make_shared<WireUpdateEvent>(
             time,std::dynamic_pointer_cast<Wire<W>>(w),v));};
         switch(v.size()) {
         case 1:add.template operator()<1>();break;case 2:add.template operator()<2>();break;

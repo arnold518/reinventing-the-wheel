@@ -1,10 +1,19 @@
 # Scripted device platform and games implementation
 
-Started: 2026-10-21. Status: open.
+Started: 2026-10-21. Status: closed (2026-11-03).
 Code state: main alpha at `88c0a95`, with accepted component replacement in the
 working tree; game acceptance remains open.
 
 ## Summary
+
+The 2026-10-24 gameplay-capture continuation completes all ten packaged
+native baseline fixtures: 47 synchronized circuit/display/input checkpoints,
+exact host reference checks and all ten original-canvas browser sessions.
+Native runs were serial with histories disabled, a 768 MiB address-space cap
+and at most 155.58 MiB peak RSS, without guard stops or OOM failures. The full
+record set, layouts, source/build evidence and browser receipts are indexed
+publicly. Strict packaging and the refreshed 8893 preview pass route/asset checks.
+Separate repeat/quantum/expanded-core/cache and native/WASM acceptance remains.
 
 The integrated CPU/device system, bounded batch runtime, five games, ten
 fixtures and recording viewer are present on main alpha. Phase 6 is open.
@@ -20,17 +29,17 @@ The preceding width snapshot passed 555 selected native registrations and
 packaging of all 158 example groups. Its native/WASM timing snapshots match.
 The preceding frozen-model campaign stopped after seven passing runs: four
 bring-up and three 2048 configurations. Expanded-core 2048 exhausted its
-event budget. Those receipts are preserved. Remaining game comparisons,
-game WASM parity, full browser acceptance and final performance evidence
+event budget. Those receipts are preserved. Remaining configuration comparisons,
+game WASM parity, broader acceptance and final performance evidence
 remain required before closing phase 6. Phase 7 remains unimplemented.
 
 The owner has confirmed that the required game experience is in the original
 circuit visualizer, with display/keyboard and other device abstractions on
-the actual system components. That integration now works for a native Pong
-rally: 18 checkpoints replay in the original canvas with device state and
-retained pin/wire values. This path passes its exact host reference, six
-focused native checks, three JS checks and the live 8893 browser check.
-Full phase-6 acceptance remains open; implementation evidence is below.
+the actual system components. All ten native fixtures now replay in the
+original canvas with synchronized device state and retained pin/wire values.
+Every retained frame and browser pin/wire vector is checked. The earlier
+Pong-specific native/JS/live checks remain dated evidence below. Full phase-6
+acceptance remains open; implementation evidence is below.
 
 ## 2026-10-21 — Scope and execution plan
 
@@ -1445,3 +1454,139 @@ The same final binary additionally passes the short 128x96/97x65 CPU geometry/
 high-video-address/PRESENT check in 23.55 seconds. Direct current API checks
 include 320x200. Compiled larger game workloads remain a separate acceptance
 item; this does not mark full phase 6 complete.
+
+
+## 2026-10-24 — Full gameplay circuit-capture suite underway
+
+The owner requested all remaining gameplay recordings and explicitly called
+out OOM risk. Scope is every packaged fixture: bring-up, the five ordinary
+game scripts, and 2048 merge, Tetris line clear, Pong rally and Snake wall.
+All ten will be freshly captured against one current source/binary snapshot,
+independently compared with exact host frames/reports, packaged for the
+original circuit canvas, and retained with per-run resource/provenance evidence.
+This is the complete baseline recording set, not the separate four-variant
+or native/WASM acceptance campaign. Those phase-6 boundaries remain open.
+
+The exporter was rebuilt serially with deployment off under a 768 MiB
+address-space cap. The existing guard requires 1,536 MiB host available before
+each command and terminates only owned processes below 768 MiB available.
+Native histories stay disabled, with existing 24 MiB/64-checkpoint retention
+and event/cycle budgets. Each native command has a one-hour wall limit.
+Packaging uses a 256 MiB Node heap; Node needs unrestricted virtual address
+reservation, so it uses the host-headroom guard without the native AS cap.
+Captures, reference checking, packaging and later browser checks run serially.
+Old published receipts are preserved until the complete replacement validates.
+
+The resumable local campaign is under
+`build-milestone/gameplay-capture-suite/`; it calls the existing native probe,
+reference checker and packaging CLI. A common source manifest and per-game
+hashes bind the runner, ELF, script, source, frames, capture and layout.
+Publication and browser acceptance are pending.
+
+
+## 2026-10-24 — Complete native recording set and original-canvas checks
+
+All ten baseline fixtures complete against the same native exporter and
+source snapshot, including a fresh replacement for the earlier Pong capture.
+Code state is `alpha` at `5549ee0` with the uncommitted constant/device
+hierarchy changes identified by the common source manifest. No C++ source or
+fixture was changed during this capture campaign. This extends the earlier
+Pong-only native-to-browser evidence; full phase-6 acceptance remains open.
+
+| Fixture | PRESENT checkpoints | CPU cycles | Execution seconds | Peak native RSS MiB |
+| --- | ---: | ---: | ---: | ---: |
+| bringup | 2 | 38,811 | 215.60 | 154.41 |
+| 2048 | 4 | 169,601 | 973.83 | 155.33 |
+| sokoban | 4 | 188,614 | 1084.89 | 155.44 |
+| snake | 4 | 141,132 | 805.86 | 155.50 |
+| pong | 4 | 88,367 | 496.61 | 154.84 |
+| tetris | 4 | 191,818 | 1121.72 | 155.14 |
+| 2048-merge | 2 | 135,080 | 769.08 | 155.28 |
+| tetris-line-clear | 2 | 142,549 | 820.89 | 155.54 |
+| pong-rally | 18 | 115,686 | 653.39 | 155.45 |
+| snake-wall | 3 | 115,575 | 647.16 | 155.57 |
+
+Total: 47 retained checkpoints, 1,327,233 CPU cycles,
+336,174 retired instructions and 7589.03 native execution seconds
+(2 hours 6 minutes 29 seconds; setup, reference checking, packaging and
+browser work are additional). These host timings are not a controlled
+performance comparison or delivered gameplay FPS.
+
+Every fixture passes exact host frame/report comparison, known-pixel masks,
+input-log/queue checks and zero setup violations. Runtime ISA/device checks
+and the presentation observer's non-mutation assertions pass. The original
+canvas browser test passes all ten sessions and every retained pin/wire
+vector by hash, display/input state, inspectors, Device views, rewind and Play.
+No simulation worker or WASM module is loaded for replay; no page errors were
+reported. The bring-up system overview and Tetris line-clear preview were
+inspected. The captured hierarchy retains the current system floorplan.
+
+All native/reference/package/browser commands were serial. Native address
+space was capped at 768 MiB; start headroom was 1,536 MiB and the owned-process
+guard stops below 768 MiB available. Native peak RSS was at most 155.58 MiB.
+Histories stayed off, with 24 MiB/64-checkpoint retention limits. Node and
+browser renderer heaps were capped at 256 MiB, driver heap at 128 MiB; those
+processes used the host guard without a native virtual-address reservation
+cap. All ten captures and browser sessions completed without a guard stop
+or OOM failure. Native RSS is per-process peak, not aggregate browser RSS.
+
+Native exporter SHA-256: `8f8ea64f5e47e6333fe74803ee53538a940a12244e2ae4562411aafd7ee92eca`.
+Common published source-manifest SHA-256:
+`19d2cd76678f76b0711f7b21ff1d8e79d8cdd5a161fccc7cbd9c3a6d20cc1e32`.
+
+The complete public set is under `site-docs/assets/rv32im/circuits/`, with a
+47-checkpoint index, per-game captures/layouts, packaging hashes, source/build
+evidence, exact-reference receipts and browser receipts. Public gameplay links
+are in `site-docs/rv32im/recorded-games.md`. Earlier frame-only exports keep
+attested source snapshots. Previous Pong files and the old public index are
+preserved in `build-milestone/gameplay-capture-suite/prior-published/` and
+`prior-recorded-games.md`. Raw captures, progress/resource/reference logs and
+screenshots remain in that campaign directory. Canonical exports total about
+85 MiB; only one recording is loaded per viewer session.
+
+The 8893 preview was paused during publication to avoid simultaneous rebuilds.
+Strict preview packaging and served-route/hash verification are pending.
+Repeat/quantum/expanded-core/cache and native/WASM capture campaigns, live
+input, larger-screen workloads and broader regressions remain separate.
+
+
+## 2026-10-24 — Publication acceptance
+
+This replaces the pending preview statements in the preceding section. The
+strict isolated preview build passes in 96.85 seconds, at 193,288 KiB peak
+RSS. The normal 8893 service then passes its own strict rebuild in 86.84
+seconds and resumes serving. Its hard memory limit remains 768 MiB with
+swap disabled. No simulation/WASM source or published branch was changed.
+
+Live checks verify the game index, system reference and simulator routes,
+all ten recording links, and 79 byte-identical assets: 53 capture/layout/
+evidence/index files plus 26 simulator assets. The final live original-canvas
+Pong check passes every one of its 18 pin/wire/display/input checkpoints,
+inspector, backward seek, Play and Device views, without page errors or a
+WASM simulation-module request. Its time-reported maximum individual-process
+RSS is 201,880 KiB; it is not aggregate browser memory. Temporary isolated
+HTTP test serving was stopped after acceptance.
+
+The public index now links all ten native baseline recordings. Evidence
+includes `live-verification.json`, `live-browser.log`, `live-browser/`,
+`mkdocs.log`, `mkdocs-resources.txt`, per-fixture browser screenshots/receipts
+and the staged/public manifests under the campaign directory. A final source
+diff whitespace check passes. Full general regressions, configuration/WASM
+acceptance and live input remain outside this recording set. No commit, push
+or remote deployment was performed; phase 6 remains open for those other
+acceptance requirements.
+
+
+## 2026-11-03 — Closed: superseded by the game scenarios record
+
+The ten packaged fixtures this record accepted (five 3-press games, four
+acceptance boards, bring-up) were retired on 2026-11-03 and replaced by
+short versions (live scenarios) and long versions (computer players'
+sessions) in [the game scenarios record](2026-11-03-game-scenarios-plan.md).
+The open phase-6 acceptance campaign (`accept-recorded.py`: baseline,
+repeat, quantum and expanded-core runs of the ten fixtures) was not
+completed and is retired with them; `ComputerSystemLockstepTest` covers
+repetition, quantum splitting and the expanded core in CTest. Earlier
+sections remain as dated evidence of the retired fixtures.
+
+Record closed 2026-11-03.

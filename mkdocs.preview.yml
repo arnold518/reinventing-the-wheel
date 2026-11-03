@@ -4,7 +4,11 @@ INHERIT: mkdocs.yml
 # retains the GitHub Pages project path in its canonical site URL.
 site_url: http://127.0.0.1:8893/
 
+extra:
+  preview_simulator_dir: build-wasm-milestone/pages/simulator
+
 hooks:
+  - tools/mkdocs_recordings.py
   - tools/mkdocs_examples.py
   - tools/mkdocs_rv32i.py
   - tools/mkdocs_diagrams.py
@@ -12,4 +16,4 @@ hooks:
   - tools/mkdocs_preview.py
 
 watch:
-  - build-wasm/pages/simulator
+  - build-wasm-milestone/pages/simulator

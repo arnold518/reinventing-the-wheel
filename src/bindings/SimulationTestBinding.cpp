@@ -1,6 +1,9 @@
 #include "Bindings.hpp"
 #include "components/selection/BuildProfile.hpp"
+#include "components/selection/FidelityPresets.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
 #include "simulator/SimulationTest.hpp"
+#include "tests/ComponentTestModel.hpp"
 #include <algorithm>
 #include <pybind11/stl.h>
 
@@ -49,6 +52,16 @@ public:
 
 
 void bindSimulationTest(py::module_& m) {
+    m.def("fidelity_preset_names",&circuit::fidelityPresetNames);
+    m.def("scenario_fidelity_restrictions",[](const std::shared_ptr<SimulationTest>& test){
+        auto restrictions=test?test->unavailableFidelityPresets():std::map<std::string,std::string>{};
+        if(auto scenario=std::dynamic_pointer_cast<circuit::test::ComponentScenarioTest>(test))
+            restrictions.merge(circuit::fidelityPresetRestrictions(scenario->getSpec().contract_id));
+        return restrictions;
+    });
+    m.def("visual_abstraction_kind",[](const std::string& id){return circuit::visualAbstractionKind(id);});
+    m.def("fidelity_preset",[](const std::string& name){return circuit::fidelityPreset(name,circuit::builtinComponentCatalog());});
+    m.def("validate_fidelity_preset",[](const std::shared_ptr<Component>& root,const std::string& name){circuit::validateFidelityPreset(root,name);});
     py::class_<circuit::BuildProfile>(
         m,
         "BuildProfile",

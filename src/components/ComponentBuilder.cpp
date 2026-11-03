@@ -155,3 +155,9 @@ std::shared_ptr<Pin<>> ComponentBuilder::getOutputPin(const std::string& pin_nam
     return nullptr;
 }
 
+
+void ComponentBuilder::removeComponent(const std::shared_ptr<Component>& component) {
+    for (auto it = namedComponents.begin(); it != namedComponents.end();)
+        it = it->second == component ? namedComponents.erase(it) : std::next(it);
+    if (auto parent = component->getParent()) parent->removeChild(component);
+}

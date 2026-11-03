@@ -5,6 +5,7 @@
 #include "components/selection/BuildContext.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
+#include "components/capabilities/BehavioralComposition.hpp"
 #include "analysis/DelayTwin.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <algorithm>
@@ -235,7 +236,18 @@ ResolvedSelection ComponentCatalog::resolve(
         }
     }
 
-    const auto requested_fidelity = request.required_fidelity ? request.required_fidelity : decision.fidelity;
+    auto requested_fidelity = request.required_fidelity ? request.required_fidelity : decision.fidelity;
+    // A gate-list compact form is an explicit choice only: a general rule
+    // ("prefer behavioral") keeps the gates where it is the only compact form.
+    if (!request.required_fidelity && requested_fidelity == Fidelity::Behavioral && !decision.exact_path) {
+        const bool hand_written = std::any_of(candidates.begin(), candidates.end(), [](const auto* candidate) {
+            return candidate->fidelity == Fidelity::Behavioral && !candidate->gate_list;
+        });
+        const bool gate_list = std::any_of(candidates.begin(), candidates.end(), [](const auto* candidate) {
+            return candidate->fidelity == Fidelity::Behavioral && candidate->gate_list;
+        });
+        if (gate_list && !hand_written) requested_fidelity = Fidelity::Structural;
+    }
     if (requested_fidelity) {
         const auto found = std::find_if(
             candidates.begin(), candidates.end(),
@@ -397,13 +409,17 @@ void ComponentCatalog::validateInstance(
     }
 
     if (implementation.fidelity == Fidelity::Behavioral) {
-        if (!std::dynamic_pointer_cast<BasicComponent>(component)) {
+        if(auto composition=std::dynamic_pointer_cast<BehavioralComposition>(component)){
+            composition->validateBehavioralComposition();
+        }else{
+          if (!std::dynamic_pointer_cast<BasicComponent>(component)) {
             throw std::runtime_error("Behavioral implementation '" + implementation.id
                                      + "' did not create a BasicComponent");
         }
-        if (!component->getChildren().empty()) {
+          if (!component->getChildren().empty()) {
             throw std::runtime_error("Behavioral implementation '" + implementation.id
                                      + "' created functional child topology");
+          }
         }
     } else if (implementation.terminal_primitive) {
         if (!std::dynamic_pointer_cast<BasicComponent>(component)) {

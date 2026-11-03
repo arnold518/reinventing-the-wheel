@@ -46,6 +46,14 @@ scenario rows alone check final values. Long benchmark campaigns are explicit
 `tools/benchmarks/run.py` runs; a passing bounded benchmark CTest does not
 stand in for a full campaign.
 
+`GateInputCacheTest` is native regression equipment for the primitive gate
+execution cache and disabled-history value buffers. It checks four-state
+gate outputs/delay histories in every timing profile, pin replacement and
+wrong-width fallback, rewiring, immediate release of replaced pins, and history
+epoch resets. It is a standalone CTest target, not a visualizer scenario.
+Changing IO/gate class layout requires rebuilding the full native archive and
+its consumers before running it; old objects cannot be used as cache controls.
+
 ### Compiler memory for generated delay tables
 
 An optional configure flag, `-DCIRCUITSIM_SPLIT_DELAY_TABLES=ON`, compiles each
@@ -80,49 +88,143 @@ full/filtered output and failure preservation using a tiny engine adapter.
 
 ### Scripted device and game checks
 
-`RV32IMDeviceSystemTest` is the bounded integrated guest baseline. Its named
-cached and wide-time variants cover the other supported configurations;
-`RV32IMDeviceSystemLockstepTest` compares repetition, quantum size, an expanded
-core and fully structural logic around scalable native memory.
-`RV32IMRecordedBringupTest` and the five `RV32IMRecordedGame_*_Test` entries
-use the same embedded ELF/input bytes as the portable batch probe. They turn
-off circuit/memory histories and keep immutable frames separately. The small
-`RV32IMDeviceSystemScenarioTest` is the recorded circuit example; its alias is
-`rv32im-device-system`. `RecordedCircuitProbe <guest> <new-output.json>`
-exports the actual game topology and bounded PRESENT checkpoints for the
-original circuit viewer's `?recording=URL` mode. `games.html` remains available
-for frame-only JSON files. The circuit capture observes current device state
-without enabling histories; only retained checkpoints have pin/wire and device
-observations. It does not offer intermediate gate transitions or RAM pages.
+`ComputerSystemTest` is the bounded integrated guest baseline: a tiny
+bring-up ELF on the `games-machine` description. Its cached, DRAM,
+`TwoBus`, `RegisteredBridge`, wide-time and unsigned-time variants cover the
+other machines and configurations; `ComputerSystemLockstepTest` compares
+repetition, quantum size, an expanded core and fully structural logic around
+scalable native memory, and `ComputerSystemFaultTest` the traps. The system
+parts have `SystemDescriptionTest`, `BusInterconnectTest` (gate-level and
+compiled routers under random traffic), `LedPanelTest`,
+`GuestHeaderContentTest` and the CTest-only `GuestHeaderTest` (committed
+guest headers equal `system_header` output). `ComputerSystemTimingTest`
+certifies each machine's clock.
+
+The guest fixtures in `tests/fixtures/rv32im/games` are built by
+`tools/rv32im/build-guests.py --compiler <riscv-none-elf-gcc>`, which also
+writes `src/runtime/RecordedGuestFixtures.generated.inc` (the ELF bytes and
+inputs embedded for WebAssembly). Rebuild the native and WASM targets after
+regenerating. There are three kinds:
+
+| Fixtures | Screen | Input | Run by |
+| --- | --- | --- | --- |
+| `bringup`, `bringup-leds` | 8 × 8 | One press at a fixed cycle | The machine scenarios `ComputerSystem*ScenarioTest` |
+| `<game>-short` | 32 × 24 | One or two presses at fixed cycles | The game scenarios `Game*ScenarioTest` |
+| `<game>-long` | 64 × 48 | A computer player's batches, one after each frame | `LongGameplayProbe` and the long-game campaign |
+
+`GuestScenarioTest` (`src/tests/GuestScenarioTests.cpp`) builds
+`system.computer` with the scenario's build profile, loads the fixture and
+calls `runRecordedGuestOn` with wire history on: the same checked runner as
+the batch probe, so every instruction, data access, device read, frame and
+console byte is checked while the visualizer gets the full timeline. Its
+checkpoints are `reset released`, `press …`/`release …` (when the device
+samples the input), `console: …`, `frame N` and `halted`. The clock follows the active timing profile:
+100 ticks (`unit`) or 4.5 ns (`embedded`, `desktop`). The game scenarios
+refuse Logic and Visual (with the core built from its stages a game's wire
+history passed 3 GB natively, beyond a browser tab) and every whole computer
+refuses Gate (its RAM is beyond the structural storage limit); `computer-system-structure` is the
+program-free machine for switching profiles.
+
+`system_experiment --guest NAME [--machine M] [--memory ...] [--fidelity ...]
+[--period P] [--recording NEW.json]` runs one short fixture on any machine,
+timing profile (`CIRCUITSIM_TIMING_PROFILE`) and period.
+`tools/system/run-experiments.py` runs a set of them serially (`--machines
+own` uses each fixture's own machine) and `tools/system/results-tables.py`
+writes the result tables of § 5.6 and § 5.7 from the saved summaries.
+`RecordedGuestProbe <guest> [ff|cached-ff|cached-dram] [max-cycles]
+[quantum-events] [compact|expanded-core|structural] [width] [height]` exports
+one checked run as JSON; `tools/rv32im/run-recorded.py` saves it with
+provenance and resource evidence. `RecordedCircuitProbe <guest>
+<new-output.json>` exports a short fixture's topology and PRESENT checkpoints
+for the viewer's `?recording=URL` mode.
+
+`RV32IMGameReferenceTest.py` compiles the same guest C for the host with
+stand-in devices (`tests/fixtures/rv32im/games/reference-host.c`, driven by
+`tools/rv32im/long_gameplay/reference.py`). For a short fixture
+(`RV32IMRecorded_<fixture>_Test`) it runs the circuit through
+`RecordedGuestProbe` and requires equal frames, console and report. For a
+long fixture (`RV32IMReference_<game>-long_Test`, `--reference-only`) it
+requires the computer player's predicted score, final state and rule
+fingerprint. `RV32IMGameRulesTest` checks the rules on hand-made boards and
+that `game_board` equals `game_cell`.
 
 `RecordedCircuitTransportTest` covers the captured topology/state contract,
 wide times, limits, mismatched frames and unsupported actions.
-`RecordedCircuitBrowserTest` uses the real packaged Pong circuit capture in
-the original canvas and checks every retained pin/wire, display/input state,
-inspector, abstraction toggle and timeline playback without a simulation worker.
+`RecordedCircuitBrowserTest` opens a packaged long-game playlist in the
+original canvas and checks the retained pins and wires, display/input state,
+inspector, abstraction toggle and timeline playback without a simulation
+worker. Set `CIRCUITSIM_RECORDED_CIRCUIT_FILE` and
+`CIRCUITSIM_RECORDED_CIRCUIT_URL` to check another capture. Run browser
+checks serially under the host-memory guard.
 
-`RecordedGuestProbe <guest> [ff|cached-ff|cached-dram] [max-cycles]
-[quantum-events] [compact|expanded-core|structural] [width] [height]` exports JSON;
-`tools/rv32im/run-recorded.py` saves it in a fresh directory with provenance
-and resource evidence.
-`RV32IMGameReferenceTest.py` compares compiled guest reports/pixels with strict
-host C reference execution. The independent host rule checks cover game
-boundaries. These newly added system/game checks are under validation; consult
-the open milestone record for passes, failures and unrun gates.
+### Long games: the background campaign
 
-The exact-reference checks use the bounded recording CLI for each fresh native
-run. They preserve JSON, RSS, progress and provenance under
-`<build>/recorded-guest-native/<guest>-<unique>/`; a successful exact comparison
-publishes `<build>/recorded-guest-native/<guest>.json` pointing to that artifact.
-Existing artifacts are retained. Reference-only and `--recording` comparisons
-do not execute another native guest.
+Each long fixture is a computer player's session
+(`tools/rv32im/long_gameplay/plans.py`), frozen into the fixture by
+`build-guests.py`: the player runs the real C rules through ctypes and stops
+at its goal. `LongGameplayProbe FIXTURE NEW-DIR [--period P] [--fidelity F]
+[--part-frames N] [--ticks]` runs it through the checked runner and writes
+the topology, one checkpoint per frame in parts, and the result.
+`tools/rv32im/run-long-gameplays.py` runs all six serially in a background
+user unit and publishes each finished game under
+`site-docs/assets/system/long-games/<game>/` (playlist, parts, topology,
+evidence):
 
-`tools/rv32im/accept-recorded.py --runner PATH --output DIR` runs each of
-the ten fixtures in compact baseline/repeat, compact quantum-97 and expanded
-core configurations. It compares exact host references and deterministic
-results, then saves performance/provenance summaries. Resuming requires the
-same source, binary and fixtures. Use `--guest NAME` for a focused selection;
-report that selection rather than claiming the full campaign.
+```sh
+cmake --build build-milestone --target LongGameplayProbe -j1
+python3 tools/rv32im/run-long-gameplays.py launch \
+  --runner build-milestone/tests/LongGameplayProbe \
+  --output build-milestone/long-games-campaign            # compact, embedded, 4.5 ns
+python3 tools/rv32im/run-long-gameplays.py status --output build-milestone/long-games-campaign
+```
+
+`launch` first runs each fixture's host reference (frames, report and
+button levels per frame) and checks it against the player's prediction. The
+unit freezes the runner, Node executable, fixtures, references, layout and
+packaging tools; later repository edits do not change a running campaign.
+The timing profile and period are frozen with it (`--timing`, `--period`).
+One game runs at a time under a memory cap (`--memory-mib`, default 1024; the
+native address space is five sixths of it), no swap, 90% of one CPU and
+nice 10. It waits below 1,536 MiB available and stops only owned work below
+1,024 MiB. Completed games receive exact full-frame, report, input-log and
+per-frame button-level checks and validated transport parts before atomic
+publication. `--games pong-long,...` selects a subset; `--fidelity` and
+`--ticks` publish under a separate `<preset>[-ticks]` folder (Visual:
+`long-games/visual/`, listed in the viewer's menu). Published games store
+their topology, scopes, parts, layout and build manifest gzip-compressed
+(`.json.gz`); the viewer decompresses them, and `compress-published --output
+DIR` converts games published before. The `smoke-long` fixture (Pong's first
+two updates) checks the whole chain in minutes; it runs only when named,
+e.g. `--games smoke-long --fidelity visual --publication build-milestone/x`
+(`--publication` keeps an equipment check out of the site). Visual runs at
+about 100 cycles per second and peaked below 300 MiB on the smoke check;
+use `--memory-mib 2048`.
+
+Pass `--ticks` to record every signal-change timestamp instead of one state
+per frame. It retains bounded compressed deltas and independent snapshots,
+including memory bytes and register state; PRESENTs remain navigation
+markers. Open its `ticks.json` rather than `playlist.json`.
+`--trace-disk-gib` bounds the compressed trace bytes (default 12 GiB). The
+native exporter links zlib.
+
+`TickRecordingTest` runs `SignalTraceProbe` and compares every tick against
+retained histories, including wide time, X/Z, future pin publications, memory
+writes/fills, registers, cancellation, small drain quanta and chunk rewind.
+`TickRecordingBrowserTest` requires `CIRCUITSIM_TICK_RECORDING_FILE` and its
+same-site `CIRCUITSIM_TICK_RECORDING_URL` query; serve that capture alongside
+the simulator. Without the file, `tools/run-web-tests.py` reports the check
+as skipped. It checks the full timeline, PRESENT equality, intermediate
+stepping, inspectors, Play and rewind without loading WASM. The fixture must
+be produced by the native exporter; no full game run is required for this check.
+
+Use `stop` with the same output to stop the owned unit, and `resume` to start
+the frozen queue again after stopping or reboot. Verified completed games are
+retained and checked before skipping. Interrupted native simulations restart
+their game; arbitrary hardware-state restore is not implemented. Partial
+attempts remain available and are never labeled verified. Pressure retries
+are bounded to three attempts; other game failures do not skip later games.
+Live progress and logs are in `campaign.json` and `jobs/` under the output.
+These long sessions can take days; a healthy launch is not a completed run.
 
 ### Timing profiles
 
@@ -148,7 +250,7 @@ fixture can be rebuilt with
 Its compiler flags and artifacts are independent of the RV32I program path.
 The phase 3 sweep checks are headless; `*ScenarioTest` aliases in
 `src/tests/RV32IMPhase3Scenarios.cpp` retain smaller viewer examples and share
-the same logical owners. See the [foundation reference](../reference/rv32im-device-foundation.md).
+the same logical owners. See the [computer system reference](../reference/computer-system.md).
 `RV32IMDeviceWasmParityTest` compares all 22 recorded component examples with
 the native probe. `RV32IMDeviceBrowserTest` checks the 22 public M/device/system component
 pages, mobile bounds and corresponding WASM checkpoint values. Run them through
@@ -219,7 +321,21 @@ changing the product profiles.
 ## Connect a scenario to the visualizer and site
 
 The registry name identifies the test. `visualizer-v2/static/scenarios.json`
-supplies its menu title, group and stable URL alias. A saved layout in
+supplies its menu title, group, explicit numeric `order`, stable URL alias
+and `fidelity`, the named profile the visualizer opens it in (every program
+opens in `visual`). Layout tools build a scenario through
+`server.scenario_topology`, under that profile, because saved layouts are
+keyed by its fingerprint. `VisualizerSessionProbe` opens a scenario in the
+same profile unless given `--fidelity`; `--fidelity test` keeps the test's own
+build profile, which `tools/run-web-tests.py` selects for its WebAssembly
+parity checks (`CIRCUITSIM_PROBE_DEFAULT_FIDELITY=test`), matching the
+bridge before a page chooses a preset.
+Its group array defines the overall component sequence. Give components
+consecutive ranks starting at zero within each group; fixed RV32I programs
+use their program number.
+Python and JavaScript sort from this metadata, and the final browser menu
+preserves that order. Check the visible selector as well as backend parity.
+A saved layout in
 `visualizer-v2/layout.json` may depend on root IDs, child names, the selected
 profile and the scenario alias; refresh affected layouts with the
 [layout guide](automatic-layout-refresh.md). Do not silently rename a saved
@@ -238,8 +354,12 @@ C++ example as an independently understandable behavioral reference, then
 check it against the scenario when that page has a compilation check.
 
 For a Markdown-only site change, run `python3 -m mkdocs build --strict` when
-the generated example bundle is available. For a scenario, browser, WASM or
-generated-example change, build the full package with
+the generated example bundle is available. Catalog/order-only changes may
+reuse an existing engine/example package: copy the changed catalog and option
+builder into its simulator directory, build the site strictly and check the
+actual browser selector. They require no engine compilation or new circuit
+recordings. For scenario behavior, other browser behavior, WASM or
+generated-example changes, build the full package with
 `tools/build-pages.sh`, then run the relevant registered browser check.
 `tests/web-tests.json` is the inventory; `tools/run-web-tests.py --suite all
 --list` shows choices. The focused runner form is:
@@ -299,6 +419,25 @@ other 4.3 references, including pin schemas and exact C++ reference replay.
 examples that call them. These checks use the existing native probe and
 do not require a core or game campaign.
 
+Headless sweep tests use `circuit::test::SettledSweep` and `FidelitySweep`
+(`include/tests/SettledSweep.hpp`). `FidelitySweep` builds the strict
+gate-level form and, when the family has one, the behavioral form; every
+vector runs on both and their outputs must match exactly. Expected values come
+from an independent integer reference in the test, never from production value
+functions. `requireSoundUnknown` checks a single X or Z input: an output bit may
+be pessimistically `X`, but never a known value that the unknown bit could
+change. `AdderWidthSweepTest` sweeps both adders at 8/16/32 bits (every carry
+span at every start position, patterns, 1,024 random vectors and every
+single-unknown input bit); `RV32IALUSweepTest` sweeps `RV32IALU`; and
+`ALUWidthContractTest` adds a boundary grid and random vectors at 16/32 bits,
+which reach every 16/32-bit sub-unit through the gate-level ALU. `WordGateSweepTest`
+also checks per-bit output timing of the compact word gates against their gates
+by sampling the output wire every tick in every timing profile (sample the
+wire, not the pin: a basic part sets its pin at evaluation). Each new or
+changed width needs such a sweep against an independent reference; a handful of
+recorded example rows is not enough. Keep sweeps out of the scenarios that site
+markers name, so published tables do not change.
+
 `WidthComponentsTest` covers `ALU<W>` and both adders at 8/16/32 bits, mux/register-file geometries, narrow transport/pixel helpers
 and iterative M units at 4/8/16 bits. Recorded 32-bit M checks remain separate.
 The same registered semantic test can run through `circuitsim_verification.js`.
@@ -324,7 +463,39 @@ exercise device-view toggling and inspector previews. Run native and WASM
 checks serially; browser tests must use a freshly packaged site. These
 procedures do not imply that the pending milestone acceptance has passed.
 
+`RV32IMDeviceBrowserTest` also inspects each distinct functional device scope
+in the twelve Device I/O sessions, checks root group names and the menu order,
+and rejects missing/out-of-bounds/overlapping child placements and explorer
+errors. Its filter still selects sessions by alias. With screenshots enabled,
+`*-hierarchy.png` records the circuit overview after nested-scope inspection.
+
 `DelayRuleTest` rejects an explicit part selection when no parts were compared;
 zero comparisons cannot establish a pass. Diagnostic `--report`/`--floors`
 outputs describe measured conservatism and do not replace the normal test's
 safety and floor checks. `DelayRuleSelectionTest` covers unmatched selection.
+
+### Named fidelity presets
+
+Normal native/WASM scenario loads accept `fidelity=scenario|gate|logic|visual|compact`
+independently of timing. Manual overrides are isolated by preset and marked
+custom. `FidelityPresetsTest` checks capacity boundaries, structural CPU and
+compact visual devices, strict failures and per-file export budgets.
+`VisualizerFidelityProfileTest` checks native/JS identities, cache isolation
+and custom overrides; `VisualizerTimingProfileBrowserTest` also covers preset
+URLs, timing independence and responsive selector placement.
+`FidelityPresetWasmParityTest` uses the generic native probe
+(`--fidelity PRESET`) to compare actual trees, profile identity and indexed
+states for all four register presets and four visual device scenarios.
+
+Long visual game recordings use schema 2 parts of at most 16 checkpoints with
+a shared chunked topology. `RecordedCircuitTransportTest` covers both formats;
+the browser checks a native capture. Preparing fixtures or launching a queue
+is not evidence that its full native games passed.
+
+`VisualizerProfileLayoutsTest` covers dynamic layout completion for newly
+selected child structures, compatible placement reuse and preservation of
+manual/unrelated saved entries. `DeviceSystemFidelityBrowserTest` switches
+Logic/Visual/Compact on the actual device-system scenario,
+checks repaired geometry and saved placements, and verifies readable strict
+Gate rejection/recovery. A named preset may be unavailable for a contract;
+that is distinct from a missing layout for a supported build.

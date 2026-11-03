@@ -79,10 +79,15 @@ if (process.env.CIRCUITSIM_EXAMPLES_ISOLATE === '1') {
 const imported = await import(pathToFileURL(resolve(modulePath)));
 const module = await imported.default({ wasmBinary: await readFile(wasmPath) });
 const scenarios = filter ? { ...previous.scenarios } : {};
+// Rows are recorded under the profile the embedded simulator opens the
+// scenario in (its catalog `fidelity`), so table and simulator agree.
+const catalog = JSON.parse(await readFile(new URL('../visualizer-v2/static/scenarios.json', import.meta.url), 'utf8'));
 for (const [scenario, test] of requested) {
   if (filter && !filter.test(test)) continue;
   const bridge = new module.WasmVisualizer();
   try {
+    const fidelity = catalog.components[test]?.fidelity;
+    if (fidelity) bridge.setFidelityProfile(fidelity);
     const topology = JSON.parse(bridge.loadScenario(test, scenario, 0));
     const examples = JSON.parse(bridge.exampleRowsJson());
     assert.equal(examples.schemaVersion, 1);

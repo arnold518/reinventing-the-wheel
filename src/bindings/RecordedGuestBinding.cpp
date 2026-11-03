@@ -12,8 +12,8 @@
 void bindRecordedGuest(py::module_& m) {
     m.def("create_device_component", [](const std::string& id,const std::string& name,
             const circuit::ParameterMap& parameters,const std::string& fidelity) {
-        if(!id.starts_with("device.")&&!id.starts_with("bus.word.address-router.")&&!id.starts_with("bus.word.error-target.")&&!id.starts_with("bus.word.instruction-guard.")&&!id.starts_with("video.pixel-selector."))
-            throw std::invalid_argument("Expected a device, device bus or pixel-selector contract");
+        if(!id.starts_with("device.")&&!id.starts_with("bus."))
+            throw std::invalid_argument("Expected a device or bus contract");
         if(fidelity!="structural"&&fidelity!="behavioral")throw std::invalid_argument("Invalid device fidelity");
         const auto selected=fidelity=="structural"?circuit::Fidelity::Structural:circuit::Fidelity::Behavioral;
         const auto& catalog=circuit::builtinComponentCatalog();
@@ -30,9 +30,9 @@ void bindRecordedGuest(py::module_& m) {
         py::arg("component"),py::arg("simulator"),py::arg("index"),py::arg("time"),
         py::arg("current")=false);
     m.def("recorded_guest_names", &circuit::runtime::recordedGuestNames);
-    m.def("run_recorded_guest_json", [](const std::string& name,bool caches,bool dram,size_t max_cycles){
-            return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles);
+    m.def("run_recorded_guest_json", [](const std::string& name,bool caches,bool dram,size_t max_cycles,const std::string& fidelity){
+            return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles,{},100000,false,true,0,0,fidelity);
         },
         py::arg("name"), py::arg("caches")=false, py::arg("dram")=false,
-        py::arg("max_cycles")=500000);
+        py::arg("max_cycles")=500000,py::arg("fidelity")="");
 }

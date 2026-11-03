@@ -33,7 +33,7 @@ void drive(
     const std::shared_ptr<Wire<>>& wire,
     bool value) {
     simulator.scheduleEvent(
-        std::make_shared<WireUpdateEvent<>>(
+        std::make_shared<WireUpdateEvent>(
             time,
             wire,
             value ? LogicValue::HIGH : LogicValue::LOW));

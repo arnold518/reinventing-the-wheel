@@ -5,6 +5,8 @@
 #include "modules/storage/ClockedStateBit.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/utility/Constant.hpp"
+#include "modules/utility/Rewire.hpp"
+#include "modules/basic/WordGate.hpp"
 #include "components/ComponentBuilder.tpp"
 #include <bit>
 
@@ -147,13 +149,32 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     // data. The count is chosen from the device's proven access time at the
     // clock (staticAccessCycles), so the device path is a multicycle path.
     auto counter = reg("WAIT_COUNT", 8);
-    auto count_bits = memory_device::bitAdapter(b, "WAIT_COUNT_BITS", 8, true);
-    w.connect(counter->getOutputPin<8>("Q"), count_bits->getInputPin<8>("IN"));
-    std::vector<PinPtr> count, count_zero;
-    for (size_t i = 0; i < 8; ++i) {
-        count.push_back(count_bits->getOutputPin("OUT_" + std::to_string(i)));
-        count_zero.push_back(w.invert("COUNT_LOW_" + std::to_string(i), count.back()));
-    }
+    // The per-bit count logic is 8-bit word gates (the same gates per bit);
+    // only the borrow chain and the zero test stay bit by bit.
+    using circuit::word::GateKind;
+    const auto word_gate = [&](GateKind kind, const std::string& name, PinPtr a, PinPtr other = nullptr) {
+        auto gate = b.add(circuit::word::gate(kind, 8), name);
+        if (kind == GateKind::Not) w.connect(a, gate->getInputPinDynamic("IN"));
+        else { w.connect(a, gate->getInputPinDynamic("A")); w.connect(other, gate->getInputPinDynamic("B")); }
+        return gate->getOutputPinDynamic("OUT");
+    };
+    const auto spread = [&](const std::string& name, PinPtr bit) {
+        std::vector<Rewire::BitMap> map;
+        for (size_t i = 0; i < 8; ++i) map.emplace_back("IN", 0, "OUT", i);
+        auto r = b.addNewComponent<Rewire>(name, std::vector<Rewire::WireSpec>{{"IN", 1}},
+                                          std::vector<Rewire::WireSpec>{{"OUT", 8}}, map);
+        w.connect(bit, r->getInputPinDynamic("IN"));
+        return r->getOutputPinDynamic("OUT");
+    };
+    const auto bits_of = [&](const std::string& name, PinPtr word) {
+        auto split = memory_device::bitAdapter(b, name, 8, true);
+        w.connect(word, split->getInputPinDynamic("IN"));
+        std::vector<PinPtr> bits;
+        for (size_t i = 0; i < 8; ++i) bits.push_back(split->getOutputPinDynamic("OUT_" + std::to_string(i)));
+        return bits;
+    };
+    const auto count = bits_of("WAIT_COUNT_BITS", counter->getOutputPinDynamic("Q"));
+    const auto count_zero = bits_of("COUNT_LOW_BITS", word_gate(GateKind::Not, "COUNT_LOW", counter->getOutputPinDynamic("Q")));
     const auto expired = w.reduce("COUNT_EXPIRED", count_zero, true);
     // A burst: BURST and the words still to come; each word is taken at its
     // counted edge, but only while the last one has left the RESULT register
@@ -172,17 +193,19 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     auto reload = w.either("RELOAD_COUNT", start, beat_next);
     // Next count: access_cycles - 1 on START, one less each edge while waiting.
     const unsigned load = unsigned(config_.access_cycles - 1);
-    auto next = memory_device::bitAdapter(b, "NEXT_WAIT_COUNT", 8, false);
+    auto less = memory_device::bitAdapter(b, "COUNT_LESS_WORD", 8, false);
     PinPtr borrow = w.constant("DECREMENT", true);
     for (size_t i = 0; i < 8; ++i) {
         const auto n = std::to_string(i);
-        auto less = w.binary<XORGate>("COUNT_LESS_" + n, count[i], borrow);
+        w.connect(w.binary<XORGate>("COUNT_LESS_" + n, count[i], borrow), less->getInputPin("IN_" + n));
         borrow = w.both("COUNT_BORROW_" + n, count_zero[i], borrow);
-        auto waiting = w.both("COUNT_KEEP_" + n, w.both("COUNT_WAITING_" + n, active, w.invert("COUNT_RUNNING_" + n, expired)), less);
-        w.connect(w.either("COUNT_NEXT_" + n, w.both("COUNT_LOAD_" + n, reload, w.constant("LOAD_" + n, (load >> i) & 1)), waiting),
-                  next->getInputPin("IN_" + std::to_string(i)));
     }
-    w.connect(next->getOutputPinDynamic("OUT"), counter->getInputPin<8>("D"));
+    auto waiting = word_gate(GateKind::And, "COUNT_WAITING", spread("ACTIVE_WORD", active),
+                             word_gate(GateKind::Not, "COUNT_RUNNING", spread("EXPIRED_WORD", expired)));
+    auto keep = word_gate(GateKind::And, "COUNT_KEEP", waiting, less->getOutputPinDynamic("OUT"));
+    auto load_word = word_gate(GateKind::And, "COUNT_LOAD", spread("RELOAD_WORD", reload),
+                               b.addNewComponent<ConstantValue<8>>("LOAD", load)->getOutputPinDynamic("OUT"));
+    w.connect(word_gate(GateKind::Or, "COUNT_NEXT", load_word, keep), counter->getInputPin<8>("D"));
     w.connect(w.constant("COUNT_ALWAYS", true), counter->getInputPin("WE"));
     // The device's READY at the capturing edge checks the count: an access
     // that has not completed ends with status Device.
@@ -284,7 +307,8 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     auto status = reg("RESULT_STATUS", 3);
     for (auto r : {result, status}) w.connect(finished, r->getInputPin("WE"));
     auto zero_data = memory_device::bitAdapter(b, "ZERO_DATA", width_, false);
-    for (size_t i = 0; i < width_; ++i) w.connect(w.constant("ZERO_" + std::to_string(i), false), zero_data->getInputPin("IN_" + std::to_string(i)));
+    const auto zero = w.constant("ZERO_DATA_BIT", false);
+    for (size_t i = 0; i < width_; ++i) w.connect(zero, zero_data->getInputPin("IN_" + std::to_string(i)));
     auto returns_data = w.reduce("RETURNS_DATA", {complete, w.invert("READ_RESULT", is_write), ready}, true);
     // The read word is taken at the counted edge, after the device's access
     // time (a multicycle path, checked by READY).
@@ -414,10 +438,14 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
         // open row and it matches.
         auto stored = memory_device::bitAdapter(b, "OPEN_ROW_BITS", 32, true);
         w.connect(open_row->getOutputPin<32>("Q"), stored->getInputPin<32>("IN"));
-        std::vector<PinPtr> same;
-        for (size_t i = 0; i + column_bits < 32; ++i)
-            same.push_back(w.invert("ROW_SAME_" + std::to_string(i),
-                w.binary<XORGate>("ROW_DIFFER_" + std::to_string(i), stored->getOutputPin("OUT_" + std::to_string(i)), live[i + column_bits])));
+        // XOR and XNOR of every row bit are word gates (ROW_DIFFER, ROW_SAME);
+        // the AND tree stays per bit.
+        std::vector<PinPtr> open_bits, live_bits;
+        for (size_t i = 0; i + column_bits < 32; ++i) {
+            open_bits.push_back(stored->getOutputPin("OUT_" + std::to_string(i)));
+            live_bits.push_back(live[i + column_bits]);
+        }
+        const auto same = w.invertBits("ROW_SAME", w.gateBits(circuit::word::GateKind::Xor, "ROW_DIFFER", open_bits, live_bits));
         hit = w.reduce("ROW_HIT", {getInputPin("MEM_ROW_OPEN"), row_known->getOutputPin("Q"), w.reduce("SAME_ROW", same, true)}, true);
     }
     // Steps in priority order. DRAM: PRECHARGE, ACTIVATE, READ/WRITE, REFRESH.

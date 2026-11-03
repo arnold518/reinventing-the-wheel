@@ -21,6 +21,9 @@ protected:
     std::map<std::string, std::shared_ptr<PinBase>> _allInputPins;
     std::map<std::string, std::shared_ptr<PinBase>> _allOutputPins;
     PinInitFunction _pin_initializer;
+    // Derived execution caches must release replaced pins before addPin
+    // returns, so weak wire sinks cannot keep driving an obsolete input.
+    virtual void pinsChanged() noexcept {}
 
     template<size_t WIDTH = 1>
     std::shared_ptr<Pin<WIDTH>> _addPin(const std::string& pin_name, PinType type, std::shared_ptr<IOComponent> self_ptr);
@@ -62,6 +65,7 @@ std::shared_ptr<Pin<WIDTH>> IOComponent::_addPin(const std::string& pin_name, Pi
     } else {
         _allOutputPins[pin_name] = pin;
     }
+    pinsChanged();
     return pin;
 }
 

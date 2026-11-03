@@ -44,13 +44,20 @@ def scenario_option(descriptor):
         program = next(p for p in CATALOG['programs'] if p['id'] == f'program-{number:02d}')
         return dict(key=aliases_for(name)[0], className=name,
                     title=f'{number:02d} · {program["title"]}', group=program['group'],
-                    workload=program['id'], core=core, policy=policy)
+                    workload=program['id'], core=core, policy=policy, order=program['order'],
+                    fidelity=program['fidelity'])
     component = CATALOG['components'][name]
     return dict(key=aliases_for(name)[0], className=name, **component)
 
 
 def scenario_options(descriptors):
-    return [scenario_option(d) for d in descriptors if d['visualizable']]
+    options = [scenario_option(d) for d in descriptors if d['visualizable']]
+    groups = {group['id']: index for index, group in enumerate(CATALOG['groups'])}
+    cores = {'single': 0, 'baseline': 1, 'advanced': 2}
+    policies = {'not-taken': 0, 'taken': 1, 'backward-taken': 2, 'one-bit': 3, 'two-bit': 4}
+    return sorted(options, key=lambda option: (
+        groups.get(option['group'], len(groups)), option['order'],
+        cores.get(option.get('core'), 0), policies.get(option.get('policy'), 0), option['className']))
 
 
 def registered_scenario(descriptors, value):

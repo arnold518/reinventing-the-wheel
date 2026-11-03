@@ -11,10 +11,10 @@ add_executable(RV32IMTimingTest cpp/RV32IMTimingTest.cpp)
 target_link_libraries(RV32IMTimingTest PRIVATE SimulatorLib)
 add_test(NAME RV32IMTimingTest COMMAND RV32IMTimingTest)
 set_tests_properties(RV32IMTimingTest PROPERTIES LABELS "rv32im;timing;analysis;phase3" TIMEOUT 600)
-add_executable(RV32IMDeviceSystemTimingTest cpp/RV32IMDeviceSystemTimingTest.cpp)
-target_link_libraries(RV32IMDeviceSystemTimingTest PRIVATE SimulatorLib)
-add_test(NAME RV32IMDeviceSystemTimingTest COMMAND RV32IMDeviceSystemTimingTest)
-set_tests_properties(RV32IMDeviceSystemTimingTest PROPERTIES LABELS "rv32im;timing;analysis;phase6" TIMEOUT 900)
+add_executable(ComputerSystemTimingTest cpp/ComputerSystemTimingTest.cpp)
+target_link_libraries(ComputerSystemTimingTest PRIVATE SimulatorLib)
+add_test(NAME ComputerSystemTimingTest COMMAND ComputerSystemTimingTest)
+set_tests_properties(ComputerSystemTimingTest PROPERTIES LABELS "system;timing;analysis" TIMEOUT 900)
 add_executable(MemoryArchitectureCleanupTest cpp/MemoryArchitectureCleanupTest.cpp)
 target_link_libraries(MemoryArchitectureCleanupTest PRIVATE SimulatorLib)
 add_test(NAME MemoryArchitectureCleanupTest COMMAND MemoryArchitectureCleanupTest)
@@ -105,6 +105,11 @@ add_executable(BenchmarkModelTest cpp/BenchmarkModelTest.cpp)
 target_link_libraries(BenchmarkModelTest PRIVATE SimulatorLib)
 add_test(NAME BenchmarkModelTest COMMAND BenchmarkModelTest)
 set_tests_properties(BenchmarkModelTest PROPERTIES LABELS "benchmark;rv32i;memory" TIMEOUT 60)
+if(TARGET system_header)
+    add_test(NAME GuestHeaderTest COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/checks/GuestHeaderTest.py $<TARGET_FILE:system_header>)
+    set_tests_properties(GuestHeaderTest PROPERTIES LABELS "system;device" TIMEOUT 120)
+endif()
 add_test(NAME BenchmarkCampaignCLITest COMMAND ${Python3_EXECUTABLE}
     ${CMAKE_CURRENT_SOURCE_DIR}/checks/BenchmarkCampaignCLITest.py ${PROJECT_BINARY_DIR})
 set_tests_properties(BenchmarkCampaignCLITest PROPERTIES LABELS "benchmark;rv32i;memory" TIMEOUT 150)
@@ -235,6 +240,7 @@ add_executable(
     cpp/VisualizerSessionProbe.cpp
 )
 target_link_libraries(VisualizerSessionProbe PRIVATE SimulatorLib)
+target_compile_definitions(VisualizerSessionProbe PRIVATE CIRCUITSIM_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
 add_test(
     NAME RV32IExternalBenchmarkRunnerSmoke
@@ -418,6 +424,10 @@ set(SIMULATION_TESTS
     RV32IMEMWBPipelineRegisterTest
     RV32IForwardingUnitTest
     RV32IHazardDetectionUnitTest
+    RV32IPipelineControlSweepTest
+    WordGateSweepTest
+    CompactFormEquivalenceTest
+    GateListCompactEquivalenceTest
     RV32IMemoryAlignmentUnitTest
     RV32IPipelineRetirementUnitTest
     RV32IPipelineCoordinatorTest
@@ -623,7 +633,7 @@ foreach(test_name RV32ISharedMemoryProgramTest RV32IMemoryArrangementBTest RV32I
 endforeach()
 
 # Generic arithmetic ownership precedes the game/device append hook.
-foreach(test_name ALUWidthContractTest ALUScenarioTest ALUWidth8ScenarioTest ALUWidth32ScenarioTest RippleCarryAdderWidth16Test ParallelPrefixAdderWidth16Test)
+foreach(test_name ALUWidthContractTest ALUScenarioTest ALUWidth8ScenarioTest ALUWidth32ScenarioTest RippleCarryAdderWidth16Test ParallelPrefixAdderWidth16Test AdderWidthSweepTest RV32IALUSweepTest ANDGateWidth8Test)
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;alu;width")
     list(APPEND SIMULATION_TESTS ${test_name})
@@ -637,6 +647,7 @@ set(RV32IM_PHASE3_TESTS
     MultiplierWidth32Test
     DividerWidth32Test
     MulDivUnitWidth32Test
+    MulDivGateLevelTest
     TableOnlyDelayPublicationTest
     RV32IMSemanticsTest
     RV32IMDecodeControlTest
@@ -648,13 +659,9 @@ set(RV32IM_PHASE3_TESTS
     ClockedCounterTest
     SynchronousFifoTest
     DeviceRegisterPortWidth32Test
-    BusErrorTargetWidth32Test
-    AddressRouterWidth32Test
-    InstructionAccessGuardWidth32Test
     ConsoleDeviceTest
     TimerDeviceTest
     ButtonDeviceTest
-    IndexedPixelSelectorWidth32Test
     FramebufferDisplayTest
     DeviceInspectorTest
     MultiplyStepScenarioTest
@@ -670,13 +677,9 @@ set(RV32IM_PHASE3_TESTS
     ClockedCounterScenarioTest
     SynchronousFifoScenarioTest
     DeviceRegisterPortWidth32ScenarioTest
-    BusErrorTargetWidth32ScenarioTest
-    AddressRouterWidth32ScenarioTest
-    InstructionAccessGuardWidth32ScenarioTest
     ConsoleDeviceScenarioTest
     TimerDeviceScenarioTest
     ButtonDeviceScenarioTest
-    IndexedPixelSelectorWidth32ScenarioTest
     FramebufferDisplayScenarioTest
 )
 foreach(test_name ${RV32IM_PHASE3_TESTS})
@@ -684,6 +687,8 @@ foreach(test_name ${RV32IM_PHASE3_TESTS})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;phase3")
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
+# Exhaustive 4-bit and boundary 8/16/32-bit gate-level M units take about 45 s.
+set_tests_properties(MulDivGateLevelTest PROPERTIES LABELS "simulation;rv32im;phase3;slow" TIMEOUT 600)
 
 foreach(test_name RV32IMArithmeticProgramTest RV32IMDependenciesProgramTest RV32IMDivideEdgesProgramTest
     RV32IMFibonacciProgramTest RV32IMGcdProgramTest)
@@ -698,14 +703,27 @@ foreach(test_name SimulationTimeTest SimulationTimePlaybackTest)
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
-foreach(test_name RV32IMDeviceSystemTest
-    RV32IMDeviceSystemCachedFFTest RV32IMDeviceSystemCachedDRAMTest
-    RV32IMDeviceSystemWideTimeTest RV32IMDeviceSystemUnsignedTimeTest RV32IMDeviceSystemLockstepTest
-    RV32IMLargerDisplayTest RV32IMRecordedInputValidationTest RV32IMRecordedEvidenceBudgetTest RV32IMDeviceSystemFaultTest RV32IMRecordedBringupTest
-    RV32IMRecordedGame_2048_Test RV32IMRecordedGame_sokoban_Test RV32IMRecordedGame_snake_Test
-    RV32IMRecordedGame_pong_Test RV32IMRecordedGame_tetris_Test RV32IMDeviceSystemScenarioTest)
+foreach(test_name ComputerSystemTest
+    ComputerSystemCachedFFTest ComputerSystemCachedDRAMTest
+    ComputerSystemWideTimeTest ComputerSystemUnsignedTimeTest
+    ComputerSystemTwoBusTest ComputerSystemRegisteredBridgeTest ComputerSystemPortCheckTest ComputerSystemLockstepTest
+    RV32IMLargerDisplayTest RV32IMRecordedInputValidationTest RV32IMRecordedEvidenceBudgetTest ComputerSystemFaultTest
+    # A real program on each machine, and the short games (GuestScenarioTests).
+    ComputerSystemScenarioTest ComputerSystemTwoBusScenarioTest ComputerSystemRegisteredBridgeScenarioTest
+    ComputerSystemCheckedScenarioTest ComputerSystemLedsScenarioTest
+    Game2048ScenarioTest GameSokobanScenarioTest GameSnakeScenarioTest GamePongScenarioTest
+    GameTetrisScenarioTest GameSnakeLedsScenarioTest ComputerSystemStructureScenarioTest)
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;device;phase4;games" TIMEOUT 3600)
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
+# The computer-system parts (§ 5), last in the registry.
+foreach(test_name SystemDescriptionTest BusInterconnectTest LedPanelTest BusPortCheckerTest GuestHeaderContentTest
+    BusRouterScenarioTest BusBridgeScenarioTest MemorySubsystemScenarioTest LedPanelScenarioTest
+    BusInterconnectScenarioTest BusPortCheckerScenarioTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;system")
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
@@ -784,8 +802,12 @@ set_tests_properties(
 )
 find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
 if(CIRCUITSIM_NODE_EXECUTABLE)
+    add_test(NAME TickRecordingTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/TickRecordingTest.mjs $<TARGET_FILE:SignalTraceProbe>)
+    set_tests_properties(TickRecordingTest PROPERTIES LABELS "visualizer;device;recorded-games" TIMEOUT 90)
     add_test(NAME VisualizerAutomaticLayoutMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerAutomaticLayoutMigrationTest.mjs)
     set_tests_properties(VisualizerAutomaticLayoutMigrationTest PROPERTIES LABELS "visualizer;layout;unit")
+    add_test(NAME VisualizerLayoutChangesTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerLayoutChangesTest.mjs)
+    set_tests_properties(VisualizerLayoutChangesTest PROPERTIES LABELS "visualizer;layout;unit")
     add_test(NAME VisualizerTopologyIdentityTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerTopologyIdentityTest.js)
     set_tests_properties(VisualizerTopologyIdentityTest PROPERTIES LABELS "visualizer;unit")
     add_test(NAME VisualizerDeviceViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerDeviceViewTest.js)
@@ -891,6 +913,34 @@ add_executable(RecordedGuestProbe cpp/RecordedGuestProbe.cpp)
 target_link_libraries(RecordedGuestProbe PRIVATE SimulatorLib)
 add_executable(RecordedCircuitProbe cpp/RecordedCircuitProbe.cpp)
 target_link_libraries(RecordedCircuitProbe PRIVATE SimulatorLib)
+add_executable(LongGameplayProbe cpp/LongGameplayProbe.cpp)
+find_package(ZLIB REQUIRED)
+target_link_libraries(LongGameplayProbe PRIVATE SimulatorLib ZLIB::ZLIB)
+add_executable(SignalTraceProbe cpp/SignalTraceProbe.cpp)
+target_link_libraries(SignalTraceProbe PRIVATE SimulatorLib ZLIB::ZLIB)
+add_executable(GateInputCacheTest cpp/GateInputCacheTest.cpp)
+target_link_libraries(GateInputCacheTest PRIVATE SimulatorLib)
+add_test(NAME GateInputCacheTest COMMAND GateInputCacheTest)
+set_tests_properties(GateInputCacheTest PROPERTIES LABELS "engine;unit;timing")
+
+add_executable(SignalWidthTest cpp/SignalWidthTest.cpp)
+target_link_libraries(SignalWidthTest PRIVATE SimulatorLib)
+add_test(NAME SignalWidthTest COMMAND SignalWidthTest)
+set_tests_properties(SignalWidthTest PROPERTIES LABELS "engine;unit")
+add_executable(DelayTwinIncrementalTest cpp/DelayTwinIncrementalTest.cpp)
+target_link_libraries(DelayTwinIncrementalTest PRIVATE SimulatorLib)
+target_include_directories(DelayTwinIncrementalTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/cpp ${PROJECT_SOURCE_DIR}/src/analysis)
+add_test(NAME DelayTwinIncrementalTest COMMAND DelayTwinIncrementalTest)
+set_tests_properties(DelayTwinIncrementalTest PROPERTIES LABELS "engine;unit;timing" TIMEOUT 600)
+add_test(NAME RecordedTraceAssetsTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RecordedTraceAssetsTest.py)
+set_tests_properties(RecordedTraceAssetsTest PROPERTIES LABELS "docs;recorded-games" SKIP_RETURN_CODE 77)
+add_executable(FidelityPresetsTest cpp/FidelityPresetsTest.cpp)
+target_link_libraries(FidelityPresetsTest PRIVATE SimulatorLib)
+add_test(NAME FidelityPresetsTest COMMAND FidelityPresetsTest)
+set_tests_properties(FidelityPresetsTest PROPERTIES LABELS "visualizer;profile")
+add_test(NAME VisualizerFidelityProfileTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerFidelityProfileTest.py)
+set_tests_properties(VisualizerFidelityProfileTest PROPERTIES LABELS "visualizer;profile"
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2")
 if(CIRCUITSIM_NODE_EXECUTABLE)
     add_test(NAME RecordedCircuitTransportTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RecordedCircuitTransportTest.mjs)
     set_tests_properties(RecordedCircuitTransportTest PROPERTIES LABELS "visualizer;device;recorded-games")
@@ -905,12 +955,21 @@ add_executable(RV32IMGameRulesTest cpp/RV32IMGameRulesTest.c
 target_include_directories(RV32IMGameRulesTest PRIVATE ${PROJECT_SOURCE_DIR}/tools/rv32im/guest)
 add_test(NAME RV32IMGameRulesTest COMMAND RV32IMGameRulesTest)
 set_tests_properties(RV32IMGameRulesTest PROPERTIES LABELS "rv32im;games;phase5;unit")
-foreach(guest bringup 2048 sokoban snake pong tetris 2048-merge tetris-line-clear pong-rally snake-wall)
+# Short fixtures: the circuit run against the host-compiled guest.
+foreach(guest bringup bringup-leds 2048-short sokoban-short snake-short pong-short tetris-short snake-leds-short)
     add_test(NAME RV32IMRecorded_${guest}_Test
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RV32IMGameReferenceTest.py
             --runner $<TARGET_FILE:RecordedGuestProbe> --guest ${guest})
     set_tests_properties(RV32IMRecorded_${guest}_Test PROPERTIES
         LABELS "rv32im;device;games;phase4;phase5;integration;slow" TIMEOUT 3600)
+endforeach()
+# Long fixtures: the host run against the computer player's prediction (their
+# circuit runs take hours; see tools/rv32im/run-long-gameplays.py).
+foreach(guest 2048-long sokoban-long snake-long pong-long tetris-long snake-leds-long)
+    add_test(NAME RV32IMReference_${guest}_Test
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RV32IMGameReferenceTest.py
+            --reference-only --guest ${guest})
+    set_tests_properties(RV32IMReference_${guest}_Test PROPERTIES LABELS "rv32im;games;unit")
 endforeach()
 
 add_test(NAME DelayTableChunksTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/DelayTableChunksTest.py)
@@ -937,3 +996,8 @@ foreach(geometry IN ITEMS "64;48;64" "320;200;320" "97;65;97" "97;65;101")
     add_test(NAME GuestDisplayGeometryTest/${key} COMMAND GuestDisplayGeometryTest ${geometry})
     set_tests_properties(GuestDisplayGeometryTest/${key} PROPERTIES LABELS "rv32im;device;phase6")
 endforeach()
+
+if(CIRCUITSIM_NODE_EXECUTABLE)
+    add_test(NAME VisualizerProfileLayoutsTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerProfileLayoutsTest.mjs)
+    set_tests_properties(VisualizerProfileLayoutsTest PROPERTIES LABELS "visualizer;profile")
+endif()

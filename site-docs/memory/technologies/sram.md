@@ -8,11 +8,11 @@ A single-port SRAM, from a one-bit cell to an addressable device, in two forms: 
 | `SRAMRow` | Groups C cells sharing one wordline | Yes | Yes |
 | `SRAMBitlinePair` | Digital primitive for one shared column's precharge, sensing, and write excitation | Yes | No |
 | `SRAMStorageBank<W>` | Assembles R rows and C shared bitline pairs | Yes | Yes |
-| `SRAMRowDecoder` | Decodes the row portion of a word address | Yes | No |
-| `SRAMPrecharge` | Distributes precharge control to the physical columns | Yes | No |
-| `SRAMWriteDriver` | Generates one bit's complementary write values and masked drive enable | Yes | No |
+| `SRAMRowDecoder` | Decodes the row portion of a word address | Yes | Yes |
+| `SRAMPrecharge` | Distributes precharge control to the physical columns | Yes | Yes |
+| `SRAMWriteDriver` | Generates one bit's complementary write values and masked drive enable | Yes | Yes |
 | `SRAMSenseAmplifier` | Digital primitive that accepts a valid symbolic read differential | Yes | No |
-| `SRAMColumnSelector<W>` | Routes one word's read pairs and write enables among K column groups | Yes | No |
+| `SRAMColumnSelector<W>` | Routes one word's read pairs and write enables among K column groups | Yes | Yes |
 | `SRAMAccessControl<W>` | Sequences an access with gates and delay lines and raises `READY` | Yes | No |
 | `SRAMOutputBuffer<W>` | Compatibility wrapper around the common output-enable primitive | Yes | No |
 | `SRAM<W>` | Complete word-addressed SRAM device, asynchronous or clocked | Yes | Yes |
@@ -477,6 +477,10 @@ Unknown address bits propagate through the gates and may produce unknown wordlin
 
 An address splitter, complemented address bits, and balanced AND trees implement the row matches. The shared `decodeMatch` construction routine builds those trees after this wrapper extracts the row-address bits. No storage or direct host indexing is used; gate names and hierarchy remain unchanged. See [helper reuse boundaries](../building-blocks.md#reuse-boundaries).
 
+#### Behavioral implementation
+
+The compact form evaluates this part's own gate list, flattened once from its structural form, and publishes the settled values on the delays proven on those gates ([§ 1.1 Structural and compact forms](../../basic/1.1.md#structural-and-compact-forms)). Its values are the gates' by construction, including unknown and floating inputs; `GateListCompactEquivalenceTest` checks them. It is chosen only explicitly, for example by collapsing the part in the simulator; profiles that prefer compact forms keep the gates.
+
 ### Examples
 
 <!-- simulator-examples: sram-row-decoder SRAMRowDecoderTest -->
@@ -537,6 +541,10 @@ Each buffer propagates X/Z as unknown logic. Outputs settle one gate delay after
 #### Structural implementation
 
 One AND buffer with a constant-high input per column. These outputs actually drive the bitline primitives; the block is not a visual-only grouping.
+
+#### Behavioral implementation
+
+The compact form evaluates this part's own gate list, flattened once from its structural form, and publishes the settled values on the delays proven on those gates ([§ 1.1 Structural and compact forms](../../basic/1.1.md#structural-and-compact-forms)). Its values are the gates' by construction, including unknown and floating inputs; `GateListCompactEquivalenceTest` checks them. It is chosen only explicitly, for example by collapsing the part in the simulator; profiles that prefer compact forms keep the gates.
 
 ### Examples
 
@@ -600,6 +608,10 @@ Unknown data produces an unknown pair. Unknown drive control is rejected by the 
 #### Structural implementation
 
 `ENABLED_BYTE` is an AND gate, `DATA` is a buffer, and `COMPLEMENT` is a NOT gate. No electrical drive strength is calculated.
+
+#### Behavioral implementation
+
+The compact form evaluates this part's own gate list, flattened once from its structural form, and publishes the settled values on the delays proven on those gates ([§ 1.1 Structural and compact forms](../../basic/1.1.md#structural-and-compact-forms)). Its values are the gates' by construction, including unknown and floating inputs; `GateListCompactEquivalenceTest` checks them. It is chosen only explicitly, for example by collapsing the part in the simulator; profiles that prefer compact forms keep the gates.
 
 ### Examples
 
@@ -748,6 +760,10 @@ Unknown slot bits follow the gate/multiplexer rules. Full-address range checking
 #### Structural implementation
 
 A low-bit slot decoder gates write excitation. Separate mux trees select `BL`, `BL_BAR`, and `VALID` for each read lane. The shared `selectMuxTree` construction routine creates those existing trees; it does not replace them with host indexing or a post-sense word mux. Buffers carry write values to the column groups.
+
+#### Behavioral implementation
+
+The compact form evaluates this part's own gate list, flattened once from its structural form, and publishes the settled values on the delays proven on those gates ([§ 1.1 Structural and compact forms](../../basic/1.1.md#structural-and-compact-forms)). Its values are the gates' by construction, including unknown and floating inputs; `GateListCompactEquivalenceTest` checks them. It is chosen only explicitly, for example by collapsing the part in the simulator; profiles that prefer compact forms keep the gates.
 
 ### Examples
 

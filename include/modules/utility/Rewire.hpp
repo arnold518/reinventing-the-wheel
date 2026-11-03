@@ -4,6 +4,7 @@
 
 #include "components/BasicComponent.hpp"
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 #include <set>
@@ -50,7 +51,18 @@ public:
     UnmappedBitValue getUnmappedDefault() const { return unmapped_default; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
+protected:
+    void pinsChanged() noexcept override { routes_resolved_ = false; }
+
 private:
+    // Bit routes by spec index, resolved to pin handles once; any pin-table
+    // change clears them.
+    struct Route { size_t input, src_bit, output, dst_bit; };
+    bool routes_resolved_ = false;
+    std::vector<std::shared_ptr<PinBase>> input_pins_, output_pins_;
+    std::vector<Route> routes_;
+    std::vector<PackedLogic> output_values_;  // per evaluation, kept to reuse its storage
+    void resolveRoutes();
     std::vector<WireSpec> inputs;
     std::vector<WireSpec> outputs;
     std::vector<BitMap> bit_mappings;

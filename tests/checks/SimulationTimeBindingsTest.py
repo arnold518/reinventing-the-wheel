@@ -9,15 +9,16 @@ alias='simulation-wide-time'
 # test factory only to this process's session map.
 server.SCENARIOS[alias]=lambda:circuit_backend.create_test_by_name('SimulationTimePlaybackTest')
 with tempfile.TemporaryDirectory(prefix='circuitsim-time-binding-') as directory:
-    session=server.CircuitSession(alias,server.LayoutManager(pathlib.Path(directory)/'layout.json'))
+    # Outside the menu it has no catalog profile: name one on both sides.
+    session=server.CircuitSession(alias,server.LayoutManager(pathlib.Path(directory)/'layout.json'),fidelity='gate')
     actual=session.topology_response()
-    expected=json.loads(subprocess.check_output([str(probe),'topology','SimulationTimePlaybackTest',alias],text=True))
+    expected=json.loads(subprocess.check_output([str(probe),'topology','SimulationTimePlaybackTest',alias,'--fidelity','gate'],text=True))
     for field in ['rootId','rootType','timestamps','checkpoints','state']:
         assert actual[field]==expected[field],field
     assert str(base) in actual['timestamps']
     assert [c['time'] for c in actual['checkpoints']]==[str(base+2),str(base+10)]
     for index in [len(actual['timestamps'])-1,0,*[c['index'] for c in actual['checkpoints']]]:
-        expected_state=json.loads(subprocess.check_output([str(probe),'state','SimulationTimePlaybackTest',alias,str(index)],text=True))
+        expected_state=json.loads(subprocess.check_output([str(probe),'state','SimulationTimePlaybackTest',alias,str(index),'--fidelity','gate'],text=True))
         assert session.state_at_index(index)==expected_state,index
     assert server._json_time((1<<53)-1)==(1<<53)-1
     assert server._json_time(1<<53)==str(1<<53)

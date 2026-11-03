@@ -63,26 +63,25 @@ void buildArithmetic(IOComponent& self,ComponentBuilder& builder,size_t width) {
     n.finish();
 }
 
+// Word gates: the same per-bit AND/OR/XOR, inverters and 8-way select as a
+// bit-by-bit circuit, grouped as words (Mux<8,W> is a Mux<8,1> per bit).
 void buildLogic(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    using circuit::word::GateKind;
     WordBuilder n(self, builder, width);
-    auto a = n.splitWord("A_SPLIT", n.input("A")), b = n.splitWord("B_SPLIT", n.input("B"));
-    auto zero = n.constant<1>("ZERO", 0);
-    WordBuilder::Bits result(width);
-    for (size_t i = 0; i < width; ++i) {
-        const auto suffix = "_" + std::to_string(i);
-        auto and_bit = n.binary<ANDGate>("AND" + suffix, a[i], b[i]);
-        auto or_bit = n.binary<ORGate>("OR" + suffix, a[i], b[i]);
-        auto xor_bit = n.binary<XORGate>("XOR" + suffix, a[i], b[i]);
-        result[i] = n.selectBit<8>("SELECT" + suffix,
-            {and_bit, or_bit, xor_bit, n.invert("NOT" + suffix, a[i]),
-             n.invert("NAND" + suffix, and_bit), n.invert("NOR" + suffix, or_bit),
-             n.invert("XNOR" + suffix, xor_bit), zero}, n.input("OP"));
-    }
-    n.connect(n.joinWord("OUT_JOIN", result), n.output("OUT"));
+    const auto a = n.input("A"), b = n.input("B");
+    const auto and_word = n.wordGate(GateKind::And, "AND", a, b);
+    const auto or_word = n.wordGate(GateKind::Or, "OR", a, b);
+    const auto xor_word = n.wordGate(GateKind::Xor, "XOR", a, b);
+    const auto result = n.selectBus<8>("SELECT",
+        {and_word, or_word, xor_word, n.wordGate(GateKind::Not, "NOT", a),
+         n.wordGate(GateKind::Not, "NAND", and_word), n.wordGate(GateKind::Not, "NOR", or_word),
+         n.wordGate(GateKind::Not, "XNOR", xor_word), n.constantWord("ZERO", 0)}, n.input("OP"));
+    n.connect(result, n.output("OUT"));
     n.finish();
 }
 
 void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width) {
+    using circuit::word::GateKind;
     WordBuilder n(self, builder, width);
     auto a = n.splitWord("A_SPLIT", n.input("A")), b = n.splitWord("B_SPLIT", n.input("B"));
     auto lo = n.constant<1>("LOW", 0), hi = n.constant<1>("HIGH", 1), op = n.input("OP");
@@ -91,27 +90,38 @@ void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width) {
     auto arithmetic = n.selectBit<8>("ARITHMETIC_SELECT", {lo,lo,hi,lo,lo,lo,lo,lo}, op);
     auto valid = n.selectBit<8>("VALID_SELECT", {hi,hi,hi,hi,hi,lo,lo,lo}, op);
     auto fill = n.binary<ANDGate>("SIGN_FILL", a[width-1], arithmetic);
-    WordBuilder::Bits current(width);
-    for (size_t i = 0; i < width; ++i)
-        current[i] = n.mux("INPUT_REVERSE_" + std::to_string(i), a[i], a[width-1-i], left);
+    const auto reversed = [&](const std::string& name, const WordBuilder::Bits& bits) {
+        return n.joinWord(name, WordBuilder::Bits(bits.rbegin(), bits.rend()));
+    };
+    // Reverse for left shifts, shift right in log2(W) stages, reverse back.
+    // Each step is one 2:1 word mux (a Mux<2,1> per bit); reversing and
+    // moving a word is wiring only.
+    auto current = n.wordMux("INPUT_REVERSE", n.input("A"), reversed("A_REVERSED", a), left);
     auto carry = n.input("C_IN");
     for (size_t stage = 0; stage < std::countr_zero(width); ++stage) {
         const size_t distance = size_t{1} << stage;
-        const auto prefix = "SHIFT_" + std::to_string(distance) + "_";
-        auto previous = current;
-        carry = n.mux(prefix + "CARRY", carry, previous[distance-1], b[stage]);
-        for (size_t i = 0; i < width; ++i) {
-            auto moved = i + distance < width ? previous[i+distance]
-                : n.mux(prefix + "FILL_" + std::to_string(i), fill, previous[i+distance-width], rotate);
-            current[i] = n.mux(prefix + "BIT_" + std::to_string(i), previous[i], moved, b[stage]);
+        const auto prefix = "SHIFT_" + std::to_string(distance);
+        const auto previous = n.splitWord(prefix + "_SPLIT", current);
+        carry = n.mux(prefix + "_CARRY", carry, previous[distance-1], b[stage]);
+        // The top `distance` bits take the fill bit, or for rotation the bits
+        // shifted out at the bottom: one mux per bit, a word mux from 4 bits.
+        WordBuilder::Bits wrapped(distance);
+        if (distance >= 4) {
+            WordBuilder::Bits shifted_out(previous.begin(), previous.begin() + distance);
+            auto word = n.wordMux(prefix + "_FILL", n.broadcast(prefix + "_FILL_WORD", fill, distance),
+                                  n.joinBits(prefix + "_OUT_JOIN", shifted_out), rotate);
+            wrapped = n.splitBits(prefix + "_FILL_SPLIT", word);
+        } else {
+            for (size_t i = 0; i < distance; ++i)
+                wrapped[i] = n.mux(prefix + "_FILL_" + std::to_string(width - distance + i), fill, previous[i], rotate);
         }
+        WordBuilder::Bits moved(width);
+        for (size_t i = 0; i < width; ++i) moved[i] = i + distance < width ? previous[i+distance] : wrapped[i + distance - width];
+        current = n.wordMux(prefix, current, n.joinWord(prefix + "_MOVED", moved), b[stage]);
     }
-    auto shifted = current;
-    for (size_t i = 0; i < width; ++i) {
-        current[i] = n.mux("OUTPUT_REVERSE_" + std::to_string(i), shifted[i], shifted[width-1-i], left);
-        current[i] = n.binary<ANDGate>("VALID_BIT_" + std::to_string(i), current[i], valid);
-    }
-    n.connect(n.joinWord("OUT_JOIN", current), n.output("OUT"));
+    auto shifted = n.splitWord("SHIFTED_SPLIT", current);
+    auto out = n.wordMux("OUTPUT_REVERSE", current, reversed("SHIFTED_REVERSED", shifted), left);
+    n.connect(n.maskBus("VALID", out, valid), n.output("OUT"));
     n.connect(n.binary<ANDGate>("CARRY_VALID", carry, valid), n.output("CARRY"));
     n.finish();
 }
@@ -124,18 +134,20 @@ void buildCompare(IOComponent& self,ComponentBuilder& builder,size_t width) {
     auto ltu = n.invert("UNSIGNED_LT", n.input("CARRY_IN"));
     auto lts = n.binary<XORGate>("SIGNED_LT", diff[width-1], n.input("OVERFLOW_IN"));
     auto lo = n.constant<1>("ZERO", 0);
-    auto a = n.splitWord("A_SPLIT", n.input("A")), b = n.splitWord("B_SPLIT", n.input("B"));
-    WordBuilder::Bits out(width);
-    for (size_t i = 0; i < width; ++i) {
-        auto min_u = n.mux("MINU_" + std::to_string(i), b[i], a[i], ltu);
-        auto max_u = n.mux("MAXU_" + std::to_string(i), a[i], b[i], ltu);
-        auto min_s = n.mux("MINS_" + std::to_string(i), b[i], a[i], lts);
-        auto max_s = n.mux("MAXS_" + std::to_string(i), a[i], b[i], lts);
-        out[i] = n.selectBit<8>("RESULT_" + std::to_string(i),
-            {i == 0 ? zero->getOutputPin("ZERO") : lo, i == 0 ? ltu : lo, i == 0 ? lts : lo,
-             min_u, max_u, min_s, max_s, lo}, n.input("OP"));
-    }
-    n.connect(n.joinWord("OUT_JOIN", out), n.output("OUT"));
+    auto a = n.input("A"), b = n.input("B");
+    // Min/max are 2:1 word muxes; the flag results are words with the flag in
+    // bit 0. One Mux<8,W> (an 8-way mux per bit) picks the result.
+    const auto flag_word = [&](const std::string& name, WordBuilder::Signal flag) {
+        WordBuilder::Bits bits(width, lo);
+        bits[0] = flag;
+        return n.joinWord(name, bits);
+    };
+    auto min_u = n.wordMux("MINU", b, a, ltu), max_u = n.wordMux("MAXU", a, b, ltu);
+    auto min_s = n.wordMux("MINS", b, a, lts), max_s = n.wordMux("MAXS", a, b, lts);
+    auto result = n.selectBus<8>("RESULT",
+        {flag_word("EQUAL_WORD", zero->getOutputPin("ZERO")), flag_word("LTU_WORD", ltu), flag_word("LTS_WORD", lts),
+         min_u, max_u, min_s, max_s, flag_word("ZERO_WORD", lo)}, n.input("OP"));
+    n.connect(result, n.output("OUT"));
     n.finish();
 }
 
@@ -159,29 +171,25 @@ void buildResult(IOComponent& self,ComponentBuilder& builder,size_t width) {
     Net n(self, builder, width);
     std::array<Net::Signal, 6> enables{n.input("ARITHMETIC_ENABLE"), n.input("LOGIC_ENABLE"), n.input("SHIFT_ENABLE"), n.input("COMPARE_ENABLE"), n.input("PASS_A_ENABLE"), n.input("PASS_B_ENABLE")};
     std::array<Net::Signal, 6> sources{n.input("ARITHMETIC_RESULT"), n.input("LOGIC_RESULT"), n.input("SHIFT_RESULT"), n.input("COMPARE_RESULT"), n.input("A"), n.input("B")};
-    std::array<Net::Bits, 6> words;
-    for (size_t i = 0; i < words.size(); ++i) words[i] = n.splitWord("RESULT_SOURCE_" + std::to_string(i), sources[i]);
-    Net::Bits out(width);
-    for (size_t bit = 0; bit < width; ++bit) {
-        std::vector<Net::Signal> selected;
-        for (size_t i = 0; i < sources.size(); ++i)
-            selected.push_back(n.binary<ANDGate>("RESULT_SELECT_" + std::to_string(i) + "_" + std::to_string(bit), words[i][bit], enables[i]));
-        out[bit] = n.reduceBalanced("RESULT_OR_" + std::to_string(bit), selected, false);
-    }
-    auto result = n.joinWord("RESULT_JOIN", out);
-    n.connect(result, n.output("OUT"));
+    // Each source word ANDed with its enable (spread by wiring), then a
+    // balanced OR tree of words: the same gates per bit as a one-hot AND/OR mux.
+    std::vector<Net::Signal> selected;
+    for (size_t i = 0; i < sources.size(); ++i)
+        selected.push_back(n.maskBus("RESULT_SELECT_" + std::to_string(i), sources[i], enables[i]));
+    n.connect(n.reduceWords("RESULT_OR", selected, circuit::word::GateKind::Or), n.output("OUT"));
     n.finish();
 }
 
 void buildAddSub(IOComponent& self,ComponentBuilder& builder,size_t width) {
     WordBuilder n(self, builder, width);
     auto a = n.splitWord("A_SPLIT", n.input("A"));
-    auto b = n.splitWord("B_SPLIT", n.input("B"));
-    for (size_t i = 0; i < width; ++i)
-        b[i] = n.binary<XORGate>("B_XOR_SUB_" + std::to_string(i), b[i], n.input("SUB"));
+    // B XOR SUB on every bit: one word XOR with SUB spread across the word.
+    const auto effective_b = n.wordGate(circuit::word::GateKind::Xor, "B_XOR_SUB", n.input("B"),
+                                        n.broadcast("SUB_WORD", n.input("SUB"), width));
+    auto b = n.splitWord("B_SPLIT", effective_b);
     auto adder = n.addWord(Unit::PrefixAdder, "ADD");
     n.connect(n.input("A"), adder->getInputPinDynamic("A"));
-    n.connect(n.joinWord("B_JOIN", b), adder->getInputPinDynamic("B"));
+    n.connect(effective_b, adder->getInputPinDynamic("B"));
     n.connect(n.input("C_IN"), adder->getInputPin("C_IN"));
     auto result = adder->getOutputPinDynamic("OUT");
     auto r = n.splitWord("RESULT_SPLIT", result);

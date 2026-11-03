@@ -295,7 +295,7 @@ void structuralAdder() {
     auto rst=b.addNewWire("reset_drive",nullptr,{root->getInputPin("RST")});
     std::vector<std::shared_ptr<Wire<>>> data;
     for(const auto& n:names)data.push_back(b.addNewWire("drive"+n,nullptr,{root->getInputPin(n)}));
-    auto drive=[&](const auto& wire,SimulationTime t,bool v){sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(t,wire,v?LogicValue::HIGH:LogicValue::LOW));};
+    auto drive=[&](const auto& wire,SimulationTime t,bool v){sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,wire,v?LogicValue::HIGH:LogicValue::LOW));};
     one->scheduleInitialEvents(sim,0);drive(clk,0,false);drive(rst,0,true);
     for(const auto& w:data)drive(w,0,false);
     sim.runAndRecord(4*period);drive(rst,4*period+1,false);sim.runAndRecord(8*period);

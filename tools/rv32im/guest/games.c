@@ -3,7 +3,8 @@
 enum { UP,RIGHT,DOWN,LEFT,ACTION,RESET,TICK,P2_UP,P2_DOWN,PAUSE };
 static const int vx[4]={0,1,0,-1},vy[4]={-1,0,1,0};
 static uint32_t rng(Game *g) { uint32_t x=g->seed; x^=x<<13;x^=x>>17;x^=x<<5;return g->seed=x; }
-static void zero(Game *g) { uint8_t *p=(uint8_t *)g;for(unsigned i=0;i<sizeof(*g);++i)p[i]=0; }
+// Word stores: Game holds only fixed-width fields and is 336 bytes long.
+static void zero(Game *g) { uint32_t *p=(uint32_t *)g;for(unsigned i=0;i<sizeof(*g)/4;++i)p[i]=0; }
 static void spawn2048(Game *g) {
     unsigned free=0;for(unsigned i=0;i<16;++i)free+=g->cells[i]==0;
     if(!free)return;
@@ -148,5 +149,28 @@ uint8_t game_cell(const Game *g,unsigned x,unsigned y) {
   return x<8&&y<16?g->cells[y*8+x]:0;
  }
  default:return 0;
+ }
+}
+
+// The whole board at once, row by row (cols x rows as drawn): the same values
+// as game_cell, in one pass instead of one rule query per cell.
+void game_board(const Game *g,uint8_t *out) {
+ switch(g->kind){
+ case GAME_2048:for(unsigned i=0;i<16;++i)out[i]=g->cells[i];return;
+ case GAME_SOKOBAN:for(unsigned i=0;i<64;++i)out[i]=g->cells[i];
+  if((unsigned)g->x<8&&(unsigned)g->y<8)out[g->y*8+g->x]=5;
+  return;
+ case GAME_SNAKE:for(unsigned i=0;i<64;++i)out[i]=0;
+  // Later segments first, so the head and then the food win a shared cell.
+  for(unsigned i=g->length;i-->0;)out[g->body_y[i]*8+g->body_x[i]]=i?2:1;
+  if(g->food_x<8&&g->food_y<8)out[g->food_y*8+g->food_x]=3;
+  return;
+ case GAME_TETRIS:{
+  for(unsigned i=0;i<128;++i)out[i]=g->cells[i];
+  uint16_t shape=shapes[g->piece][g->rotation&3];
+  for(int j=0;j<4;++j)for(int i=0;i<4;++i)if(shape&(1u<<(j*4+i))){
+   int x=g->x+i,y=g->y+j;if(x>=0&&x<8&&y>=0&&y<16)out[y*8+x]=(uint8_t)(g->piece+1);}
+  return;}
+ default:return;
  }
 }

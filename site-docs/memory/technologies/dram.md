@@ -11,7 +11,7 @@ One-bank digital DRAM with explicit activation, a sensed row buffer, restoration
 | `DRAMCommandControl<W>` | Clocked command acceptance and the timing chains of each command, as gates and delay lines | Yes | No |
 | `DRAM<W>` | Complete single-bank device | Yes | Yes |
 
-Real DRAM controllers track open rows, issue precharge and activate commands, and respect the device's intervals. This device keeps those distinctions, with intervals from the active [timing profile](../../timing.md): in `embedded` an SDR SDRAM (Micron MT48LC16M16A2), in `desktop` a DDR4 part (Micron MT40A1G8). It is not a pin-compatible SDRAM or DDR interface. See [Microchip's SDRAM controller description](https://onlinedocs.microchip.com/oxy/GUID-B822915F-C375-4172-91BD-AB6F326EB783-en-US-1/GUID-A9CFAA65-9F00-4E1D-AB82-84F228BBF5B6.html).
+Real DRAM controllers track open rows, issue precharge and activate commands, and respect the device's intervals. This device keeps those distinctions, with intervals from the active [timing profile](../../basic/1.2.md): in `embedded` an SDR SDRAM (Micron MT48LC16M16A2), in `desktop` a DDR4 part (Micron MT40A1G8). It is not a pin-compatible SDRAM or DDR interface. See [Microchip's SDRAM controller description](https://onlinedocs.microchip.com/oxy/GUID-B822915F-C375-4172-91BD-AB6F326EB783-en-US-1/GUID-A9CFAA65-9F00-4E1D-AB82-84F228BBF5B6.html).
 
 ## Configuration
 

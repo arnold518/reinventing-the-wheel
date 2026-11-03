@@ -29,3 +29,11 @@ public:
 protected:
     void verifyResults() override;
 };
+// Seeded random and edge-grid vectors for RV32IALU against plain C++ integer
+// results, comparing its gate-level and behavioral forms on every vector.
+class RV32IALUSweepTest : public StandaloneVerificationTest {
+public:
+    std::string getTestName() const override { return "RV32IALUSweepTest"; }
+protected:
+    void verifyResults() override;
+};

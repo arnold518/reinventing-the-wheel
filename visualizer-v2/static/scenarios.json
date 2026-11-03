@@ -14,6 +14,10 @@
       "title": "ALU / Chapter 2 components"
     },
     {
+      "id": "memory-helpers",
+      "title": "Memory / Shared helpers"
+    },
+    {
       "id": "ff",
       "title": "Memory / Flip-flop storage"
     },
@@ -32,10 +36,6 @@
     {
       "id": "flash",
       "title": "Memory / NOR flash"
-    },
-    {
-      "id": "memory-helpers",
-      "title": "Memory / Shared helpers"
     },
     {
       "id": "memory-interface",
@@ -66,12 +66,12 @@
       "title": "RV32I / Baseline pipeline"
     },
     {
-      "id": "advanced",
-      "title": "RV32I / Advanced pipeline"
-    },
-    {
       "id": "prediction",
       "title": "RV32I / Branch prediction"
+    },
+    {
+      "id": "advanced",
+      "title": "RV32I / Advanced pipeline"
     },
     {
       "id": "memory-systems",
@@ -90,20 +90,24 @@
       "title": "RV32I programs / Performance examples"
     },
     {
-      "id": "developer",
-      "title": "Developer circuits"
-    },
-    {
       "id": "rv32im",
-      "title": "RV32IM / Integer multiply and divide"
-    },
-    {
-      "id": "device-io",
-      "title": "Device I/O / Recorded components"
+      "title": "Computer System / RV32IM multiply and divide"
     },
     {
       "id": "rv32im-programs",
-      "title": "RV32IM programs / Recorded execution"
+      "title": "Computer System / RV32IM programs"
+    },
+    {
+      "id": "system",
+      "title": "Computer System / Buses, memory and devices"
+    },
+    {
+      "id": "games",
+      "title": "Computer System / Games (short versions)"
+    },
+    {
+      "id": "developer",
+      "title": "Developer circuits"
     }
   ],
   "aliases": {
@@ -428,15 +432,6 @@
     "DeviceRegisterPortWidth32ScenarioTest": [
       "device-register-port-w32"
     ],
-    "BusErrorTargetWidth32ScenarioTest": [
-      "bus-error-target-w32"
-    ],
-    "AddressRouterWidth32ScenarioTest": [
-      "address-router-w32"
-    ],
-    "InstructionAccessGuardWidth32ScenarioTest": [
-      "instruction-access-guard-w32"
-    ],
     "ConsoleDeviceScenarioTest": [
       "console-device"
     ],
@@ -446,14 +441,23 @@
     "ButtonDeviceScenarioTest": [
       "button-device"
     ],
-    "IndexedPixelSelectorWidth32ScenarioTest": [
-      "indexed-pixel-selector-w32"
-    ],
     "FramebufferDisplayScenarioTest": [
       "framebuffer-display"
     ],
-    "RV32IMDeviceSystemScenarioTest": [
-      "rv32im-device-system"
+    "BusRouterScenarioTest": [
+      "bus-router"
+    ],
+    "BusBridgeScenarioTest": [
+      "bus-bridge"
+    ],
+    "MemorySubsystemScenarioTest": [
+      "memory-subsystem"
+    ],
+    "LedPanelScenarioTest": [
+      "led-panel"
+    ],
+    "ComputerSystemScenarioTest": [
+      "computer-system"
     ],
     "ALUScenarioTest": [
       "alu"
@@ -508,935 +512,1512 @@
     ],
     "RV32IMGcdProgramTest": [
       "rv32im-program27"
+    ],
+    "ANDGateWidth8Test": [
+      "and-gate-w8"
+    ],
+    "BusInterconnectScenarioTest": [
+      "bus-interconnect"
+    ],
+    "BusPortCheckerScenarioTest": [
+      "bus-port-checker"
+    ],
+    "ComputerSystemTwoBusScenarioTest": [
+      "computer-system-two-bus"
+    ],
+    "ComputerSystemRegisteredBridgeScenarioTest": [
+      "computer-system-registered-bridge"
+    ],
+    "ComputerSystemLedsScenarioTest": [
+      "computer-system-leds"
+    ],
+    "ComputerSystemCheckedScenarioTest": [
+      "computer-system-checked"
+    ],
+    "Game2048ScenarioTest": [
+      "game-2048"
+    ],
+    "GameSokobanScenarioTest": [
+      "game-sokoban"
+    ],
+    "GameSnakeScenarioTest": [
+      "game-snake"
+    ],
+    "GamePongScenarioTest": [
+      "game-pong"
+    ],
+    "GameTetrisScenarioTest": [
+      "game-tetris"
+    ],
+    "GameSnakeLedsScenarioTest": [
+      "game-snake-leds"
+    ],
+    "ComputerSystemStructureScenarioTest": [
+      "computer-system-structure"
     ]
   },
   "components": {
-    "FullCircuitTest": {
-      "title": "Full Circuit",
-      "group": "developer"
-    },
     "NOTGateTest": {
       "title": "NOT Gate",
-      "group": "logic"
+      "group": "logic",
+      "order": 0,
+      "fidelity": "gate"
     },
     "ANDGateTest": {
       "title": "AND Gate",
-      "group": "logic"
+      "group": "logic",
+      "order": 1,
+      "fidelity": "gate"
     },
     "ORGateTest": {
       "title": "OR Gate",
-      "group": "logic"
-    },
-    "XORGateTest": {
-      "title": "XOR Gate",
-      "group": "logic"
+      "group": "logic",
+      "order": 2,
+      "fidelity": "gate"
     },
     "NANDGateTest": {
       "title": "NAND Gate",
-      "group": "logic"
+      "group": "logic",
+      "order": 3,
+      "fidelity": "gate"
     },
     "NORGateTest": {
       "title": "NOR Gate",
-      "group": "logic"
+      "group": "logic",
+      "order": 4,
+      "fidelity": "gate"
     },
-    "SRLatchTest": {
-      "title": "SR Latch",
-      "group": "logic"
+    "XORGateTest": {
+      "title": "XOR Gate",
+      "group": "logic",
+      "order": 5,
+      "fidelity": "gate"
     },
-    "GatedDLatchTest": {
-      "title": "Gated D Latch",
-      "group": "logic"
-    },
-    "DFlipFlopTest": {
-      "title": "D Flip Flop",
-      "group": "logic"
+    "ANDGateWidth8Test": {
+      "title": "ANDGate<8> (word gate)",
+      "group": "logic",
+      "order": 6,
+      "fidelity": "gate"
     },
     "ClockGeneratorTest": {
       "title": "Clock Generator",
-      "group": "logic"
+      "group": "logic",
+      "order": 7,
+      "fidelity": "gate"
+    },
+    "SRLatchTest": {
+      "title": "SR Latch",
+      "group": "logic",
+      "order": 8,
+      "fidelity": "gate"
+    },
+    "GatedDLatchTest": {
+      "title": "Gated D Latch",
+      "group": "logic",
+      "order": 9,
+      "fidelity": "gate"
+    },
+    "DFlipFlopTest": {
+      "title": "D Flip Flop",
+      "group": "logic",
+      "order": 10,
+      "fidelity": "gate"
     },
     "FlipFlopCellTest": {
       "title": "Flip Flop Cell",
-      "group": "logic"
-    },
-    "FFAlwaysReadyControllerTest": {
-      "title": "FF Always-Ready Controller",
-      "group": "memory-interface"
-    },
-    "MemoryTransactionPortTest": {
-      "title": "Memory Transaction Port",
-      "group": "memory-interface"
-    },
-    "MemoryResponseBufferTest": {
-      "title": "Memory Response Buffer",
-      "group": "memory-interface"
-    },
-    "MemoryControllerTest": {
-      "title": "FF memory controller",
-      "group": "memory-interface"
-    },
-    "MemoryArbiterTest": {
-      "title": "Two-port memory arbiter",
-      "group": "memory-interface"
-    },
-    "RV32ISharedMemoryProgramTest": {
-      "title": "C-ID \u00b7 L1 caches over one shared memory (program 21)",
-      "group": "memory-systems"
-    },
-    "MemoryEndpointFFTest": {
-      "title": "Memory Endpoint FF",
-      "group": "memory-interface"
-    },
-    "MemoryEndpointSRAMTest": {
-      "title": "Memory Endpoint SRAM",
-      "group": "memory-interface"
-    },
-    "MemoryEndpointDRAMTest": {
-      "title": "Memory Endpoint DRAM",
-      "group": "memory-interface"
-    },
-    "MemoryEndpointROMTest": {
-      "title": "Memory Endpoint ROM",
-      "group": "memory-interface"
-    },
-    "MemoryEndpointFlashTest": {
-      "title": "Memory Endpoint Flash",
-      "group": "memory-interface"
-    },
-    "ScalableMemoryEndpointTest": {
-      "title": "Scalable memory endpoint",
-      "group": "memory-interface"
-    },
-    "CacheComponentScenarioTest": {
-      "title": "Cache lines, replacement and writes",
-      "group": "memory-cache"
-    },
-    "CacheDirectMappedScenarioTest": {
-      "title": "Direct-mapped cache and conflict miss",
-      "group": "memory-cache"
-    },
-    "CacheScalableScenarioTest": {
-      "title": "Scalable two-way cache and line fills",
-      "group": "memory-cache"
-    },
-    "CacheTwoLevelScenarioTest": {
-      "title": "Two cache levels over RAM",
-      "group": "memory-cache"
-    },
-    "NativeMemoryDeviceTest": {
-      "title": "Native FF memory device",
-      "group": "memory-interface"
-    },
-    "FFMemoryTest": {
-      "title": "FF memory device",
-      "group": "ff"
-    },
-    "FFWordTest": {
-      "title": "FF Word",
-      "group": "ff"
-    },
-    "FFStorageBankTest": {
-      "title": "FF Storage Bank",
-      "group": "ff"
-    },
-    "SRAMCellTest": {
-      "title": "SRAM Cell",
-      "group": "sram"
-    },
-    "SRAMRowTest": {
-      "title": "SRAM Row",
-      "group": "sram"
-    },
-    "SRAMBitlinePairTest": {
-      "title": "SRAM Bitline Pair",
-      "group": "sram"
-    },
-    "SRAMRowDecoderTest": {
-      "title": "SRAM Row Decoder",
-      "group": "sram"
-    },
-    "SRAMPrechargeTest": {
-      "title": "SRAM Precharge",
-      "group": "sram"
-    },
-    "SRAMWriteDriverTest": {
-      "title": "SRAM Write Driver",
-      "group": "sram"
-    },
-    "SRAMSenseAmplifierTest": {
-      "title": "SRAM Sense Amplifier",
-      "group": "sram"
-    },
-    "SRAMColumnSelectorTest": {
-      "title": "SRAM Column Selector",
-      "group": "sram"
-    },
-    "SRAMAccessControlTest": {
-      "title": "SRAM Access Control",
-      "group": "sram"
-    },
-    "SRAMOutputBufferTest": {
-      "title": "SRAM Output Buffer",
-      "group": "sram"
-    },
-    "SRAMStorageBankTest": {
-      "title": "SRAM Storage Bank",
-      "group": "sram"
-    },
-    "SRAMTest": {
-      "title": "SRAM",
-      "group": "sram"
-    },
-    "MatrixRowDecoderTest": {
-      "title": "Matrix Row Decoder",
-      "group": "memory-helpers"
-    },
-    "MatrixColumnMuxTest": {
-      "title": "Matrix Column Mux",
-      "group": "memory-helpers"
-    },
-    "MatrixWriteDistributorTest": {
-      "title": "Matrix Write Distributor",
-      "group": "memory-helpers"
-    },
-    "StaticReadColumnTest": {
-      "title": "Static Read Column",
-      "group": "memory-helpers"
-    },
-    "MemoryOutputBufferTest": {
-      "title": "Memory Output Buffer",
-      "group": "memory-helpers"
-    },
-    "ROMCellTest": {
-      "title": "ROM Cell",
-      "group": "rom"
-    },
-    "ROMRowTest": {
-      "title": "ROM Row",
-      "group": "rom"
-    },
-    "ROMAddressControlTest": {
-      "title": "ROM Address Control",
-      "group": "rom"
-    },
-    "ROMStorageBankTest": {
-      "title": "ROM Storage Bank",
-      "group": "rom"
-    },
-    "ROMTest": {
-      "title": "ROM",
-      "group": "rom"
-    },
-    "DRAMCellTest": {
-      "title": "DRAM Cell",
-      "group": "dram"
-    },
-    "DRAMRowTest": {
-      "title": "DRAM Row",
-      "group": "dram"
-    },
-    "DRAMSenseColumnTest": {
-      "title": "DRAM Sense Column",
-      "group": "dram"
-    },
-    "DRAMStorageBankTest": {
-      "title": "DRAM Storage Bank",
-      "group": "dram"
-    },
-    "DRAMCommandControlTest": {
-      "title": "DRAM Command Control",
-      "group": "dram"
-    },
-    "DRAMTest": {
-      "title": "DRAM",
-      "group": "dram"
-    },
-    "NORFlashCellTest": {
-      "title": "NOR Flash Cell",
-      "group": "flash"
-    },
-    "NORFlashRowTest": {
-      "title": "NOR Flash Row",
-      "group": "flash"
-    },
-    "NORFlashStorageBankTest": {
-      "title": "NOR Flash Storage Bank",
-      "group": "flash"
-    },
-    "NORFlashCommandControlTest": {
-      "title": "NOR Flash Command Control",
-      "group": "flash"
-    },
-    "NORFlashTest": {
-      "title": "NOR Flash",
-      "group": "flash"
-    },
-    "RegisterTest": {
-      "title": "Register<32>",
-      "group": "registers"
-    },
-    "RegisterFileWidth32Count32Test": {
-      "title": "Register File32x32",
-      "group": "registers"
+      "group": "logic",
+      "order": 11,
+      "fidelity": "gate"
     },
     "RewireTest": {
       "title": "Rewire",
-      "group": "wiring"
-    },
-    "BitSplitter1Test": {
-      "title": "Bit Splitter1",
-      "group": "wiring"
-    },
-    "BitSplitter2Test": {
-      "title": "Bit Splitter2",
-      "group": "wiring"
-    },
-    "BitSplitter3Test": {
-      "title": "Bit Splitter3",
-      "group": "wiring"
-    },
-    "BitSplitter4Test": {
-      "title": "Bit Splitter4",
-      "group": "wiring"
-    },
-    "BitSplitter5Test": {
-      "title": "Bit Splitter5",
-      "group": "wiring"
-    },
-    "BitSplitter8Test": {
-      "title": "Bit Splitter8",
-      "group": "wiring"
-    },
-    "BitSplitter16Test": {
-      "title": "Bit Splitter16",
-      "group": "wiring"
-    },
-    "BitSplitter32Test": {
-      "title": "Bit Splitter32",
-      "group": "wiring"
-    },
-    "BitJoiner1Test": {
-      "title": "Bit Joiner1",
-      "group": "wiring"
-    },
-    "BitJoiner2Test": {
-      "title": "Bit Joiner2",
-      "group": "wiring"
-    },
-    "BitJoiner3Test": {
-      "title": "Bit Joiner3",
-      "group": "wiring"
-    },
-    "BitJoiner4Test": {
-      "title": "Bit Joiner4",
-      "group": "wiring"
-    },
-    "BitJoiner5Test": {
-      "title": "Bit Joiner5",
-      "group": "wiring"
-    },
-    "BitJoiner8Test": {
-      "title": "Bit Joiner8",
-      "group": "wiring"
-    },
-    "BitJoiner16Test": {
-      "title": "Bit Joiner16",
-      "group": "wiring"
-    },
-    "BitJoiner32Test": {
-      "title": "Bit Joiner32",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 0,
+      "fidelity": "gate"
     },
     "ConstantValue1Test": {
       "title": "Constant Value1",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 1,
+      "fidelity": "gate"
     },
     "ConstantValue2Test": {
       "title": "Constant Value2",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 2,
+      "fidelity": "gate"
     },
     "ConstantValue4Test": {
       "title": "Constant Value4",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 3,
+      "fidelity": "gate"
     },
     "ConstantValue8Test": {
       "title": "Constant Value8",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 4,
+      "fidelity": "gate"
     },
     "ConstantValue32Test": {
       "title": "Constant Value32",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 5,
+      "fidelity": "gate"
     },
-    "HalfAdderTest": {
-      "title": "HalfAdder",
-      "group": "alu"
+    "BitSplitter1Test": {
+      "title": "Bit Splitter1",
+      "group": "wiring",
+      "order": 6,
+      "fidelity": "gate"
     },
-    "FullAdderTest": {
-      "title": "FullAdder",
-      "group": "alu"
+    "BitSplitter2Test": {
+      "title": "Bit Splitter2",
+      "group": "wiring",
+      "order": 7,
+      "fidelity": "gate"
     },
-    "RippleCarryAdderWidth8Test": {
-      "title": "RippleCarryAdder<8>",
-      "group": "alu"
+    "BitSplitter3Test": {
+      "title": "Bit Splitter3",
+      "group": "wiring",
+      "order": 8,
+      "fidelity": "gate"
     },
-    "RippleCarryAdderWidth16Test": {
-      "title": "RippleCarryAdder<16>",
-      "group": "alu"
+    "BitSplitter4Test": {
+      "title": "Bit Splitter4",
+      "group": "wiring",
+      "order": 9,
+      "fidelity": "gate"
     },
-    "ParallelPrefixAdderWidth16Test": {
-      "title": "ParallelPrefixAdder<16>",
-      "group": "alu"
+    "BitSplitter5Test": {
+      "title": "Bit Splitter5",
+      "group": "wiring",
+      "order": 10,
+      "fidelity": "gate"
     },
-    "ParallelPrefixAdderWidth32Test": {
-      "title": "ParallelPrefixAdder<32>",
-      "group": "alu"
+    "BitSplitter8Test": {
+      "title": "Bit Splitter8",
+      "group": "wiring",
+      "order": 11,
+      "fidelity": "gate"
     },
-    "AddSubWidth8Test": {
-      "title": "AddSub<8>",
-      "group": "alu"
+    "BitSplitter16Test": {
+      "title": "Bit Splitter16",
+      "group": "wiring",
+      "order": 12,
+      "fidelity": "gate"
     },
-    "ArithmeticUnitWidth8Test": {
-      "title": "ArithmeticUnit<8>",
-      "group": "alu"
+    "BitSplitter32Test": {
+      "title": "Bit Splitter32",
+      "group": "wiring",
+      "order": 13,
+      "fidelity": "gate"
     },
-    "LogicUnitWidth8Test": {
-      "title": "LogicUnit<8>",
-      "group": "alu"
+    "BitJoiner1Test": {
+      "title": "Bit Joiner1",
+      "group": "wiring",
+      "order": 14,
+      "fidelity": "gate"
     },
-    "BarrelShifterWidth8Test": {
-      "title": "BarrelShifter<8>",
-      "group": "alu"
+    "BitJoiner2Test": {
+      "title": "Bit Joiner2",
+      "group": "wiring",
+      "order": 15,
+      "fidelity": "gate"
     },
-    "ZeroDetectWidth8Test": {
-      "title": "ZeroDetect<8>",
-      "group": "alu"
+    "BitJoiner3Test": {
+      "title": "Bit Joiner3",
+      "group": "wiring",
+      "order": 16,
+      "fidelity": "gate"
     },
-    "ZeroDetectWidth32Test": {
-      "title": "ZeroDetect<32>",
-      "group": "alu"
+    "BitJoiner4Test": {
+      "title": "Bit Joiner4",
+      "group": "wiring",
+      "order": 17,
+      "fidelity": "gate"
     },
-    "CompareSelectWidth8Test": {
-      "title": "CompareSelect<8>",
-      "group": "alu"
+    "BitJoiner5Test": {
+      "title": "Bit Joiner5",
+      "group": "wiring",
+      "order": 18,
+      "fidelity": "gate"
     },
-    "ALUFlagUnitWidth8Test": {
-      "title": "ALUFlagUnit<8>",
-      "group": "alu"
+    "BitJoiner8Test": {
+      "title": "Bit Joiner8",
+      "group": "wiring",
+      "order": 19,
+      "fidelity": "gate"
     },
-    "ALUControlDecoderTest": {
-      "title": "ALUControlDecoder",
-      "group": "alu"
+    "BitJoiner16Test": {
+      "title": "Bit Joiner16",
+      "group": "wiring",
+      "order": 20,
+      "fidelity": "gate"
     },
-    "ALUResultSelectorWidth8Test": {
-      "title": "ALUResultSelector<8>",
-      "group": "alu"
-    },
-    "ALUWidth8ScenarioTest": {
-      "title": "ALU<8>",
-      "group": "alu"
-    },
-    "ALUScenarioTest": {
-      "title": "ALU<16>",
-      "group": "alu"
-    },
-    "ALUWidth32ScenarioTest": {
-      "title": "ALU<32>",
-      "group": "alu"
+    "BitJoiner32Test": {
+      "title": "Bit Joiner32",
+      "group": "wiring",
+      "order": 21,
+      "fidelity": "gate"
     },
     "Mux2Width1Test": {
       "title": "Mux<2,1>",
-      "group": "wiring"
-    },
-    "Mux4Width1Test": {
-      "title": "Mux<4,1>",
-      "group": "wiring"
-    },
-    "Mux8Width1Test": {
-      "title": "Mux<8,1>",
-      "group": "wiring"
-    },
-    "Mux32Width1Test": {
-      "title": "Mux<32,1>",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 22,
+      "fidelity": "gate"
     },
     "Mux2Width4Test": {
       "title": "Mux<2,1> 4bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 23,
+      "fidelity": "gate"
     },
     "Mux2Width32Test": {
       "title": "Mux<2,1> 32bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 24,
+      "fidelity": "gate"
+    },
+    "Mux4Width1Test": {
+      "title": "Mux<4,1>",
+      "group": "wiring",
+      "order": 25,
+      "fidelity": "gate"
     },
     "Mux4Width32Test": {
       "title": "Mux<4,1> 32bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 26,
+      "fidelity": "gate"
+    },
+    "Mux8Width1Test": {
+      "title": "Mux<8,1>",
+      "group": "wiring",
+      "order": 27,
+      "fidelity": "gate"
     },
     "Mux8Width8Test": {
       "title": "Mux<8,1> 8bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 28,
+      "fidelity": "gate"
     },
     "Mux8Width32Test": {
       "title": "Mux<8,1> 32bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 29,
+      "fidelity": "gate"
+    },
+    "Mux32Width1Test": {
+      "title": "Mux<32,1>",
+      "group": "wiring",
+      "order": 30,
+      "fidelity": "gate"
     },
     "Mux32Width32Test": {
       "title": "Mux<32,1> 32bit",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 31,
+      "fidelity": "gate"
     },
     "DecoderWidth5Test": {
       "title": "Decoder<5>",
-      "group": "wiring"
+      "group": "wiring",
+      "order": 32,
+      "fidelity": "gate"
     },
-    "RV32IALUTest": {
-      "title": "RV32IALU",
-      "group": "rv32i-alu"
+    "HalfAdderTest": {
+      "title": "HalfAdder",
+      "group": "alu",
+      "order": 0,
+      "fidelity": "gate"
     },
-    "RV32IALUControlTest": {
-      "title": "RV32IALUControl",
-      "group": "rv32i-alu"
+    "FullAdderTest": {
+      "title": "FullAdder",
+      "group": "alu",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "RippleCarryAdderWidth8Test": {
+      "title": "RippleCarryAdder<8>",
+      "group": "alu",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "RippleCarryAdderWidth16Test": {
+      "title": "RippleCarryAdder<16>",
+      "group": "alu",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "ParallelPrefixAdderWidth16Test": {
+      "title": "ParallelPrefixAdder<16>",
+      "group": "alu",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "ParallelPrefixAdderWidth32Test": {
+      "title": "ParallelPrefixAdder<32>",
+      "group": "alu",
+      "order": 5,
+      "fidelity": "gate"
+    },
+    "AddSubWidth8Test": {
+      "title": "AddSub<8>",
+      "group": "alu",
+      "order": 6,
+      "fidelity": "gate"
+    },
+    "ArithmeticUnitWidth8Test": {
+      "title": "ArithmeticUnit<8>",
+      "group": "alu",
+      "order": 7,
+      "fidelity": "gate"
+    },
+    "LogicUnitWidth8Test": {
+      "title": "LogicUnit<8>",
+      "group": "alu",
+      "order": 8,
+      "fidelity": "gate"
+    },
+    "BarrelShifterWidth8Test": {
+      "title": "BarrelShifter<8>",
+      "group": "alu",
+      "order": 9,
+      "fidelity": "gate"
+    },
+    "ZeroDetectWidth8Test": {
+      "title": "ZeroDetect<8>",
+      "group": "alu",
+      "order": 10,
+      "fidelity": "gate"
+    },
+    "ZeroDetectWidth32Test": {
+      "title": "ZeroDetect<32>",
+      "group": "alu",
+      "order": 11,
+      "fidelity": "gate"
+    },
+    "CompareSelectWidth8Test": {
+      "title": "CompareSelect<8>",
+      "group": "alu",
+      "order": 12,
+      "fidelity": "gate"
+    },
+    "ALUFlagUnitWidth8Test": {
+      "title": "ALUFlagUnit<8>",
+      "group": "alu",
+      "order": 13,
+      "fidelity": "gate"
+    },
+    "ALUControlDecoderTest": {
+      "title": "ALUControlDecoder",
+      "group": "alu",
+      "order": 14,
+      "fidelity": "gate"
+    },
+    "ALUResultSelectorWidth8Test": {
+      "title": "ALUResultSelector<8>",
+      "group": "alu",
+      "order": 15,
+      "fidelity": "gate"
+    },
+    "ALUWidth8ScenarioTest": {
+      "title": "ALU<8>",
+      "group": "alu",
+      "order": 16,
+      "fidelity": "gate"
+    },
+    "ALUScenarioTest": {
+      "title": "ALU<16>",
+      "group": "alu",
+      "order": 17,
+      "fidelity": "gate"
+    },
+    "ALUWidth32ScenarioTest": {
+      "title": "ALU<32>",
+      "group": "alu",
+      "order": 18,
+      "fidelity": "gate"
+    },
+    "MatrixRowDecoderTest": {
+      "title": "Matrix Row Decoder",
+      "group": "memory-helpers",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "MatrixColumnMuxTest": {
+      "title": "Matrix Column Mux",
+      "group": "memory-helpers",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "MatrixWriteDistributorTest": {
+      "title": "Matrix Write Distributor",
+      "group": "memory-helpers",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "StaticReadColumnTest": {
+      "title": "Static Read Column",
+      "group": "memory-helpers",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "MemoryOutputBufferTest": {
+      "title": "Memory Output Buffer",
+      "group": "memory-helpers",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "FFWordTest": {
+      "title": "FF Word",
+      "group": "ff",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "FFStorageBankTest": {
+      "title": "FF Storage Bank",
+      "group": "ff",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "FFMemoryTest": {
+      "title": "FF memory device",
+      "group": "ff",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "NativeMemoryDeviceTest": {
+      "title": "Native FF memory device",
+      "group": "ff",
+      "order": 3,
+      "fidelity": "visual"
+    },
+    "SRAMCellTest": {
+      "title": "SRAM Cell",
+      "group": "sram",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "SRAMRowTest": {
+      "title": "SRAM Row",
+      "group": "sram",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "SRAMStorageBankTest": {
+      "title": "SRAM Storage Bank",
+      "group": "sram",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "SRAMRowDecoderTest": {
+      "title": "SRAM Row Decoder",
+      "group": "sram",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "SRAMBitlinePairTest": {
+      "title": "SRAM Bitline Pair",
+      "group": "sram",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "SRAMPrechargeTest": {
+      "title": "SRAM Precharge",
+      "group": "sram",
+      "order": 5,
+      "fidelity": "gate"
+    },
+    "SRAMWriteDriverTest": {
+      "title": "SRAM Write Driver",
+      "group": "sram",
+      "order": 6,
+      "fidelity": "gate"
+    },
+    "SRAMSenseAmplifierTest": {
+      "title": "SRAM Sense Amplifier",
+      "group": "sram",
+      "order": 7,
+      "fidelity": "gate"
+    },
+    "SRAMColumnSelectorTest": {
+      "title": "SRAM Column Selector",
+      "group": "sram",
+      "order": 8,
+      "fidelity": "gate"
+    },
+    "SRAMAccessControlTest": {
+      "title": "SRAM Access Control",
+      "group": "sram",
+      "order": 9,
+      "fidelity": "gate"
+    },
+    "SRAMOutputBufferTest": {
+      "title": "SRAM Output Buffer",
+      "group": "sram",
+      "order": 10,
+      "fidelity": "gate"
+    },
+    "SRAMTest": {
+      "title": "SRAM",
+      "group": "sram",
+      "order": 11,
+      "fidelity": "gate"
+    },
+    "DRAMCellTest": {
+      "title": "DRAM Cell",
+      "group": "dram",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "DRAMRowTest": {
+      "title": "DRAM Row",
+      "group": "dram",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "DRAMSenseColumnTest": {
+      "title": "DRAM Sense Column",
+      "group": "dram",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "DRAMStorageBankTest": {
+      "title": "DRAM Storage Bank",
+      "group": "dram",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "DRAMCommandControlTest": {
+      "title": "DRAM Command Control",
+      "group": "dram",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "DRAMTest": {
+      "title": "DRAM",
+      "group": "dram",
+      "order": 5,
+      "fidelity": "gate"
+    },
+    "ROMCellTest": {
+      "title": "ROM Cell",
+      "group": "rom",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "ROMRowTest": {
+      "title": "ROM Row",
+      "group": "rom",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "ROMStorageBankTest": {
+      "title": "ROM Storage Bank",
+      "group": "rom",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "ROMAddressControlTest": {
+      "title": "ROM Address Control",
+      "group": "rom",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "ROMTest": {
+      "title": "ROM",
+      "group": "rom",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "NORFlashCellTest": {
+      "title": "NOR Flash Cell",
+      "group": "flash",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "NORFlashRowTest": {
+      "title": "NOR Flash Row",
+      "group": "flash",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "NORFlashStorageBankTest": {
+      "title": "NOR Flash Storage Bank",
+      "group": "flash",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "NORFlashCommandControlTest": {
+      "title": "NOR Flash Command Control",
+      "group": "flash",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "NORFlashTest": {
+      "title": "NOR Flash",
+      "group": "flash",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "MemoryTransactionPortTest": {
+      "title": "Memory Transaction Port",
+      "group": "memory-interface",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "MemoryResponseBufferTest": {
+      "title": "Memory Response Buffer",
+      "group": "memory-interface",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "FFAlwaysReadyControllerTest": {
+      "title": "FF Always-Ready Controller",
+      "group": "memory-interface",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "MemoryControllerTest": {
+      "title": "FF memory controller",
+      "group": "memory-interface",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "MemoryArbiterTest": {
+      "title": "Two-port memory arbiter",
+      "group": "memory-interface",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "MemoryEndpointFFTest": {
+      "title": "Memory Endpoint FF",
+      "group": "memory-interface",
+      "order": 5,
+      "fidelity": "gate"
+    },
+    "MemoryEndpointSRAMTest": {
+      "title": "Memory Endpoint SRAM",
+      "group": "memory-interface",
+      "order": 6,
+      "fidelity": "gate"
+    },
+    "MemoryEndpointDRAMTest": {
+      "title": "Memory Endpoint DRAM",
+      "group": "memory-interface",
+      "order": 7,
+      "fidelity": "gate"
+    },
+    "MemoryEndpointROMTest": {
+      "title": "Memory Endpoint ROM",
+      "group": "memory-interface",
+      "order": 8,
+      "fidelity": "gate"
+    },
+    "MemoryEndpointFlashTest": {
+      "title": "Memory Endpoint Flash",
+      "group": "memory-interface",
+      "order": 9,
+      "fidelity": "gate"
+    },
+    "ScalableMemoryEndpointTest": {
+      "title": "Scalable memory endpoint",
+      "group": "memory-interface",
+      "order": 10,
+      "fidelity": "visual"
+    },
+    "CacheDirectMappedScenarioTest": {
+      "title": "Direct-mapped cache and conflict miss",
+      "group": "memory-cache",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "CacheComponentScenarioTest": {
+      "title": "Cache lines, replacement and writes",
+      "group": "memory-cache",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "CacheScalableScenarioTest": {
+      "title": "Scalable two-way cache and line fills",
+      "group": "memory-cache",
+      "order": 2,
+      "fidelity": "logic"
+    },
+    "CacheTwoLevelScenarioTest": {
+      "title": "Two cache levels over RAM",
+      "group": "memory-cache",
+      "order": 3,
+      "fidelity": "logic"
+    },
+    "RegisterTest": {
+      "title": "Register<32>",
+      "group": "registers",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "RegisterFileWidth32Count32Test": {
+      "title": "Register File32x32",
+      "group": "registers",
+      "order": 1,
+      "fidelity": "gate"
     },
     "RV32IALUAddSubTest": {
       "title": "RV32IALUAddSub",
-      "group": "rv32i-alu"
+      "group": "rv32i-alu",
+      "order": 0,
+      "fidelity": "gate"
     },
     "RV32IALULogicTest": {
       "title": "RV32IALULogic",
-      "group": "rv32i-alu"
+      "group": "rv32i-alu",
+      "order": 1,
+      "fidelity": "gate"
     },
     "RV32IALUShifterTest": {
       "title": "RV32IALUShifter",
-      "group": "rv32i-alu"
+      "group": "rv32i-alu",
+      "order": 2,
+      "fidelity": "gate"
     },
     "RV32IALUCompareTest": {
       "title": "RV32IALUCompare",
-      "group": "rv32i-alu"
+      "group": "rv32i-alu",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "RV32IALUControlTest": {
+      "title": "RV32IALUControl",
+      "group": "rv32i-alu",
+      "order": 4,
+      "fidelity": "gate"
     },
     "RV32IALUResultSelectTest": {
       "title": "RV32IALUResultSelect",
-      "group": "rv32i-alu"
+      "group": "rv32i-alu",
+      "order": 5,
+      "fidelity": "gate"
     },
-    "RV32IMemoryLanesTest": {
-      "title": "Memory Lanes",
-      "group": "rv32i-blocks"
-    },
-    "RV32IMemoryRequestTest": {
-      "title": "Memory Request",
-      "group": "rv32i-blocks"
-    },
-    "RV32IDecodeControlUnitTest": {
-      "title": "Decode Control Unit",
-      "group": "rv32i-blocks"
-    },
-    "RV32IExecutionControlStatusUnitTest": {
-      "title": "Execution Control Status Unit",
-      "group": "rv32i-blocks"
-    },
-    "RV32IIFIDPipelineRegisterTest": {
-      "title": "IFID Pipeline Register",
-      "group": "advanced"
-    },
-    "RV32IIDEXPipelineRegisterTest": {
-      "title": "IDEX Pipeline Register",
-      "group": "advanced"
-    },
-    "RV32IEXMEMPipelineRegisterTest": {
-      "title": "EXMEM Pipeline Register",
-      "group": "advanced"
-    },
-    "RV32IMEMWBPipelineRegisterTest": {
-      "title": "MEMWB Pipeline Register",
-      "group": "advanced"
-    },
-    "RV32IForwardingUnitTest": {
-      "title": "Forwarding Unit",
-      "group": "advanced"
-    },
-    "RV32IHazardDetectionUnitTest": {
-      "title": "Load-use hazard detection",
-      "group": "advanced"
-    },
-    "RV32IMemoryAlignmentUnitTest": {
-      "title": "Memory Alignment Unit",
-      "group": "rv32i-blocks"
-    },
-    "RV32IPipelineRetirementUnitTest": {
-      "title": "Pipeline Retirement Unit",
-      "group": "advanced"
-    },
-    "RV32IPipelineCoordinatorTest": {
-      "title": "Pipeline Coordinator",
-      "group": "advanced"
-    },
-    "RV32IFetchStageTest": {
-      "title": "Fetch Stage",
-      "group": "advanced"
-    },
-    "RV32IDecodeStageTest": {
-      "title": "Decode Stage",
-      "group": "advanced"
-    },
-    "RV32IExecuteStageTest": {
-      "title": "Execute Stage",
-      "group": "advanced"
-    },
-    "RV32IMemoryStageTest": {
-      "title": "Memory Stage",
-      "group": "advanced"
-    },
-    "RV32IPipelineExecutionStatusTest": {
-      "title": "Pipeline execution status",
-      "group": "advanced"
-    },
-    "RV32IWritebackStageTest": {
-      "title": "Writeback Stage",
-      "group": "advanced"
-    },
-    "RV32IFiveStageCoreTest": {
-      "title": "Advanced pipeline core",
-      "group": "advanced"
-    },
-    "RV32IPredictionCounterTest": {
-      "title": "Prediction Counter",
-      "group": "prediction"
-    },
-    "RV32IBranchPredecodeTest": {
-      "title": "Branch Predecode",
-      "group": "prediction"
-    },
-    "RV32IBranchPredictorTest": {
-      "title": "Branch Predictor",
-      "group": "prediction"
-    },
-    "RV32IBranchRecoveryTest": {
-      "title": "Branch Recovery",
-      "group": "prediction"
-    },
-    "RV32IPredictionPathTest": {
-      "title": "Prediction Path",
-      "group": "prediction"
+    "RV32IALUTest": {
+      "title": "RV32IALU",
+      "group": "rv32i-alu",
+      "order": 6,
+      "fidelity": "gate"
     },
     "RV32IBitPatternMatcherTest": {
       "title": "Bit Pattern Matcher",
-      "group": "rv32i-blocks"
+      "group": "rv32i-blocks",
+      "order": 0,
+      "fidelity": "gate"
     },
-    "RV32IProgramLoaderTest": {
-      "title": "Program image loader",
-      "group": "developer"
+    "RV32IDecodeControlUnitTest": {
+      "title": "Decode Control Unit",
+      "group": "rv32i-blocks",
+      "order": 1,
+      "fidelity": "gate"
     },
-    "RV32ISingleCycleCoreTest": {
-      "title": "Single-cycle core",
-      "group": "single"
+    "RV32IExecutionControlStatusUnitTest": {
+      "title": "Execution Control Status Unit",
+      "group": "rv32i-blocks",
+      "order": 2,
+      "fidelity": "logic"
+    },
+    "RV32IMemoryAlignmentUnitTest": {
+      "title": "Memory Alignment Unit",
+      "group": "rv32i-blocks",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "RV32IMemoryLanesTest": {
+      "title": "Memory Lanes",
+      "group": "rv32i-blocks",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "RV32IMemoryRequestTest": {
+      "title": "Memory Request",
+      "group": "rv32i-blocks",
+      "order": 5,
+      "fidelity": "gate"
     },
     "RV32ISingleCycleFetchStageTest": {
       "title": "Single Cycle Fetch Stage",
-      "group": "single"
+      "group": "single",
+      "order": 0,
+      "fidelity": "logic"
     },
     "RV32ISingleCycleDecodeStageTest": {
       "title": "Single Cycle Decode Stage",
-      "group": "single"
+      "group": "single",
+      "order": 1,
+      "fidelity": "logic"
     },
     "RV32ISingleCycleExecuteStageTest": {
       "title": "Single Cycle Execute Stage",
-      "group": "single"
+      "group": "single",
+      "order": 2,
+      "fidelity": "logic"
     },
     "RV32ISingleCycleMemoryStageTest": {
       "title": "Single Cycle Memory Stage",
-      "group": "single"
+      "group": "single",
+      "order": 3,
+      "fidelity": "logic"
     },
     "RV32ISingleCycleWritebackStageTest": {
       "title": "Single Cycle Writeback Stage",
-      "group": "single"
+      "group": "single",
+      "order": 4,
+      "fidelity": "logic"
     },
     "RV32ISingleCycleNextPCStageTest": {
       "title": "Single Cycle Next PC Stage",
-      "group": "single"
+      "group": "single",
+      "order": 5,
+      "fidelity": "logic"
     },
-    "RV32IBaselineFetchStageTest": {
-      "title": "Baseline Fetch Stage",
-      "group": "baseline"
-    },
-    "RV32IBaselineDecodeStageTest": {
-      "title": "Baseline Decode Stage",
-      "group": "baseline"
-    },
-    "RV32IBaselineExecuteStageTest": {
-      "title": "Baseline Execute Stage",
-      "group": "baseline"
-    },
-    "RV32IBaselineMemoryStageTest": {
-      "title": "Baseline Memory Stage",
-      "group": "baseline"
+    "RV32ISingleCycleCoreTest": {
+      "title": "Single-cycle core",
+      "group": "single",
+      "order": 6,
+      "fidelity": "logic"
     },
     "RV32IBaselineDependencyUnitTest": {
       "title": "Baseline Dependency Unit",
-      "group": "baseline"
+      "group": "baseline",
+      "order": 0,
+      "fidelity": "gate"
     },
     "RV32IBaselineControlTest": {
       "title": "Baseline Control",
-      "group": "baseline"
+      "group": "baseline",
+      "order": 1,
+      "fidelity": "logic"
+    },
+    "RV32IBaselineFetchStageTest": {
+      "title": "Baseline Fetch Stage",
+      "group": "baseline",
+      "order": 2,
+      "fidelity": "logic"
+    },
+    "RV32IBaselineDecodeStageTest": {
+      "title": "Baseline Decode Stage",
+      "group": "baseline",
+      "order": 3,
+      "fidelity": "logic"
+    },
+    "RV32IBaselineExecuteStageTest": {
+      "title": "Baseline Execute Stage",
+      "group": "baseline",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "RV32IBaselineMemoryStageTest": {
+      "title": "Baseline Memory Stage",
+      "group": "baseline",
+      "order": 5,
+      "fidelity": "gate"
     },
     "RV32IBaselinePipelineCoreTest": {
       "title": "Baseline pipeline core",
-      "group": "baseline"
+      "group": "baseline",
+      "order": 6,
+      "fidelity": "logic"
+    },
+    "RV32IPredictionCounterTest": {
+      "title": "Prediction Counter",
+      "group": "prediction",
+      "order": 0,
+      "fidelity": "logic"
+    },
+    "RV32IBranchPredecodeTest": {
+      "title": "Branch Predecode",
+      "group": "prediction",
+      "order": 1,
+      "fidelity": "logic"
+    },
+    "RV32IBranchPredictorTest": {
+      "title": "Branch Predictor",
+      "group": "prediction",
+      "order": 2,
+      "fidelity": "logic"
+    },
+    "RV32IBranchRecoveryTest": {
+      "title": "Branch Recovery",
+      "group": "prediction",
+      "order": 3,
+      "fidelity": "logic"
+    },
+    "RV32IPredictionPathTest": {
+      "title": "Prediction Path",
+      "group": "prediction",
+      "order": 4,
+      "fidelity": "logic"
+    },
+    "RV32IIFIDPipelineRegisterTest": {
+      "title": "IFID Pipeline Register",
+      "group": "advanced",
+      "order": 0,
+      "fidelity": "logic"
+    },
+    "RV32IIDEXPipelineRegisterTest": {
+      "title": "IDEX Pipeline Register",
+      "group": "advanced",
+      "order": 1,
+      "fidelity": "logic"
+    },
+    "RV32IEXMEMPipelineRegisterTest": {
+      "title": "EXMEM Pipeline Register",
+      "group": "advanced",
+      "order": 2,
+      "fidelity": "logic"
+    },
+    "RV32IMEMWBPipelineRegisterTest": {
+      "title": "MEMWB Pipeline Register",
+      "group": "advanced",
+      "order": 3,
+      "fidelity": "logic"
+    },
+    "RV32IForwardingUnitTest": {
+      "title": "Forwarding Unit",
+      "group": "advanced",
+      "order": 4,
+      "fidelity": "logic"
+    },
+    "RV32IHazardDetectionUnitTest": {
+      "title": "Load-use hazard detection",
+      "group": "advanced",
+      "order": 5,
+      "fidelity": "logic"
+    },
+    "RV32IPipelineExecutionStatusTest": {
+      "title": "Pipeline execution status",
+      "group": "advanced",
+      "order": 6,
+      "fidelity": "logic"
+    },
+    "RV32IPipelineRetirementUnitTest": {
+      "title": "Pipeline Retirement Unit",
+      "group": "advanced",
+      "order": 7,
+      "fidelity": "logic"
+    },
+    "RV32IFetchStageTest": {
+      "title": "Fetch Stage",
+      "group": "advanced",
+      "order": 8,
+      "fidelity": "logic"
+    },
+    "RV32IDecodeStageTest": {
+      "title": "Decode Stage",
+      "group": "advanced",
+      "order": 9,
+      "fidelity": "logic"
+    },
+    "RV32IExecuteStageTest": {
+      "title": "Execute Stage",
+      "group": "advanced",
+      "order": 10,
+      "fidelity": "logic"
+    },
+    "RV32IMemoryStageTest": {
+      "title": "Memory Stage",
+      "group": "advanced",
+      "order": 11,
+      "fidelity": "logic"
+    },
+    "RV32IWritebackStageTest": {
+      "title": "Writeback Stage",
+      "group": "advanced",
+      "order": 12,
+      "fidelity": "logic"
+    },
+    "RV32IPipelineCoordinatorTest": {
+      "title": "Pipeline Coordinator",
+      "group": "advanced",
+      "order": 13,
+      "fidelity": "logic"
+    },
+    "RV32IFiveStageCoreTest": {
+      "title": "Advanced pipeline core",
+      "group": "advanced",
+      "order": 14,
+      "fidelity": "logic"
     },
     "RV32IMemoryArrangementBTest": {
-      "title": "B \u00b7 One shared memory, no caches (program 21)",
-      "group": "memory-systems"
+      "title": "B · One shared memory, no caches (program 21)",
+      "group": "memory-systems",
+      "order": 0,
+      "fidelity": "visual"
+    },
+    "RV32ISharedMemoryProgramTest": {
+      "title": "C-ID · L1 caches over one shared memory (program 21)",
+      "group": "memory-systems",
+      "order": 1,
+      "fidelity": "visual"
     },
     "RV32IMemoryArrangementD0Test": {
-      "title": "D-0 \u00b7 Shared L2 cache below the arbiter (program 21)",
-      "group": "memory-systems"
+      "title": "D-0 · Shared L2 cache below the arbiter (program 21)",
+      "group": "memory-systems",
+      "order": 2,
+      "fidelity": "visual"
     },
     "RV32IMemoryArrangementDIDTest": {
-      "title": "D-ID \u00b7 L1 caches and a shared L2 (program 21)",
-      "group": "memory-systems"
+      "title": "D-ID · L1 caches and a shared L2 (program 21)",
+      "group": "memory-systems",
+      "order": 3,
+      "fidelity": "visual"
     },
     "MultiplyStepScenarioTest": {
-      "title": "MultiplyStep",
+      "title": "MultiplyStep<4>",
       "group": "rv32im",
-      "root": "MULTIPLY_STEP_ROOT"
+      "root": "MULTIPLY_STEP_ROOT",
+      "order": 0,
+      "fidelity": "compact"
     },
     "DivideStepScenarioTest": {
-      "title": "DivideStep",
+      "title": "DivideStep<4>",
       "group": "rv32im",
-      "root": "DIVIDE_STEP_ROOT"
+      "root": "DIVIDE_STEP_ROOT",
+      "order": 1,
+      "fidelity": "compact"
     },
     "MultiplierWidth32ScenarioTest": {
       "title": "Multiplier<32>",
       "group": "rv32im",
-      "root": "MULTIPLIER_W32_ROOT"
+      "root": "MULTIPLIER_W32_ROOT",
+      "order": 2,
+      "fidelity": "compact"
     },
     "DividerWidth32ScenarioTest": {
       "title": "Divider<32>",
       "group": "rv32im",
-      "root": "DIVIDER_W32_ROOT"
+      "root": "DIVIDER_W32_ROOT",
+      "order": 3,
+      "fidelity": "compact"
     },
     "MulDivUnitWidth32ScenarioTest": {
       "title": "MulDivUnit<32>",
       "group": "rv32im",
-      "root": "MULDIV_W32_ROOT"
+      "root": "MULDIV_W32_ROOT",
+      "order": 4,
+      "fidelity": "logic"
     },
     "RV32IMDecodeControlScenarioTest": {
       "title": "RV32IMDecodeControl",
       "group": "rv32im",
-      "root": "RV32IM_DECODE_CONTROL_ROOT"
+      "root": "RV32IM_DECODE_CONTROL_ROOT",
+      "order": 5,
+      "fidelity": "gate"
     },
     "RV32IMDecodeStageScenarioTest": {
       "title": "RV32IMDecodeStage",
       "group": "rv32im",
-      "root": "RV32IM_DECODE_STAGE_ROOT"
+      "root": "RV32IM_DECODE_STAGE_ROOT",
+      "order": 6,
+      "fidelity": "logic"
     },
     "RV32IMExecuteStageScenarioTest": {
       "title": "RV32IMExecuteStage",
       "group": "rv32im",
-      "root": "RV32IM_EXECUTE_STAGE_ROOT"
+      "root": "RV32IM_EXECUTE_STAGE_ROOT",
+      "order": 7,
+      "fidelity": "logic"
     },
     "RV32IMPipelineCoordinatorScenarioTest": {
       "title": "RV32IMPipelineCoordinator",
       "group": "rv32im",
-      "root": "RV32IM_PIPELINE_COORDINATOR_ROOT"
+      "root": "RV32IM_PIPELINE_COORDINATOR_ROOT",
+      "order": 8,
+      "fidelity": "gate"
     },
     "RV32IMFiveStageCoreScenarioTest": {
       "title": "RV32IMFiveStageCore",
       "group": "rv32im",
-      "root": "RV32IM_FIVE_STAGE_CORE_ROOT"
+      "root": "RV32IM_FIVE_STAGE_CORE_ROOT",
+      "order": 9,
+      "fidelity": "logic"
+    },
+    "RV32IMArithmeticProgramTest": {
+      "title": "23 · All eight M instructions and x0",
+      "group": "rv32im-programs",
+      "programNumber": 23,
+      "order": 0,
+      "fidelity": "visual"
+    },
+    "RV32IMDependenciesProgramTest": {
+      "title": "24 · M dependencies, loads, stores and branch flush",
+      "group": "rv32im-programs",
+      "programNumber": 24,
+      "order": 1,
+      "fidelity": "visual"
+    },
+    "RV32IMDivideEdgesProgramTest": {
+      "title": "25 · Division edges and signed high products",
+      "group": "rv32im-programs",
+      "programNumber": 25,
+      "order": 2,
+      "fidelity": "visual"
+    },
+    "RV32IMFibonacciProgramTest": {
+      "title": "26 · Fibonacci fast doubling with MUL and DIVU",
+      "group": "rv32im-programs",
+      "programNumber": 26,
+      "order": 3,
+      "fidelity": "visual"
+    },
+    "RV32IMGcdProgramTest": {
+      "title": "27 · Euclidean GCD with DIVU, REMU and MUL",
+      "group": "rv32im-programs",
+      "programNumber": 27,
+      "order": 4,
+      "fidelity": "visual"
     },
     "ClockedCounterScenarioTest": {
       "title": "ClockedCounter",
-      "group": "device-io",
-      "root": "CLOCKED_COUNTER_ROOT"
+      "group": "system",
+      "root": "CLOCKED_COUNTER_ROOT",
+      "order": 6,
+      "fidelity": "logic"
     },
     "SynchronousFifoScenarioTest": {
       "title": "SynchronousFifo",
-      "group": "device-io",
-      "root": "SYNCHRONOUS_FIFO_ROOT"
+      "group": "system",
+      "root": "SYNCHRONOUS_FIFO_ROOT",
+      "order": 7,
+      "fidelity": "logic"
     },
     "DeviceRegisterPortWidth32ScenarioTest": {
       "title": "DeviceRegisterPort<32>",
-      "group": "device-io",
-      "root": "DEVICE_REGISTER_PORT_W32_ROOT"
-    },
-    "BusErrorTargetWidth32ScenarioTest": {
-      "title": "BusErrorTarget<32>",
-      "group": "device-io",
-      "root": "BUS_ERROR_TARGET_W32_ROOT"
-    },
-    "AddressRouterWidth32ScenarioTest": {
-      "title": "AddressRouter<32>",
-      "group": "device-io",
-      "root": "ADDRESS_ROUTER_W32_ROOT"
-    },
-    "InstructionAccessGuardWidth32ScenarioTest": {
-      "title": "InstructionAccessGuard<32>",
-      "group": "device-io",
-      "root": "INSTRUCTION_ACCESS_GUARD_W32_ROOT"
+      "group": "system",
+      "root": "DEVICE_REGISTER_PORT_W32_ROOT",
+      "order": 5,
+      "fidelity": "logic"
     },
     "ConsoleDeviceScenarioTest": {
       "title": "ConsoleDevice",
-      "group": "device-io",
-      "root": "CONSOLE_DEVICE_ROOT"
+      "group": "system",
+      "root": "CONSOLE_DEVICE_ROOT",
+      "order": 8,
+      "fidelity": "logic"
     },
     "TimerDeviceScenarioTest": {
       "title": "TimerDevice",
-      "group": "device-io",
-      "root": "TIMER_DEVICE_ROOT"
+      "group": "system",
+      "root": "TIMER_DEVICE_ROOT",
+      "order": 9,
+      "fidelity": "logic"
     },
     "ButtonDeviceScenarioTest": {
       "title": "ButtonDevice",
-      "group": "device-io",
-      "root": "BUTTON_DEVICE_ROOT"
-    },
-    "IndexedPixelSelectorWidth32ScenarioTest": {
-      "title": "IndexedPixelSelector<32>",
-      "group": "device-io",
-      "root": "INDEXED_PIXEL_SELECTOR_W32_ROOT"
+      "group": "system",
+      "root": "BUTTON_DEVICE_ROOT",
+      "order": 10,
+      "fidelity": "logic"
     },
     "FramebufferDisplayScenarioTest": {
       "title": "FramebufferDisplay",
-      "group": "device-io",
-      "root": "FRAMEBUFFER_DISPLAY_ROOT"
+      "group": "system",
+      "root": "FRAMEBUFFER_DISPLAY_ROOT",
+      "order": 11,
+      "fidelity": "logic"
     },
-    "RV32IMDeviceSystemScenarioTest": {
-      "title": "RV32IMDeviceSystem",
-      "group": "device-io",
-      "root": "RV32IM_DEVICE_SYSTEM_ROOT"
+    "BusRouterScenarioTest": {
+      "title": "BusRouter<32>",
+      "group": "system",
+      "root": "BUS_ROUTER_ROOT",
+      "order": 0,
+      "fidelity": "logic"
     },
-    "RV32IMArithmeticProgramTest": {
-      "title": "23 \u00b7 All eight M instructions and x0",
-      "group": "rv32im-programs",
-      "programNumber": 23
+    "BusBridgeScenarioTest": {
+      "title": "BusBridge<32> (registered)",
+      "group": "system",
+      "root": "BUS_BRIDGE_ROOT",
+      "order": 2,
+      "fidelity": "logic"
     },
-    "RV32IMDependenciesProgramTest": {
-      "title": "24 \u00b7 M dependencies, loads, stores and branch flush",
-      "group": "rv32im-programs",
-      "programNumber": 24
+    "MemorySubsystemScenarioTest": {
+      "title": "MemorySubsystem",
+      "group": "system",
+      "root": "MEMORY_SUBSYSTEM_ROOT",
+      "order": 4,
+      "fidelity": "compact"
     },
-    "RV32IMDivideEdgesProgramTest": {
-      "title": "25 \u00b7 Division edges and signed high products",
-      "group": "rv32im-programs",
-      "programNumber": 25
+    "LedPanelScenarioTest": {
+      "title": "LedPanel",
+      "group": "system",
+      "root": "LED_PANEL_ROOT",
+      "order": 12,
+      "fidelity": "logic"
     },
-    "RV32IMFibonacciProgramTest": {
-      "title": "26 \u00b7 Fibonacci fast doubling with MUL and DIVU",
-      "group": "rv32im-programs",
-      "programNumber": 26
+    "ComputerSystemScenarioTest": {
+      "title": "ComputerSystem (one bus): bring-up program",
+      "group": "system",
+      "root": "COMPUTER_SYSTEM_ROOT",
+      "order": 14,
+      "fidelity": "compact"
     },
-    "RV32IMGcdProgramTest": {
-      "title": "27 \u00b7 Euclidean GCD with DIVU, REMU and MUL",
-      "group": "rv32im-programs",
-      "programNumber": 27
+    "FullCircuitTest": {
+      "title": "Full Circuit",
+      "group": "developer",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "RV32IProgramLoaderTest": {
+      "title": "Program image loader",
+      "group": "developer",
+      "order": 1,
+      "fidelity": "compact"
+    },
+    "BusInterconnectScenarioTest": {
+      "title": "Bus<32> (two masters, shared memory)",
+      "group": "system",
+      "root": "BUS_ROOT",
+      "order": 1,
+      "fidelity": "logic"
+    },
+    "BusPortCheckerScenarioTest": {
+      "title": "BusPortChecker<32>",
+      "group": "system",
+      "root": "PORT_CHECKER_ROOT",
+      "order": 3,
+      "fidelity": "compact"
+    },
+    "ComputerSystemTwoBusScenarioTest": {
+      "title": "ComputerSystem (two buses): bring-up program",
+      "group": "system",
+      "root": "TWO_BUS_SYSTEM_ROOT",
+      "order": 15,
+      "fidelity": "compact"
+    },
+    "ComputerSystemRegisteredBridgeScenarioTest": {
+      "title": "ComputerSystem (registered bridge): bring-up program",
+      "group": "system",
+      "root": "REGISTERED_BRIDGE_SYSTEM_ROOT",
+      "order": 16,
+      "fidelity": "compact"
+    },
+    "ComputerSystemLedsScenarioTest": {
+      "title": "ComputerSystem (LED panel): bring-up program",
+      "group": "system",
+      "root": "LED_SYSTEM_ROOT",
+      "order": 17,
+      "fidelity": "compact"
+    },
+    "ComputerSystemCheckedScenarioTest": {
+      "title": "ComputerSystem (port checkers): bring-up program",
+      "group": "system",
+      "root": "CHECKED_SYSTEM_ROOT",
+      "order": 18,
+      "fidelity": "compact"
+    },
+    "Game2048ScenarioTest": {
+      "title": "2048 · four 2s merge (LEFT)",
+      "group": "games",
+      "order": 0,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "GameSokobanScenarioTest": {
+      "title": "Sokoban · one push wins (RIGHT)",
+      "group": "games",
+      "order": 1,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "GameSnakeScenarioTest": {
+      "title": "Snake · two updates, the snake eats",
+      "group": "games",
+      "order": 2,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "GamePongScenarioTest": {
+      "title": "Pong · the ball bounces off a paddle",
+      "group": "games",
+      "order": 3,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "GameTetrisScenarioTest": {
+      "title": "Tetris · a hard drop clears a line",
+      "group": "games",
+      "order": 4,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "GameSnakeLedsScenarioTest": {
+      "title": "Snake with LEDs · crash, the LEDs blink",
+      "group": "games",
+      "order": 5,
+      "fidelity": "compact",
+      "root": "GAME_MACHINE"
+    },
+    "ComputerSystemStructureScenarioTest": {
+      "title": "ComputerSystem (games machine): structure, no program",
+      "group": "system",
+      "root": "COMPUTER_SYSTEM_ROOT",
+      "order": 13,
+      "fidelity": "visual"
     }
   },
   "programs": [
     {
       "id": "program-01",
       "title": "Array sum, loop, and stores",
-      "group": "examples"
+      "group": "examples",
+      "order": 1,
+      "fidelity": "visual"
     },
     {
       "id": "program-02",
       "title": "Arithmetic, logic, shifts, and comparisons",
-      "group": "examples"
+      "group": "examples",
+      "order": 2,
+      "fidelity": "visual"
     },
     {
       "id": "program-03",
       "title": "Signed and unsigned memory accesses",
-      "group": "examples"
+      "group": "examples",
+      "order": 3,
+      "fidelity": "visual"
     },
     {
       "id": "program-04",
       "title": "Conditional branches and fallthrough",
-      "group": "examples"
+      "group": "examples",
+      "order": 4,
+      "fidelity": "visual"
     },
     {
       "id": "program-05",
       "title": "Direct call, indirect jump, and return",
-      "group": "examples"
+      "group": "examples",
+      "order": 5,
+      "fidelity": "visual"
     },
     {
       "id": "program-06",
       "title": "Upper immediates, PC-relative values, and FENCE",
-      "group": "examples"
+      "group": "examples",
+      "order": 6,
+      "fidelity": "visual"
     },
     {
       "id": "program-07",
       "title": "Fibonacci sequence",
-      "group": "examples"
+      "group": "examples",
+      "order": 7,
+      "fidelity": "visual"
     },
     {
       "id": "program-08",
       "title": "Byte copy and checksum",
-      "group": "examples"
+      "group": "examples",
+      "order": 8,
+      "fidelity": "visual"
     },
     {
       "id": "program-09",
       "title": "Illegal instruction and precise stopping",
-      "group": "faults"
+      "group": "faults",
+      "order": 9,
+      "fidelity": "visual"
     },
     {
       "id": "program-10",
       "title": "Environment-call trap",
-      "group": "faults"
+      "group": "faults",
+      "order": 10,
+      "fidelity": "visual"
     },
     {
       "id": "program-11",
       "title": "Misaligned word load",
-      "group": "faults"
+      "group": "faults",
+      "order": 11,
+      "fidelity": "visual"
     },
     {
       "id": "program-12",
       "title": "Misaligned halfword store",
-      "group": "faults"
+      "group": "faults",
+      "order": 12,
+      "fidelity": "visual"
     },
     {
       "id": "program-13",
       "title": "Out-of-range word load",
-      "group": "faults"
+      "group": "faults",
+      "order": 13,
+      "fidelity": "visual"
     },
     {
       "id": "program-14",
       "title": "Out-of-range word store",
-      "group": "faults"
+      "group": "faults",
+      "order": 14,
+      "fidelity": "visual"
     },
     {
       "id": "program-15",
       "title": "Misaligned jump target",
-      "group": "faults"
+      "group": "faults",
+      "order": 15,
+      "fidelity": "visual"
     },
     {
       "id": "program-16",
       "title": "Instruction-fetch access fault",
-      "group": "faults"
+      "group": "faults",
+      "order": 16,
+      "fidelity": "visual"
     },
     {
       "id": "program-17",
       "title": "Independent ALU chains",
-      "group": "performance"
+      "group": "performance",
+      "order": 17,
+      "fidelity": "visual"
     },
     {
       "id": "program-18",
       "title": "Dependent ALU chain",
-      "group": "performance"
+      "group": "performance",
+      "order": 18,
+      "fidelity": "visual"
     },
     {
       "id": "program-19",
       "title": "Repeated load-use pairs",
-      "group": "performance"
+      "group": "performance",
+      "order": 19,
+      "fidelity": "visual"
     },
     {
       "id": "program-20",
       "title": "Branch-heavy loop",
-      "group": "performance"
+      "group": "performance",
+      "order": 20,
+      "fidelity": "visual"
     },
     {
       "id": "program-21",
       "title": "Sixteen-word array sum",
-      "group": "performance"
+      "group": "performance",
+      "order": 21,
+      "fidelity": "visual"
     },
     {
       "id": "program-22",
       "title": "Word copy and checksum",
-      "group": "performance"
+      "group": "performance",
+      "order": 22,
+      "fidelity": "visual"
     }
   ]
 }

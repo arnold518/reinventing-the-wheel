@@ -53,7 +53,7 @@ def main():
     for alias, scenario in selected.items():
         automatic = alias in ALU_SCENARIOS
         revision = rv32i_layout.ALU_AUTOMATIC_REVISION if automatic else None
-        root = server.circuit_backend.create_layout_topology(scenario)
+        root = server.scenario_topology(scenario)
         old_root = deepcopy(manager.get_root_layout_for_component(alias, root))
         for component in walk(root):
             kind = server._component_layout_type(component)

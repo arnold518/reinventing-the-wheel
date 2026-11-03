@@ -48,6 +48,11 @@ class WebTestRunnerTest(unittest.TestCase):
         guest_check = runner.command_for(next(r for r in rows if r['name'] == 'RecordedGuestWasmParityTest'), args, 'http://test/')
         self.assertEqual(guest_check[-1], '/chosen/native/tests/RecordedGuestProbe')
 
+    def test_checks_needing_a_fixture_report_what_is_missing(self):
+        tick = next(r for r in runner.test_inventory() if r['name'] == 'TickRecordingBrowserTest')
+        self.assertEqual(runner.missing_environment(tick, {}), ['CIRCUITSIM_TICK_RECORDING_FILE'])
+        self.assertEqual(runner.missing_environment(tick, {'CIRCUITSIM_TICK_RECORDING_FILE': 'ticks.json'}), [])
+
     def test_failed_and_timed_out_checks_are_failures(self):
         with tempfile.TemporaryDirectory() as directory:
             log = Path(directory) / 'test.log'

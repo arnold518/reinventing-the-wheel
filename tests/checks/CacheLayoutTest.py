@@ -72,7 +72,7 @@ class CacheLayoutTest(unittest.TestCase):
                             ("CacheDirectMappedScenarioTest", "cache-direct-mapped"),
                             ("CacheScalableScenarioTest", "cache-scalable-two-way")):
             with self.subTest(scenario=alias):
-                root = circuit_backend.create_layout_topology(test)
+                root = server.scenario_topology(test)
                 children = list(root.get_children())
                 aspects = {child.get_name(): manager.aspect_for_component(child) for child in children}
                 parent_aspect = manager.aspect_for_component(root)
@@ -101,7 +101,7 @@ class CacheLayoutTest(unittest.TestCase):
                     self.assert_geometry(saved, subaspects, manager.aspect_for_component(component))
 
     def test_two_level_scenario_has_both_caches_and_ram(self):
-        root = circuit_backend.create_layout_topology("CacheTwoLevelScenarioTest")
+        root = server.scenario_topology("CacheTwoLevelScenarioTest")
         children = {child.get_name() for child in root.get_children()}
         self.assertTrue({"CACHE", "LOWER_CACHE", "BACKING"} <= children)
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")

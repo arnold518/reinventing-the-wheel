@@ -83,7 +83,7 @@ The standalone `ROMCellTest` opens this component as `MEMORY_ROOT`. Use the expl
 | Test | Coverage |
 | --- | --- |
 | [`ROMCellTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
-| `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
+| `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection; also `value=0` |
 
 ## 3.3.4.2. `ROMRow<C>`
 
@@ -149,7 +149,7 @@ The standalone `ROMRowTest` opens this component as `MEMORY_ROOT`. Use the explo
 | Test | Coverage |
 | --- | --- |
 | [`ROMRowTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
-| `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
+| `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection; also the contents `0000`, `1111`, `0110` and `1001` |
 
 ## 3.3.4.3. `ROMStorageBank<W>`
 

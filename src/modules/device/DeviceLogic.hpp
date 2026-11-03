@@ -7,7 +7,11 @@
 #include <bit>
 #include <set>
 namespace circuit::device::detail {
-using circuit::structural::Logic;using circuit::structural::P;using circuit::structural::V;
+using circuit::structural::P;using circuit::structural::V;
+// Device recipes use the same minimal adapters as every other recipe.
+struct Logic : circuit::structural::Logic {
+    explicit Logic(ComponentBuilder& builder) : circuit::structural::Logic(builder) {}
+};
 inline uint32_t parameter(const circuit::ParameterMap& parameters, const std::string& key, uint32_t fallback) {
     auto found = parameters.find(key);
     if (found == parameters.end()) return fallback;
@@ -42,30 +46,6 @@ inline bool supportsFifo(const circuit::ParameterMap& p) {
 inline bool supportsQueuedDevice(const circuit::ParameterMap& p) {
     return supportsParameters(p, {"fifo_depth"}) && validFifoDepth(parameter(p,"fifo_depth",4));
 }
-inline AddressMap addressMap(const circuit::ParameterMap& p) {
-    AddressMap map;
-    const std::array<std::string,6> names{"ram","console","timer","buttons","display","video"};
-    std::set<std::string> keys;
-    for(const auto& name:names){keys.insert(name+"_base");keys.insert(name+"_bytes");}
-    if(!supportsParameters(p,keys))throw std::invalid_argument("Invalid router parameters");
-    for(size_t i=0;i<names.size();++i){map.regions[i].base=parameter(p,names[i]+"_base",map.regions[i].base);
-        map.regions[i].bytes=parameter(p,names[i]+"_bytes",map.regions[i].bytes);}
-    map.validate();
-    if(!validVideoAperture(map.regions.back().bytes))throw std::invalid_argument("Invalid video aperture");
-    return map;
-}
-inline bool supportsRouter(const circuit::ParameterMap& p) {
-    try {(void)addressMap(p);return true;} catch(const std::exception&) {return false;}
-}
-inline std::string mapLayoutVariant(const AddressMap& map) {
-    AddressMap defaults;
-    bool same_other=true;
-    for(size_t i=0;i<map.regions.size();++i)if(map.regions[i].base!=defaults.regions[i].base || (i!=5 && map.regions[i].bytes!=defaults.regions[i].bytes))same_other=false;
-    if(same_other)return map.regions.back().bytes==4096?"":"video_bytes="+std::to_string(map.regions.back().bytes);
-    std::string result;
-    for(const auto& r:map.regions)result+=r.prefix+std::to_string(r.base)+":"+std::to_string(r.bytes)+";";
-    return result;
-}
 inline bool supportsDisplay(const circuit::ParameterMap& p) {
     if (!supportsParameters(p, {"width", "height", "storage_bytes"})) return false;
     try {
@@ -74,16 +54,23 @@ inline bool supportsDisplay(const circuit::ParameterMap& p) {
     } catch (const std::exception&) { return false; }
 }
 inline V pad(Logic&l,V v,size_t width=32){while(v.size()<width)v.push_back(l.bit(false));if(v.size()!=width)throw std::invalid_argument("Invalid padding");return v;}
+inline std::shared_ptr<IOComponent> devicePart(IOComponent& root,ComponentBuilder& b,
+    const circuit::ComponentFamily& family,const std::string& name,circuit::ParameterMap parameters={}){
+    if(!b.getBuildContext())return b.add(family,name,std::move(parameters));
+    auto request=family.request(name,std::move(parameters));
+    if(root.getSelectedFidelity()=="behavioral")request.required_fidelity=circuit::Fidelity::Behavioral;
+    return b.addByContract(std::move(request));
+}
 P knownWord(Logic&,ComponentBuilder&,P);
 inline P at(Logic&l,const std::shared_ptr<IOComponent>& port,uint32_t offset) {
     return l.equal({l.split(port->getOutputPin<32>("ADDRESS")),l.constant(32,offset)});
 }
 inline std::shared_ptr<IOComponent> devicePort(IOComponent&root,ComponentBuilder&b,Logic&l) {
-    auto p=b.add(circuit::device::busFamily(circuit::device::BusUnit::RegisterPort,32),"PORT");
+    auto p=devicePart(root,b,circuit::device::busFamily(circuit::device::BusUnit::RegisterPort,32),"PORT");
     for(auto n:{"CLK","RST","REQ_VALID","REQ_OP","REQ_ADDR","REQ_WRITE_DATA","REQ_WRITE_MASK","RSP_READY"})
         l.wire(root.getInputPinDynamic(n),p->getInputPinDynamic(n));
     for(auto n:{"REQ_READY","RSP_VALID","RSP_READ_DATA","RSP_STATUS"})
-        l.out(p->getOutputPinDynamic(n),root.getOutputPinDynamic(n));
+        l.wire(p->getOutputPinDynamic(n),root.getOutputPinDynamic(n));
     return p;
 }
 inline P validCommand(Logic&l,ComponentBuilder&b,const std::shared_ptr<IOComponent>&p) {

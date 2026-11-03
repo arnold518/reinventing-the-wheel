@@ -9,6 +9,7 @@
 #include "modules/storage/ClockedStateBit.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/basic/Gate.hpp"
+#include <algorithm>
 
 template<size_t W> SRAMAccessControl<W>::SRAMAccessControl(std::string name, SRAMDeviceConfig config)
     : IOComponent(std::move(name), [clocked = config.clocked](IOComponent* s) {

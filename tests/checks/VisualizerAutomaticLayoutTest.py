@@ -15,7 +15,7 @@ import rv32i_layout
 
 class AutomaticLayoutTest(unittest.TestCase):
     def test_cpu_floorplan_respects_child_pin_footprints(self):
-        root = server.circuit_backend.create_layout_topology("RV32IFiveStageCoreProgramTest/program-01")
+        root = server.scenario_topology("RV32IFiveStageCoreProgramTest/program-01")
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         checked = 0
         for component, _ in refresh._walk(root):
@@ -35,7 +35,7 @@ class AutomaticLayoutTest(unittest.TestCase):
 
     def test_routing_floorplans(self):
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
-        root = server.circuit_backend.create_layout_topology("RV32IFiveStageCoreProgramTest/program-01")
+        root = server.scenario_topology("RV32IFiveStageCoreProgramTest/program-01")
         checked = set()
         for component, _ in refresh._walk(root):
             kind = component.get_type_name()
@@ -192,13 +192,16 @@ class AutomaticLayoutTest(unittest.TestCase):
                     for c,_ in refresh._walk(root)]
         for name in ["RewireTest", "RV32IMemoryLanesTest", "SRAMTest", "RV32ISingleCycleMemoryStageTest",
                      "RV32ISingleCycleSystemTest/program-03", "RV32IFiveStageCoreProgramTest/program-03"]:
-            topology = server.circuit_backend.create_layout_topology(name)
+            topology = server.scenario_topology(name)
             test = server.circuit_backend.create_test_by_name(name)
+            # Both sides under the profile the scenario opens in.
+            if server.class_fidelity(name) and test.supports_build_profile():
+                test.set_build_profile(server.circuit_backend.fidelity_preset(server.class_fidelity(name)))
             test.setup_circuit()
             self.assertEqual(shape(topology), shape(test.get_root()), name)
 
     def test_wide_child_pins_in_shallow_parent(self):
-        root = server.circuit_backend.create_layout_topology("RV32IALUCompareTest")
+        root = server.scenario_topology("RV32IALUCompareTest")
         children = list(root.get_children())
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         for aspect in [.45, .725, 2.0]:

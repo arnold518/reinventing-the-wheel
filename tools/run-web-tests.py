@@ -44,6 +44,11 @@ def select_tests(rows, suite, names):
         r for r in rows if suite == 'all' or suite in r['suites'] or suite == r['kind']]
 
 
+def missing_environment(row, env):
+    """Environment variables a check needs (its external fixture) that are unset."""
+    return [name for name in row.get('requires_env', ()) if not env.get(name)]
+
+
 def command_for(row, args, base):
     values = dict(js=str(args.wasm_dir / 'pages/simulator/circuitsim_wasm.js'),
                   wasm=str(args.wasm_dir / 'pages/simulator/circuitsim_wasm.wasm'),
@@ -117,11 +122,20 @@ def main(argv=None):
     env = dict(os.environ, PYTHONPATH=f'{args.build_dir}:{ROOT / "visualizer-v2"}',
                CIRCUITSIM_EXAMPLE_ROWS=str(args.wasm_dir / 'pages/simulator/example-rows.json'))
     env.setdefault('NODE_OPTIONS', '--max-old-space-size=512')
+    # The WebAssembly bridge builds a scenario with its test's own profile
+    # unless a page chooses a preset; the native probe matches it here.
+    env.setdefault('CIRCUITSIM_PROBE_DEFAULT_FIDELITY', 'test')
     rows = []
 
     def checks(base):
         for test in selected:
             print(test['name'], flush=True)
+            missing_env = missing_environment(test, env)
+            if missing_env:
+                # A check that needs an external fixture is reported, not failed.
+                print('  skipped: needs ' + ', '.join(missing_env), flush=True)
+                rows.append(dict(name=test['name'], exit=None, seconds=0.0, skipped='needs ' + ', '.join(missing_env)))
+                continue
             started = time.monotonic()
             code = run_check(command_for(test, args, base), output / (test['name'] + '.log'), test['timeout'], env)
             rows.append(dict(name=test['name'], exit=code, seconds=time.monotonic() - started))
@@ -139,8 +153,12 @@ def main(argv=None):
                 checks(f'http://127.0.0.1:{server.server_port}/')
             finally:
                 server.shutdown()
-    passed = len(rows) == len(selected) and all(r['exit'] == 0 for r in rows)
-    print(f'{"PASS" if passed else "FAIL"}: {len(rows)}/{len(selected)} executed; logs in {output}')
+    skipped = [r for r in rows if r.get('skipped')]
+    passed = len(rows) == len(selected) and all(r['exit'] == 0 or r.get('skipped') for r in rows)
+    failed = [r['name'] for r in rows if r['exit'] not in (0, None)]
+    print(f'{"PASS" if passed else "FAIL"}: {len(rows) - len(skipped)}/{len(selected)} executed'
+          + (f', {len(skipped)} skipped' if skipped else '') + (f', failed: {" ".join(failed)}' if failed else '')
+          + f'; logs in {output}')
     return 0 if passed else 1
 
 

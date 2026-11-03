@@ -18,6 +18,7 @@ this index when moving them.
 
 ## Complete inventory
 
+- [2026-10-29-rv32im-device-foundation](2026-10-29-rv32im-device-foundation.md) (contracts of the fixed device system, superseded by the computer system)
 - [alu8-fidelity-report](alu8-fidelity-report.md)
 - [behavioral-rv32i-beginners-guide](behavioral-rv32i-beginners-guide.md)
 - [building-circuits](building-circuits.md)

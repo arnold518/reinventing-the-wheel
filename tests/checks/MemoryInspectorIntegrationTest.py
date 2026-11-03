@@ -145,7 +145,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             # registered program scenarios separately check structural cores.
             overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
             session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"), profile_overrides=overrides)
-            component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
+            component = next(c["id"] for c in session.components if c["id"].endswith(".MEMORY.RAM"))
             index = len(session.timestamps) - 1
             state = session.component_state_at_index(index, component)
             del session
@@ -171,7 +171,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as tmp:
                 overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
                 session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"), profile_overrides=overrides)
-                component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
+                component = next(c["id"] for c in session.components if c["id"].endswith(".MEMORY.RAM"))
                 index = len(session.timestamps) - 1
                 state = session.component_state_at_index(index, component)
                 del session

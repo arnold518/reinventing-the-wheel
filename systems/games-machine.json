@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "name": "games-machine",
+  "parts": [
+    {"name": "CORE", "family": "rv32im.core.educational-five-stage"},
+    {"name": "MEMORY", "family": "memory.subsystem.32",
+     "parameters": {"technology": "ff", "words": "65536", "caches": "none"}},
+    {"name": "CONSOLE", "family": "device.console"},
+    {"name": "TIMER", "family": "device.timer", "parameters": {"divisor": "1", "frequency_hz": "0"}},
+    {"name": "BUTTONS", "family": "device.buttons"},
+    {"name": "DISPLAY", "family": "device.framebuffer",
+     "parameters": {"width": "64", "height": "48", "storage_bytes": "4096"}}
+  ],
+  "buses": [
+    {"name": "BUS", "width": 32,
+     "masters": [
+       {"name": "CPU_I", "port": "CORE.IMEM_", "access": "fetch"},
+       {"name": "CPU_D", "port": "CORE.DMEM_", "access": "data"}
+     ],
+     "regions": [
+       {"name": "RAM", "base": "0x00000000", "bytes": "0x40000", "execute": true,
+        "targets": {"CPU_I": "MEMORY.I_", "CPU_D": "MEMORY.D_"}},
+       {"name": "CONSOLE", "base": "0x10000000", "bytes": "0x100", "target": "CONSOLE"},
+       {"name": "TIMER", "base": "0x10001000", "bytes": "0x100", "target": "TIMER"},
+       {"name": "BUTTONS", "base": "0x10002000", "bytes": "0x100", "target": "BUTTONS"},
+       {"name": "DISPLAY", "base": "0x10003000", "bytes": "0x100", "target": "DISPLAY"},
+       {"name": "VIDEO", "base": "0x20000000", "bytes": "0x1000", "target": "DISPLAY.FB_"}
+     ]}
+  ],
+  "inputs": [
+    {"name": "ENABLE", "to": "CORE.ENABLE"},
+    {"name": "TX_READY", "to": "CONSOLE.TX_READY"},
+    {"name": "INPUT_VALID", "to": "BUTTONS.INPUT_VALID"},
+    {"name": "INPUT_BUTTON", "to": "BUTTONS.INPUT_BUTTON"},
+    {"name": "INPUT_DOWN", "to": "BUTTONS.INPUT_DOWN"}
+  ],
+  "outputs": [
+    {"name": "TX_VALID", "from": "CONSOLE.TX_VALID"},
+    {"name": "TX_DATA", "from": "CONSOLE.TX_DATA"},
+    {"name": "PRESENT", "from": "DISPLAY.PRESENT"},
+    {"name": "FRAME_SEQUENCE", "from": "DISPLAY.FRAME_SEQUENCE"},
+    {"name": "HALTED", "from": "CORE.HALTED"},
+    {"name": "TRAPPED", "from": "CORE.TRAPPED"},
+    {"name": "TRAP_CAUSE", "from": "CORE.TRAP_CAUSE"},
+    {"name": "COMMIT_VALID", "from": "CORE.COMMIT_VALID"}
+  ]
+}

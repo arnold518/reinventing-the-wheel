@@ -315,8 +315,8 @@ The controller is gate-level throughout:
 | `REQUEST_CHECK` | Operation, alignment, range and mask checks, and the status of a rejected request |
 | `ADDRESS_PATH` | Splits the address into tag, set and word, and counts fill words |
 | `PHASES` | State bits `LOOKUP`, `MEMORY_SEND`, `MEMORY_WAIT`, `STREAM`, `DONE` |
-| `TAG_MATCH_<n>` | A 32-bit comparator and the valid bit of each way |
-| `LINE_STATE_<n>` | Valid (and with write-back, dirty) bits of every line of a way, in `registers` mode |
+| `TAG_MATCH_<n>` | A 32-bit comparator (one `XORGate<32>` `DIFFER` and a `ZeroDetect<32>` `EQUAL`) and the valid bit of each way |
+| `LINE_STATE_<n>` | Valid (and with write-back, dirty) bits of every line of a way, in `registers` mode; one state bit per set, with the next-state logic of all sets as word gates over the sets (at 4–32 sets) |
 | `REPLACEMENT` | Two-way `lru`: one bit per set; `plru` and `fifo`: their bits per set |
 | `WRITE_QUEUE` | The write buffer: each slot a valid bit and the write's address, data and mask |
 | `EVICT_*`, `FLUSH_*` | Write-back of a dirty victim, and the walk over every line before invalidation |

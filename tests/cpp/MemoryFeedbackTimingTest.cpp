@@ -88,7 +88,7 @@ struct Fixture {
     }
     void drive(const std::string& name,SimulationTime t,const Bits& v) {
         const auto& wire=inputs.at(name);
-        auto send=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t,std::dynamic_pointer_cast<Wire<W>>(wire),v));};
+        auto send=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,std::dynamic_pointer_cast<Wire<W>>(wire),v));};
         switch(v.size()){case 1:send.template operator()<1>();break;case 2:send.template operator()<2>();break;
             case 32:send.template operator()<32>();break;default:throw std::runtime_error("Bad width");}
     }
@@ -171,7 +171,7 @@ void coreCounterexample(const std::string& family) {
     imem->setHistoryRecordingEnabled(false);dmem->setHistoryRecordingEnabled(false);
     Simulator sim;sim.setHistoryRecordingEnabled(false);
     auto drive=[&](SimulationTime t,const std::shared_ptr<Wire<1>>& w,LogicValue v){
-        sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(t,w,v));
+        sim.scheduleEvent(std::make_shared<WireUpdateEvent>(t,w,v));
     };
     auto run=[&](SimulationTime t){
         auto r=sim.drainUntilIdle(t,1000000);

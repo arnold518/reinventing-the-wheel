@@ -244,6 +244,31 @@ void WordMux::buildInternals(ComponentBuilder& b) {
 }
 
 namespace circuit::word {
+namespace {
+// The compact form at every geometry: per bit, the same Mux<2,1> tree as the
+// gates (BusMuxBehavioral).
+template<size_t W> FamilyFactory compactMuxAt(size_t n) {
+    return [n](const std::string& name,const std::shared_ptr<BuildContext>& c)->std::shared_ptr<Component>{
+        const auto type=std::string(mux(n,W).typeName());
+        switch(n){
+        case 2:return Component::createWithContext<BusMuxBehavioral<2,1,W>>(c,name,type);
+        case 4:return Component::createWithContext<BusMuxBehavioral<4,2,W>>(c,name,type);
+        case 8:return Component::createWithContext<BusMuxBehavioral<8,3,W>>(c,name,type);
+        case 16:return Component::createWithContext<BusMuxBehavioral<16,4,W>>(c,name,type);
+        default:return Component::createWithContext<BusMuxBehavioral<32,5,W>>(c,name,type);
+        }
+    };
+}
+FamilyFactory compactMux(size_t n,size_t w) {
+    switch(w){
+    case 1:return compactMuxAt<1>(n);
+    case 4:return compactMuxAt<4>(n);
+    case 8:return compactMuxAt<8>(n);
+    case 16:return compactMuxAt<16>(n);
+    default:return compactMuxAt<32>(n);
+    }
+}
+}
 const ComponentFamily& mux(size_t inputs,size_t width){
     if((inputs!=2 && inputs!=4 && inputs!=8 && inputs!=16 && inputs!=32)||(width!=1 && width!=4 && width!=8 && width!=16 && width!=32))
         throw std::invalid_argument("Invalid mux geometry");
@@ -258,16 +283,7 @@ const ComponentFamily& mux(size_t inputs,size_t width){
                 p->addPinDynamic("OUT",PinType::OUTPUT,w);
             },[n,w](const std::string& name,const std::shared_ptr<BuildContext>& c){
                 return Component::createWithContext<WordMux>(c,name,n,w);
-            },w==32?FamilyFactory([n](const std::string& name,const std::shared_ptr<BuildContext>& c)->std::shared_ptr<Component>{
-                const auto type=std::string(mux(n,32).typeName());
-                switch(n){
-                case 2:return Component::createWithContext<BusMuxBehavioral<2,1,32>>(c,name,type);
-                case 4:return Component::createWithContext<BusMuxBehavioral<4,2,32>>(c,name,type);
-                case 8:return Component::createWithContext<BusMuxBehavioral<8,3,32>>(c,name,type);
-                case 16:return Component::createWithContext<BusMuxBehavioral<16,4,32>>(c,name,type);
-                default:return Component::createWithContext<BusMuxBehavioral<32,5,32>>(c,name,type);
-                }
-            }):FamilyFactory{}) {}
+            },compactMux(n,w)) {}
     };
     static std::map<std::pair<size_t,size_t>,std::unique_ptr<Entry>> entries;
     auto& e=entries[{inputs,width}];if(!e)e=std::make_unique<Entry>(inputs,width);return e->family;
@@ -279,7 +295,9 @@ void registerMuxes(ComponentCatalog& c) {
         const auto test=recorded?"Mux"+std::to_string(n)+"Width"+std::to_string(w)+"Test":"WidthComponentsTest";
         circuit::registration::registerStructural(c,f,test);
         if(f.supports(Fidelity::Behavioral)) {
-            circuit::registration::registerBehavioral(c,f,test,test,{},"stable-after-settle");
+            // 32-bit compact muxes are compared in their own tests; the other
+            // widths (2026-10-28) in CompactFormEquivalenceTest.
+            circuit::registration::registerBehavioral(c,f,test,w==32?test:std::string("CompactFormEquivalenceTest"),{},"stable-after-settle");
         }
     }
 }

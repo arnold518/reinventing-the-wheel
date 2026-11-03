@@ -120,29 +120,11 @@ inline std::shared_ptr<Event> makeTestWireUpdate(SimulationTime time, const std:
         if (value.values.size() != wire->getWidth()) {
             return nullptr;
         }
-        auto create = [&]<size_t Width>() -> std::shared_ptr<Event> {
-            return std::make_shared<WireUpdateEvent<Width>>(
-                time,
-                std::dynamic_pointer_cast<Wire<Width>>(wire),
-                value.values);
-        };
-        return circuit::dispatchWidth(wire->getWidth(), create,
-            []() -> decltype(create.operator()<1>()) { return nullptr; });
+        return std::make_shared<WireUpdateEvent>(time, wire, value.values);
     }
-    uint64_t numeric = value.multi ? value.numeric : static_cast<uint64_t>(value.logic == LogicValue::HIGH);
-    switch (wire->getWidth()) {
-        case 1:
-            if (value.multi) return std::make_shared<WireUpdateEvent<1>>(time, std::dynamic_pointer_cast<Wire<1>>(wire), numeric);
-            return std::make_shared<WireUpdateEvent<1>>(time, std::dynamic_pointer_cast<Wire<1>>(wire), value.logic);
-        case 2: return std::make_shared<WireUpdateEvent<2>>(time, std::dynamic_pointer_cast<Wire<2>>(wire), numeric);
-        case 3: return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), numeric);
-        case 4: return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), numeric);
-        case 5: return std::make_shared<WireUpdateEvent<5>>(time, std::dynamic_pointer_cast<Wire<5>>(wire), numeric);
-        case 8: return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric);
-        case 16: return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), numeric);
-        case 32: return std::make_shared<WireUpdateEvent<32>>(time, std::dynamic_pointer_cast<Wire<32>>(wire), numeric);
-        default: return nullptr;
-    }
+    if (wire->getWidth() == 1 && !value.multi) return std::make_shared<WireUpdateEvent>(time, wire, value.logic);
+    const uint64_t numeric = value.multi ? value.numeric : static_cast<uint64_t>(value.logic == LogicValue::HIGH);
+    return std::make_shared<WireUpdateEvent>(time, wire, numeric);
 }
 
 inline bool checkExpectedOutputs(const std::shared_ptr<IOComponent>& io,

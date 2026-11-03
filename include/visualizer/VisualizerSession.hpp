@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <functional>
 
 class Component;
 class PinBase;
@@ -28,7 +29,8 @@ public:
         std::string registered_test_name,
         std::string scenario_key,
         std::map<std::string, std::string> exact_overrides = {},
-        size_t profile_revision = 0);
+        size_t profile_revision = 0,
+        std::string fidelity_preset = {});
     ~VisualizerSession();
 
     // Borrow an executing circuit for read-only checkpoint export. The
@@ -37,11 +39,24 @@ public:
                       std::string scenario_key);
     std::string currentCheckpointJson(SimulationTime time);
     std::string topologySlicesJson() const;
+    // Bounded export: consume one <=512-owner scope packet at a time.
+    void forEachTopologySlice(const std::function<void(const std::string&)>& consume) const;
+    void forEachPin(const std::function<void(size_t, const std::shared_ptr<PinBase>&)>&) const;
+    void forEachWire(const std::function<void(size_t, const std::shared_ptr<WireBase>&)>&) const;
+    void forEachComponent(const std::function<void(const std::shared_ptr<Component>&)>&) const;
 
     VisualizerSession(const VisualizerSession&) = delete;
     VisualizerSession& operator=(const VisualizerSession&) = delete;
 
     static std::string visualizableTestsJson();
+    // The parts the scenario would have with these fidelity choices: builds
+    // the circuit with the same profile as a session, without simulating,
+    // and lists every component (id, name, type, parentIndex, fidelity,
+    // availableFidelities, profileSelectable). For the explorer's preview of
+    // parts that exist only after Apply & Run.
+    static std::string previewComponentsJson(const std::string& registered_test_name,
+                                             const std::map<std::string, std::string>& exact_overrides,
+                                             const std::string& fidelity_preset);
 
     std::string topologyResponseJson();
     std::string topologySliceJson(const std::vector<std::string>& owner_ids) const;
@@ -72,6 +87,7 @@ private:
 
     std::string registered_test_name_;
     std::string scenario_key_;
+    std::string fidelity_preset_;
     std::string session_id_;
     std::string layout_key_;
     std::map<std::string, std::string> exact_overrides_;

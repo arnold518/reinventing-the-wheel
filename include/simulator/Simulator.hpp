@@ -63,6 +63,9 @@ public:
     // can have pin-only history. Neither method scrubs or advances the circuit.
     const PinHistory& signalHistory(const std::shared_ptr<PinBase>& pin) const;
     size_t historyRevision() const noexcept { return history_revision_; }
+    // True when a recorded wire change needs its value (history or a trace).
+    bool changeValuesObserved() const;
+    void countEffectiveWireChange() noexcept { ++performance_counters_.effective_wire_changes; }
     void recordChange(SimulationTime time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value);
     void recordChange(SimulationTime time, std::shared_ptr<Wire<>> wire, LogicValue value);
     void recordPinChange(SimulationTime time, std::shared_ptr<PinBase> pin, const std::vector<LogicValue>& value);
@@ -77,8 +80,25 @@ private:
 
     SimulationTime current_time;
     uint64_t next_scheduling_order = 0;
+    // The queue keeps each event's sort keys beside it, so ordering compares
+    // plain values instead of dereferencing events and calling getPriority():
+    // time, then wire updates before evaluations, then scheduling order, as
+    // Event::EventComparator.
+    struct QueuedEvent {
+        SimulationTime time;
+        EventPriority priority;
+        uint64_t order;
+        std::shared_ptr<Event> event;
+    };
+    struct QueuedEventLater {
+        bool operator()(const QueuedEvent& a, const QueuedEvent& b) const {
+            if (a.time != b.time) return a.time > b.time;
+            if (a.priority != b.priority) return a.priority > b.priority;
+            return a.order > b.order;
+        }
+    };
     // Mutable so that the const queries can drop withdrawn events first.
-    mutable std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, Event::EventComparator> event_queue;
+    mutable std::priority_queue<QueuedEvent, std::vector<QueuedEvent>, QueuedEventLater> event_queue;
     void dropCancelled() const noexcept;
     HistoryLog _log;
     PinHistoryLog _pin_log;

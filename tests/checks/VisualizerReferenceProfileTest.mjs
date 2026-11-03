@@ -3,12 +3,13 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
+import { normalizeFidelityPreset, profileStorageKey } from '../../visualizer-v2/static/fidelity_profiles.mjs';
 
 const source = await readFile(new URL('../../visualizer-v2/static/wasm_worker.js', import.meta.url), 'utf8');
 const start = source.indexOf('async function loadScenario(');
 const end = source.indexOf('\nfunction parseBody', start);
 assert(start >= 0 && end > start);
-const saved = { schema_version: 1, scenarios: { 'rv32i-program9': {
+const saved = { schema_version: 1, scenarios: { 'rv32i-program9::visual': {
   revision: 4, exact_overrides: { 'RV32I_PROGRAM_ROOT.CORE': 'structural' },
 } } };
 const before = JSON.stringify(saved);
@@ -16,19 +17,23 @@ let selected = {};
 let timing = 'unit';
 const sandbox = {
   normalizeScenario: key => ({ key, name: 'RV32ISingleCycleSystemTest/program-09' }),
+  defaultFidelity: () => 'visual',
   profileStore: async () => saved,
   bridge: {
     clearProfileOverrides: () => { selected = {}; },
     setProfileOverride: (path, fidelity) => { selected[path] = fidelity; },
     loadScenario: (name, key, revision) => JSON.stringify({ revision, overrides: selected }),
     setTimingProfile: name => { timing = name; },
+    setFidelityProfile: () => {},
     timingProfileJson: () => JSON.stringify({ name: timing, tickPicoseconds: timing === 'unit' ? 0 : 1 }),
   },
   defaultLayout: {}, LAYOUT_KEY: 'layout', loadStored: async () => ({}),
   mergeLayoutStores: () => ({}), enrichPayload: payload => payload,
+  normalizeFidelityPreset, profileStorageKey, completeProfileLayouts: () => [], componentLayout: () => ({}),
+  clone: structuredClone,
 };
 vm.createContext(sandbox);
-vm.runInContext('let currentLayout, currentScenario, currentPayload;\n' + source.slice(start, end), sandbox);
+vm.runInContext('let currentLayout, currentScenario, currentPayload, currentDefaults;\n' + source.slice(start, end), sandbox);
 let result = await sandbox.loadScenario('rv32i-program9', null, null, 'behavioral');
 assert.equal(result.overrides['RV32I_PROGRAM_ROOT.CORE'], 'behavioral');
 assert.equal(result.revision, 4);
@@ -53,7 +58,7 @@ const handleStart = source.indexOf('async function handleRequest(');
 const handleEnd = source.indexOf('\nself.addEventListener', handleStart);
 const root = 'MEMORY_CONTAINER_ROOT';
 const word = `${root}.STORAGE.WORD_0`;
-const profiles = {schema_version: 1, scenarios: {'ff-memory-container': {
+const profiles = {schema_version: 1, scenarios: {'ff-memory-container::gate': {
   revision: 4, exact_overrides: {[root]: 'behavioral', [word]: 'behavioral'},
 }}};
 const applySandbox = {
@@ -62,7 +67,9 @@ const applySandbox = {
   normalizeScenario: key => ({key}),
   profileStore: async () => profiles, localProfileStore: async () => structuredClone(profiles),
   currentPayload: {components: [{id: root, availableFidelities: ['structural', 'behavioral']}]},
-  clone: structuredClone, PROFILE_KEY: 'profile',
+  previewComponentsById: new Map(),
+  defaultFidelity: () => 'gate',
+  clone: structuredClone, PROFILE_KEY: 'profile', normalizeFidelityPreset, profileStorageKey,
   loadScenario: async (key, overrides, revision) => ({key, overrides, revision}),
   saveStored: async (_key, store) => { profiles.scenarios = store.scenarios; },
 };
@@ -78,6 +85,6 @@ await assert.rejects(apply({[root]: 'structural', [`${word}.NEW`]: 'behavioral'}
 const restored = JSON.parse(await apply({[root]: 'structural', [word]: 'behavioral'}));
 assert.equal(restored.revision, 5);
 assert.equal(restored.overrides[word], 'behavioral');
-assert.equal(profiles.scenarios['ff-memory-container'].exact_overrides[word], 'behavioral');
+assert.equal(profiles.scenarios['ff-memory-container::gate'].exact_overrides[word], 'behavioral');
 await assert.rejects(apply({[root]: 'behavioral'}), /Profile changed/);
 console.log('PASS: retained inactive descendants, invalid new overrides, and stale profile rejection');

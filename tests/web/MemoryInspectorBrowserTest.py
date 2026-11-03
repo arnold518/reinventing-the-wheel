@@ -57,7 +57,7 @@ with sync_playwright() as p:
                 # Exercise the real row-scroll button and the Follow control.
                 control=page.evaluate("id=>app.memoryScrollControls.find(c=>c.componentId===id&&c.direction==='down'&&c.enabled)",case["id"])
                 assert control
-                canvas=page.locator("canvas").bounding_box()
+                canvas=page.locator("#circuit-canvas").bounding_box()
                 page.mouse.click(canvas["x"]+control["rect"]["x"]+control["rect"]["w"]/2,
                                  canvas["y"]+control["rect"]["y"]+control["rect"]["h"]/2)
                 assert page.evaluate("id=>app.memoryFollowing.get(id)",case["id"]) is False

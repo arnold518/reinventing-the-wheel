@@ -13,5 +13,7 @@ typedef struct {
 void game_init(Game *g,uint32_t kind);
 void game_action(Game *g,unsigned button,uint32_t levels);
 uint8_t game_cell(const Game *g,unsigned x,unsigned y);
+// Every cell of the drawn board (2048 4x4, Sokoban/Snake 8x8, Tetris 8x16).
+void game_board(const Game *g,uint8_t *out);
 uint32_t game_fingerprint(const Game *g);
 #endif

@@ -33,6 +33,8 @@ const context = vm.createContext({
   componentFocusRect: component => component.rect,
   setSelectedComponent: id => { app.selectedComponentId = id; },
   requestRender: () => { ++renderRequests; },
+  // Device views off: focus targets the component itself.
+  deviceViewsEnabled: () => false, outermostAbstraction: () => null,
 });
 vm.runInContext(functions.map(extract).join("\n"), context);
 const camera = () => JSON.parse(JSON.stringify(app.camera));

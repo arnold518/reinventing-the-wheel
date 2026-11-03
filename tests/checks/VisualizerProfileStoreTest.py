@@ -5,7 +5,7 @@ import json
 import tempfile
 
 import server
-from profile_store import ProfileStore, validate_overrides
+from profile_store import FIDELITY_PRESETS, ProfileStore, validate_overrides
 
 
 def expect_value_error(action, message_fragment: str):
@@ -110,7 +110,7 @@ def main():
             ),
             "does not provide behavioral fidelity",
         )
-        assert store.profile_store.get("flip-flop-cell") == (0, {})
+        assert store.profile_store.get("flip-flop-cell::gate") == (0, {})
         assert store.get("flip-flop-cell") is initial
 
         changed = store.apply_profile(
@@ -122,6 +122,10 @@ def main():
         assert payload["sessionId"] == changed.session_id
         assert payload["profile"] == {
             "editable": True,
+            "fidelityPreset": "gate",
+            "presetVersion": 1,
+            "custom": True,
+            "availablePresets": list(FIDELITY_PRESETS),
             "revision": 1,
             "exactOverrides": {
                 "FLIP_FLOP_CELL_ROOT": "behavioral",
@@ -147,7 +151,7 @@ def main():
             ),
             "unknown component",
         )
-        assert store.profile_store.get("flip-flop-cell") == (
+        assert store.profile_store.get("flip-flop-cell::gate") == (
             1,
             {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
@@ -161,7 +165,7 @@ def main():
             ),
             "Profile changed since it was loaded",
         )
-        assert store.profile_store.get("flip-flop-cell") == (
+        assert store.profile_store.get("flip-flop-cell::gate") == (
             1,
             {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
@@ -176,7 +180,7 @@ def test_transient_reference_profile():
         payload = reference.topology_response()
         core = next(c for c in payload["components"] if c["id"] == "RV32I_PROGRAM_ROOT.CORE")
         assert core["fidelity"] == "behavioral"
-        assert store.profile_store.get(scenario) == (0, {})
+        assert store.profile_store.get(f"{scenario}::visual") == (0, {})
         assert store.get(scenario, "behavioral") is reference
         assert store.get_by_id(reference.session_id) is reference
         normal = store.get(scenario)

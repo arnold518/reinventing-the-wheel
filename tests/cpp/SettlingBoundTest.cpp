@@ -272,9 +272,10 @@ void handBuilt() {
         auto unused = b.addNewComponent<NOTGate>("UNUSED");
         b.addNewWire("s3", split->getOutputPin("OUT_3"), {unused->getInputPin("IN")});
         const auto r = valid(CircuitTimingAnalyzer::settling(root));
-        check(endpoint(r, "Y").bound == 6, "Per-bit: three stages of splitter + inverter");
+        // Three inverter stages; the splitter is wiring (no delay in any profile).
+        check(endpoint(r, "Y").bound == 3, "Per-bit: three inverter stages through the splitter");
         Bench bench(root);
-        check(confirm(bench, r, true, 20, random) == 6, "Per-bit bound is attained");
+        check(confirm(bench, r, true, 20, random) == 3, "Per-bit bound is attained");
     }
 }
 
@@ -521,7 +522,8 @@ void aluEquality() {
     const auto& eq = endpoint(report, "EQ");
     std::cout << "rv32i.alu EQ: paths " << eq.structural << ", proven " << eq.bound
               << (eq.tight ? " (attained)" : "") << " after " << eq.evaluations << " evaluations\n";
-    check(eq.structural == 33 && eq.bound == 30 && eq.tight, "The ALU EQ false path must be removed: 33 -> 30");
+    // 33 -> 30 before the splitter became wiring in `unit`.
+    check(eq.structural == 24 && eq.bound == 21 && eq.tight, "The ALU EQ false path must be removed: 24 -> 21");
 
     std::mt19937_64 random(0xe9);
     const auto word = [](uint32_t value) {
@@ -595,7 +597,8 @@ void compactAdder() {
     std::map<std::pair<std::string, std::string>, circuit::DelayRange> arcs;
     for (const auto& arc : table.arcs) arcs[{arc.input, arc.output}] = arc.delay;
     check(arcs.size() == 9 && table.clock.empty() && table.launches.empty(), "The adder has nine input-output pairs");
-    check(arcs[{"A", "OUT"}].maximum == 19 && arcs[{"C_IN", "OUT"}].maximum == 3 && arcs[{"C_IN", "C_OUT"}].maximum == 2,
+    // A -> OUT was 19 before splitters became wiring in `unit`.
+    check(arcs[{"A", "OUT"}].maximum == 12 && arcs[{"C_IN", "OUT"}].maximum == 3 && arcs[{"C_IN", "C_OUT"}].maximum == 2,
           "Proven adder pairs");
     for (const auto& [pair, delay] : arcs) check(delay.minimum >= 1 && delay.minimum <= delay.maximum, "Earliest before latest");
     std::cout << "ParallelPrefixAdder<32> pairs (earliest..latest):";

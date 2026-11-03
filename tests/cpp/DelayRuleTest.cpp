@@ -72,9 +72,10 @@ struct Floor { int typical, worst; const char* why; };
 const std::map<std::string, Floor> FLOORS = {
     // Measured with the unchanged cache circuits/tables: this sample misses
     // the slowest per-output cases. Keep the safety rule and global targets.
-    {"memory.cache.controller.16", {83, 64, SAMPLE}},
-    {"memory.cache.controller.32", {85, 75, SAMPLE}},
-    {"memory.cache.controller.8", {84, 61, SAMPLE}},
+    // Re-measured 2026-10-27 after the unit splitter became zero-delay.
+    {"memory.cache.controller.16", {81, 58, SAMPLE}},
+    {"memory.cache.controller.32", {83, 75, SAMPLE}},
+    {"memory.cache.controller.8", {83, 58, SAMPLE}},
     // Like the existing whole-core exceptions, this core exceeds the delay
     // twin's node budget and publishes on its conservative structural table.
     {"rv32im.core.educational-five-stage", {29, 25, DATA}},

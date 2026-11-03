@@ -81,11 +81,11 @@ public:
         auto sb=l.reg(divide_?"REMAINDER_NEGATIVE":"NEGATIVE_B",1,clk,reset,launch);
         auto na=l.land({input("SIGNED_A"),a.back()}), nb=l.land({input("SIGNED_B"),bv.back()});
         if(divide_) {
-            l.wire(selectWord(b,l,"DIVISOR_MAGNITUDE",nb,input("B"),l.join(l.negate(bv))),ar->getInputPinDynamic("D"));
+            l.wire(selectWord(b,l,"DIVISOR_MAGNITUDE",nb,input("B"),l.negateWord(input("B"))),ar->getInputPinDynamic("D"));
             l.wire(l.lx({na,nb}),sa->getInputPin("D")); l.wire(na,sb->getInputPin("D"));
-            l.wire(selectWord(b,l,"DIVIDEND_MAGNITUDE",na,input("A"),l.join(l.negate(a))),output("INITIAL_LOW"));
+            l.wire(selectWord(b,l,"DIVIDEND_MAGNITUDE",na,input("A"),l.negateWord(input("A"))),output("INITIAL_LOW"));
             l.out(ar->getOutputPinDynamic("Q"),output("OPERAND_A"));
-            l.drive(l.constant(width_),output("OPERAND_B"));
+            l.wire(l.constantWord(width_),output("OPERAND_B"));
         } else {
             auto br=l.reg("ORIGINAL_MULTIPLIER",width_,clk,reset,launch);
             l.drive(a,ar->getInputPinDynamic("D")); l.drive(bv,br->getInputPinDynamic("D"));
@@ -117,16 +117,17 @@ public:
         l.wire(r->getOutputPinDynamic("Q"),step->getInputPinDynamic(divide_?"REMAINDER":"HI"));
         l.wire(input("OPERAND"),step->getInputPinDynamic(divide_?"DIVISOR":"A"));
         l.wire(divide_?qv.back():qv.front(),step->getInputPin("BIT"));
-        V nextq,nextr;
+        V nextq;
+        P nextr;
         if(divide_) {
             nextq=l.shiftLeft(qv,step->getOutputPin("QUOTIENT_BIT"));
-            nextr=l.split(step->getOutputPinDynamic("NEXT_REMAINDER"));
+            nextr=step->getOutputPinDynamic("NEXT_REMAINDER");  // already a word
         } else {
             auto sum=l.split(step->getOutputPinDynamic("SUM"));
-            nextq=l.shiftRight(qv,sum.front()); nextr=l.shiftRight(sum,step->getOutputPin("CARRY"));
+            nextq=l.shiftRight(qv,sum.front()); nextr=l.join(l.shiftRight(sum,step->getOutputPin("CARRY")));
         }
         l.wire(selectWord(b,l,"LOW_NEXT",input("LAUNCH"),l.join(nextq),input("INITIAL_LOW")),q->getInputPinDynamic("D"));
-        l.wire(selectWord(b,l,"HIGH_NEXT",input("LAUNCH"),l.join(nextr),l.join(l.constant(width_))),r->getInputPinDynamic("D"));
+        l.wire(selectWord(b,l,"HIGH_NEXT",input("LAUNCH"),nextr,l.constantWord(width_)),r->getInputPinDynamic("D"));
         l.out(q->getOutputPinDynamic("Q"),output("LOW"));
         l.out(r->getOutputPinDynamic("Q"),output("HIGH")); l.finish();
     }
@@ -142,18 +143,20 @@ public:
             for(auto n:{"LOW","HIGH"}) p->addPinDynamic(std::string("RESULT_")+n,PinType::OUTPUT,width);
         }), divide_(divide) {}
     void buildInternals(ComponentBuilder& b) override {
-        Logic l(b); auto q=l.split(input("LOW")),r=l.split(input("HIGH"));
+        // Word-level corrections: the words are negated or subtracted whole,
+        // with the same inverters and adders, and never split.
+        Logic l(b);
         if(divide_) {
             auto signedq=l.land({input("NEGATIVE_A"),l.any(l.split(input("OPERAND_A")))});
-            l.wire(selectWord(b,l,"QUOTIENT_SIGN",signedq,input("LOW"),l.join(l.negate(q))),output("RESULT_LOW"));
-            l.wire(selectWord(b,l,"REMAINDER_SIGN",input("NEGATIVE_B"),input("HIGH"),l.join(l.negate(r))),output("RESULT_HIGH"));
+            l.wire(selectWord(b,l,"QUOTIENT_SIGN",signedq,input("LOW"),l.negateWord(input("LOW"))),output("RESULT_LOW"));
+            l.wire(selectWord(b,l,"REMAINDER_SIGN",input("NEGATIVE_B"),input("HIGH"),l.negateWord(input("HIGH"))),output("RESULT_HIGH"));
         } else {
-            auto zero=l.join(l.constant(width_));
+            auto zero=l.constantWord(width_);
             auto correct_a=selectWord(b,l,"SIGNED_A_CORRECTION",input("NEGATIVE_A"),zero,input("OPERAND_B"));
             auto correct_b=selectWord(b,l,"SIGNED_B_CORRECTION",input("NEGATIVE_B"),zero,input("OPERAND_A"));
-            auto hi=l.sub({r,l.split(correct_a)}).first;
-            hi=l.sub({hi,l.split(correct_b)}).first;
-            l.drive(hi,output("RESULT_HIGH")); l.drive(q,output("RESULT_LOW"));
+            auto hi=l.subtractWords(input("HIGH"),correct_a);
+            hi=l.subtractWords(hi,correct_b);
+            l.wire(hi,output("RESULT_HIGH")); l.wire(input("LOW"),output("RESULT_LOW"));
         }
         l.finish();
     }

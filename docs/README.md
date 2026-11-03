@@ -17,8 +17,8 @@ describe the code as it was when they were written.
 | [records/](records/README.md) | Dated evidence and decisions for substantive topics |
 | [archive/](archive/README.md) | Indexed historical plans, guides and reports |
 
-[RV32IM and device foundations](reference/rv32im-device-foundation.md) documents
-the new ISA/device contracts and their integration boundary.
+[Computer system contracts](reference/computer-system.md) documents the
+system description, buses, register tables and recorded runs of chapter 5.
 
 ## Where to put a document
 

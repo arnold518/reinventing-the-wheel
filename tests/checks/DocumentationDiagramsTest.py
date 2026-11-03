@@ -15,7 +15,7 @@ from render_documentation_diagrams import DESTINATION, figures
 DOCS = ROOT / "site-docs"
 NS = "{http://www.w3.org/2000/svg}"
 PAGES = {
-    "timing.md": ["timing-profile-gates"],
+    "basic/1.2.md": ["timing-profile-gates"],
     "memory/cache-experiments.md": ["cache-access-patterns"],
     "rv32i/memory-systems.md": ["cache-topologies"],
     "rv32i/experiments.md": ["cache-speedup"],
@@ -33,6 +33,12 @@ PAGES = {
                             "single-cycle-next-pc", "single-cycle-completion"],
     "rv32i/4.5/index.md": ["baseline-pipeline"],
     "rv32i/4.6/index.md": ["advanced-prediction"],
+    "system/index.md": ["system-overview"],
+    "system/5.2/bus.md": ["bus-structure"],
+    "system/5.2/bridge.md": ["bus-layers"],
+    "system/5.4/index.md": ["device-shape"],
+    "system/5.4/leds.md": ["led-panel"],
+    "system/5.6.md": ["game-versions", "game-boards"],
 }
 
 

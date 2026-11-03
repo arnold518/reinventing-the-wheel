@@ -18,7 +18,7 @@ import recalculate_layouts as refresh
 def refresh_layout(path):
     manager = server.LayoutManager(path)
     before = deepcopy(manager.to_jsonable())
-    core = server.circuit_backend.create_layout_topology("RV32ISingleCycleCoreTest")
+    core = server.scenario_topology("RV32ISingleCycleCoreTest")
     kind = "RV32ISingleCycleCore"
     entries = [(manager.type_layouts[kind], "explicit", None)]
     entries.extend((types[kind], fingerprint, None)
@@ -48,7 +48,7 @@ def refresh_layout(path):
         entry["layout_revision"] = rv32i_layout.SINGLE_CYCLE_REVISION
         entry["layout_mode"] = "floorplan"
 
-    program = server.circuit_backend.create_layout_topology("RV32ISingleCycleSystemTest/program-03")
+    program = server.scenario_topology("RV32ISingleCycleSystemTest/program-03")
     children = list(program.get_children())
     for key, entry in manager.root_layouts.items():
         if not re.fullmatch(r"rv32i-program\d+(?:@[^@]+)?", key) or entry.get("layout_mode") == "manual":

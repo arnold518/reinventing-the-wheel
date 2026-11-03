@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=30">
+  <link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
@@ -44,6 +44,15 @@
           <option value="desktop">desktop (32 nm, ps)</option>
         </select>
       </label>
+      <label class="field field-fidelity" title="Which components are simulated structurally or behaviorally">
+        <span class="field-label">Fidelity</span>
+        <select id="fidelity-select">
+          <option value="gate">Gate</option>
+          <option value="logic">Logic</option>
+          <option value="visual">Visual</option>
+          <option value="compact">Compact</option>
+        </select>
+      </label>
     </div>
     <div class="timeline-controls" aria-label="Simulation controls">
       <button id="checkpoint-back" class="icon-button" title="Previous checkpoint" aria-label="Previous checkpoint"></button>
@@ -69,9 +78,9 @@
     <div class="panel-toggles">
       <button id="toggle-explorer" aria-pressed="true" aria-expanded="true" aria-controls="component-explorer" title="Component explorer">Explorer</button>
       <button id="toggle-inspector" aria-pressed="false" aria-expanded="false" aria-controls="inspector" title="Selection inspector">Info</button>
+      <button id="toggle-device-views" aria-pressed="false" title="Show outermost visual abstractions without changing fidelity" aria-label="Device View">Device View</button>
     </div>
     <div class="view-actions">
-      <button id="toggle-device-views" aria-pressed="true" title="Show device pixels and input state; toggle to inspect their circuits">Device views</button>
       <button id="reset-view">Reset View</button>
       <button id="zoom-out" class="icon-button" title="Zoom out" aria-label="Zoom out"></button>
       <button id="zoom-in" class="icon-button" title="Zoom in" aria-label="Zoom in"></button>
@@ -89,7 +98,7 @@
       <div>
         <div class="explorer-title">Components</div>
         <div class="explorer-subtitle">
-          Expand structural blocks. Collapse behavioral blocks.
+          Expand to build from parts, collapse for one block; Apply &amp; Run builds it.
         </div>
       </div>
       <button id="explorer-close" class="panel-close" title="Close explorer" aria-label="Close explorer">&times;</button>
@@ -184,13 +193,13 @@
   </aside>
   <div id="loading">Loading circuit...</div>
   <script src="runtime-config.js?v=1"></script>
-  <script src="transport.js?v=15"></script>
-  <script src="explorer.js?v=3"></script>
+  <script src="transport.js?v=21"></script>
+  <script src="explorer.js?v=6"></script>
   <script src="wire_geometry.js?v=1"></script>
   <script src="rewire_geometry.js?v=4"></script>
   <script src="device_view.js?v=1"></script>
   <script src="memory_cell_view.js?v=1"></script>
   <script src="memory_view.js?v=1"></script>
-  <script src="app.js?v=73"></script>
+  <script src="app.js?v=82"></script>
 </body>
 </html>

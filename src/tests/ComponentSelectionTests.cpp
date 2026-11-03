@@ -469,9 +469,9 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         expected_types.insert(std::string("Register<") + width + ">");
     for(const auto* type:{"MultiplyStep<4>","MultiplyStep<32>","DivideStep<4>","DivideStep<32>",
         "Multiplier<32>","Divider<32>","MulDivUnit<32>","RV32IMDecodeControlUnit","RV32IMDecodeStage","RV32IMExecuteStage",
-        "RV32IMPipelineCoordinator","RV32IMFiveStageCore","DeviceRegisterPort<32>","BusErrorTarget<32>","AddressRouter<32>",
-        "InstructionAccessGuard<32>","ClockedCounter<4>","ClockedCounter<32>","SynchronousFifo<8>","SynchronousFifo<32>",
-        "ConsoleDevice","TimerDevice","ButtonDevice","IndexedPixelSelector<32>","FramebufferDisplay","RV32IMDeviceSystem"})expected_types.insert(type);
+        "RV32IMPipelineCoordinator","RV32IMFiveStageCore","DeviceRegisterPort<32>",
+        "ClockedCounter<4>","ClockedCounter<32>","SynchronousFifo<8>","SynchronousFifo<32>",
+        "ConsoleDevice","TimerDevice","ButtonDevice","FramebufferDisplay","LedPanel","MemorySubsystem","ComputerSystem"})expected_types.insert(type);
     // Public parameterized contracts, independently enumerated by their schema.
     for(const std::string w:{"8","16","32"}){
         for(const std::string unit:{"ALU","AddSub","ArithmeticUnit","LogicUnit","BarrelShifter","CompareSelect",
@@ -481,8 +481,9 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
             if(w=="32"&&count=="32"&&zero)continue;
             expected_types.insert("RegisterFile<"+w+","+count+(zero?",zero>":",writable-zero>"));
         }
+        for(const std::string unit:{"BusRouter","Bus","BusBridge","BusPortChecker"})expected_types.insert(unit+"<"+w+">");
         if(w=="32")continue;
-        for(const std::string unit:{"DeviceRegisterPort","BusErrorTarget","AddressRouter","InstructionAccessGuard","IndexedPixelSelector"})expected_types.insert(unit+"<"+w+">");
+        expected_types.insert("DeviceRegisterPort<"+w+">");
         expected_types.insert("MultiplyStep<"+w+">");expected_types.insert("DivideStep<"+w+">");expected_types.insert("ClockedCounter<"+w+">");
     }
     expected_types.insert("SynchronousFifo<16>");
@@ -491,6 +492,9 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         expected_types.insert("Mux<"+n+","+w+">");
     for(size_t bits=1;bits<=5;++bits)for(bool suppress:{false,true})
         expected_types.insert("Decoder<"+std::to_string(bits)+(suppress?",zero-disabled>":">"));
+    // Word gates exist at every width 2..32 (§ 1.3).
+    for(unsigned w=2;w<=32;++w)for(const std::string kind:{"AND","NAND","OR","NOR","XOR","NOT"})
+        expected_types.insert(kind+"Gate<"+std::to_string(w)+">");
     for (const auto& type : expected_types)
         require(registered_types.count(type) != 0,
                 "Built-in catalog is missing production module TypeName: " + type);
@@ -628,28 +632,36 @@ void RecursiveBuildProfileTest::verifyResults() {
     require(
         mixed_alu.root->getSelectedFidelity() == "structural",
         "Exact ALU root selection was overridden by its descendant profile");
-    // Inside an ALU the arithmetic, logic, shift and zero-detect units are
-    // built by class and are always gate-level: a profile that makes the
-    // ALU subtree behavioral must not turn them into black boxes.
+    // The ALU's arithmetic, logic, shift and zero-detect units are catalog
+    // families: a profile that makes the ALU subtree behavioral selects each
+    // unit's compact form where it has one, and leaves a unit without one
+    // gate-level (never an empty black box).
     const std::set<std::string> gate_level_alu_units{
         "ARITHMETIC", "LOGIC", "SHIFT", "ARITHMETIC_ZERO"};
     size_t found_units = 0;
+    // ARITHMETIC_ZERO lives inside the compare unit: a compact compare unit
+    // has no gate-level descendants to find.
+    size_t hidden_units = 0;
     std::vector<std::shared_ptr<Component>> pending_alu{mixed_alu.root};
     while (!pending_alu.empty()) {
         auto child = pending_alu.back();
         pending_alu.pop_back();
+        if (child->getName() == "COMPARE" && child->getSelectedFidelity() == "behavioral") ++hidden_units;
         if (gate_level_alu_units.count(child->getName()) == 0) {
             pending_alu.insert(pending_alu.end(), child->getChildren().begin(), child->getChildren().end());
             continue;
         }
         ++found_units;
+        const auto available = child->getAvailableFidelities();
+        const bool compact = std::find(available.begin(), available.end(), "behavioral") != available.end();
         require(
-            child->getSelectedFidelity() != "behavioral" && !child->getChildren().empty(),
-            "ALU unit must stay gate-level inside an ALU: " + child->getName());
+            compact ? child->getSelectedFidelity() == "behavioral"
+                    : (child->getSelectedFidelity() != "behavioral" && !child->getChildren().empty()),
+            "ALU unit did not follow the behavioral ALU subtree rule: " + child->getName());
     }
     require(
-        found_units == gate_level_alu_units.size(),
-        "Structural ALU omitted one of its gate-level units");
+        found_units + hidden_units == gate_level_alu_units.size(),
+        "Structural ALU omitted one of its units");
 
     auto mixed_system_profile =
         circuit::BuildProfileBuilder("behavioral-core")

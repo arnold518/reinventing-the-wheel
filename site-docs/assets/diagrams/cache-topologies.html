@@ -11,7 +11,7 @@
 <!-- diagram:start -->
 <figure class="circuit-figure" data-diagram="cache-topologies">
 <div class="diagram-viewport" role="region" aria-label="Five memory arrangements over one DRAM" tabindex="0">
-<svg viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cache-topologies-title cache-topologies-desc">
+<svg viewBox="0 0 640 372" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cache-topologies-title cache-topologies-desc">
 <title id="cache-topologies-title">Five memory arrangements over one DRAM</title>
 <desc id="cache-topologies-desc">Five ways to connect a processor&#x27;s instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.</desc>
 <style>.circuit-figure {
@@ -70,86 +70,86 @@
 <marker id="cache-topologies-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
 <marker id="cache-topologies-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
 </defs>
-<rect width="640" height="360" fill="var(--dg-paper)"/>
+<rect width="640" height="372" fill="var(--dg-paper)"/>
 <text x="80" y="32" class="dg-name" text-anchor="middle">A</text>
-<rect x="40" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="58" y="67" class="dg-code" text-anchor="middle">I</text>
-<rect x="84" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="102" y="67" class="dg-code" text-anchor="middle">D</text>
-<path class="dg-edge" d="M 58 76 L 58 252" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 102 76 L 102 252" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="32" y="252" width="48" height="40" rx="4" class="dg-store"/>
-<text x="56" y="276" class="dg-code" text-anchor="middle">DRAM</text>
-<rect x="84" y="252" width="48" height="40" rx="4" class="dg-store"/>
-<text x="108" y="276" class="dg-code" text-anchor="middle">DRAM</text>
+<rect x="40" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="58" y="69" class="dg-code" text-anchor="middle">I</text>
+<rect x="84" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="102" y="69" class="dg-code" text-anchor="middle">D</text>
+<path class="dg-edge" d="M 58 80 L 58 264" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 102 80 L 102 264" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="32" y="264" width="48" height="40" rx="4" class="dg-store"/>
+<text x="56" y="288" class="dg-code" text-anchor="middle">DRAM</text>
+<rect x="84" y="264" width="48" height="40" rx="4" class="dg-store"/>
+<text x="108" y="288" class="dg-code" text-anchor="middle">DRAM</text>
 <text x="200" y="32" class="dg-name" text-anchor="middle">B</text>
-<rect x="160" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="178" y="67" class="dg-code" text-anchor="middle">I</text>
-<rect x="204" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="222" y="67" class="dg-code" text-anchor="middle">D</text>
-<path class="dg-edge" d="M 178 76 L 178 152" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 222 76 L 222 152" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="160" y="152" width="80" height="28" rx="4" class="dg-box"/>
-<text x="200" y="171" class="dg-code" text-anchor="middle">ARB</text>
-<path class="dg-edge" d="M 200 180 L 200 252" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="160" y="252" width="80" height="40" rx="4" class="dg-store"/>
-<text x="200" y="276" class="dg-code" text-anchor="middle">DRAM</text>
+<rect x="160" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="178" y="69" class="dg-code" text-anchor="middle">I</text>
+<rect x="204" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="222" y="69" class="dg-code" text-anchor="middle">D</text>
+<path class="dg-edge" d="M 178 80 L 178 160" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 222 80 L 222 160" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="160" y="160" width="80" height="32" rx="4" class="dg-box"/>
+<text x="200" y="181" class="dg-code" text-anchor="middle">ARB</text>
+<path class="dg-edge" d="M 200 192 L 200 264" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="160" y="264" width="80" height="40" rx="4" class="dg-store"/>
+<text x="200" y="288" class="dg-code" text-anchor="middle">DRAM</text>
 <text x="320" y="32" class="dg-name" text-anchor="middle">C-ID</text>
-<rect x="280" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="298" y="67" class="dg-code" text-anchor="middle">I</text>
-<rect x="324" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="342" y="67" class="dg-code" text-anchor="middle">D</text>
-<path class="dg-edge" d="M 298 76 L 298 100" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 342 76 L 342 100" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="280" y="100" width="36" height="28" rx="4" class="dg-focus"/>
-<text x="298" y="119" class="dg-code" text-anchor="middle">L1</text>
-<rect x="324" y="100" width="36" height="28" rx="4" class="dg-focus"/>
-<text x="342" y="119" class="dg-code" text-anchor="middle">L1</text>
-<path class="dg-edge" d="M 298 128 L 298 152" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 342 128 L 342 152" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="280" y="152" width="80" height="28" rx="4" class="dg-box"/>
-<text x="320" y="171" class="dg-code" text-anchor="middle">ARB</text>
-<path class="dg-edge" d="M 320 180 L 320 252" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="280" y="252" width="80" height="40" rx="4" class="dg-store"/>
-<text x="320" y="276" class="dg-code" text-anchor="middle">DRAM</text>
+<rect x="280" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="298" y="69" class="dg-code" text-anchor="middle">I</text>
+<rect x="324" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="342" y="69" class="dg-code" text-anchor="middle">D</text>
+<path class="dg-edge" d="M 298 80 L 298 104" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 342 80 L 342 104" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="280" y="104" width="36" height="32" rx="4" class="dg-focus"/>
+<text x="298" y="125" class="dg-code" text-anchor="middle">L1</text>
+<rect x="324" y="104" width="36" height="32" rx="4" class="dg-focus"/>
+<text x="342" y="125" class="dg-code" text-anchor="middle">L1</text>
+<path class="dg-edge" d="M 298 136 L 298 160" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 342 136 L 342 160" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="280" y="160" width="80" height="32" rx="4" class="dg-box"/>
+<text x="320" y="181" class="dg-code" text-anchor="middle">ARB</text>
+<path class="dg-edge" d="M 320 192 L 320 264" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="280" y="264" width="80" height="40" rx="4" class="dg-store"/>
+<text x="320" y="288" class="dg-code" text-anchor="middle">DRAM</text>
 <text x="440" y="32" class="dg-name" text-anchor="middle">D-0</text>
-<rect x="400" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="418" y="67" class="dg-code" text-anchor="middle">I</text>
-<rect x="444" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="462" y="67" class="dg-code" text-anchor="middle">D</text>
-<path class="dg-edge" d="M 418 76 L 418 152" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 462 76 L 462 152" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="400" y="152" width="80" height="28" rx="4" class="dg-box"/>
-<text x="440" y="171" class="dg-code" text-anchor="middle">ARB</text>
-<path class="dg-edge" d="M 440 180 L 440 204" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="400" y="204" width="80" height="28" rx="4" class="dg-focus"/>
-<text x="440" y="223" class="dg-code" text-anchor="middle">L2</text>
-<path class="dg-edge" d="M 440 232 L 440 252" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="400" y="252" width="80" height="40" rx="4" class="dg-store"/>
-<text x="440" y="276" class="dg-code" text-anchor="middle">DRAM</text>
+<rect x="400" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="418" y="69" class="dg-code" text-anchor="middle">I</text>
+<rect x="444" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="462" y="69" class="dg-code" text-anchor="middle">D</text>
+<path class="dg-edge" d="M 418 80 L 418 160" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 462 80 L 462 160" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="400" y="160" width="80" height="32" rx="4" class="dg-box"/>
+<text x="440" y="181" class="dg-code" text-anchor="middle">ARB</text>
+<path class="dg-edge" d="M 440 192 L 440 216" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="400" y="216" width="80" height="32" rx="4" class="dg-focus"/>
+<text x="440" y="237" class="dg-code" text-anchor="middle">L2</text>
+<path class="dg-edge" d="M 440 248 L 440 264" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="400" y="264" width="80" height="40" rx="4" class="dg-store"/>
+<text x="440" y="288" class="dg-code" text-anchor="middle">DRAM</text>
 <text x="560" y="32" class="dg-name" text-anchor="middle">D-ID</text>
-<rect x="520" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="538" y="67" class="dg-code" text-anchor="middle">I</text>
-<rect x="564" y="48" width="36" height="28" rx="4" class="dg-box"/>
-<text x="582" y="67" class="dg-code" text-anchor="middle">D</text>
-<path class="dg-edge" d="M 538 76 L 538 100" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 582 76 L 582 100" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="520" y="100" width="36" height="28" rx="4" class="dg-focus"/>
-<text x="538" y="119" class="dg-code" text-anchor="middle">L1</text>
-<rect x="564" y="100" width="36" height="28" rx="4" class="dg-focus"/>
-<text x="582" y="119" class="dg-code" text-anchor="middle">L1</text>
-<path class="dg-edge" d="M 538 128 L 538 152" marker-end="url(#cache-topologies-arrow)"/>
-<path class="dg-edge" d="M 582 128 L 582 152" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="520" y="152" width="80" height="28" rx="4" class="dg-box"/>
-<text x="560" y="171" class="dg-code" text-anchor="middle">ARB</text>
-<path class="dg-edge" d="M 560 180 L 560 204" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="520" y="204" width="80" height="28" rx="4" class="dg-focus"/>
-<text x="560" y="223" class="dg-code" text-anchor="middle">L2</text>
-<path class="dg-edge" d="M 560 232 L 560 252" marker-end="url(#cache-topologies-arrow)"/>
-<rect x="520" y="252" width="80" height="40" rx="4" class="dg-store"/>
-<text x="560" y="276" class="dg-code" text-anchor="middle">DRAM</text>
-<text x="40" y="320" class="dg-small" text-anchor="start">I, D: instruction and data ports. ARB: two-port arbiter.</text>
-<text x="40" y="342" class="dg-small" text-anchor="start">A: each DRAM holds the whole image.</text>
+<rect x="520" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="538" y="69" class="dg-code" text-anchor="middle">I</text>
+<rect x="564" y="48" width="36" height="32" rx="4" class="dg-box"/>
+<text x="582" y="69" class="dg-code" text-anchor="middle">D</text>
+<path class="dg-edge" d="M 538 80 L 538 104" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 582 80 L 582 104" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="520" y="104" width="36" height="32" rx="4" class="dg-focus"/>
+<text x="538" y="125" class="dg-code" text-anchor="middle">L1</text>
+<rect x="564" y="104" width="36" height="32" rx="4" class="dg-focus"/>
+<text x="582" y="125" class="dg-code" text-anchor="middle">L1</text>
+<path class="dg-edge" d="M 538 136 L 538 160" marker-end="url(#cache-topologies-arrow)"/>
+<path class="dg-edge" d="M 582 136 L 582 160" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="520" y="160" width="80" height="32" rx="4" class="dg-box"/>
+<text x="560" y="181" class="dg-code" text-anchor="middle">ARB</text>
+<path class="dg-edge" d="M 560 192 L 560 216" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="520" y="216" width="80" height="32" rx="4" class="dg-focus"/>
+<text x="560" y="237" class="dg-code" text-anchor="middle">L2</text>
+<path class="dg-edge" d="M 560 248 L 560 264" marker-end="url(#cache-topologies-arrow)"/>
+<rect x="520" y="264" width="80" height="40" rx="4" class="dg-store"/>
+<text x="560" y="288" class="dg-code" text-anchor="middle">DRAM</text>
+<text x="40" y="332" class="dg-small" text-anchor="start">I, D: instruction and data ports. ARB: two-port arbiter.</text>
+<text x="40" y="354" class="dg-small" text-anchor="start">A: each DRAM holds the whole image.</text>
 </svg>
 </div>
 <figcaption><strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; C-ID adds an instruction and a data L1 above the arbiter; D-0 puts a shared L2 below it; D-ID has both.</figcaption>

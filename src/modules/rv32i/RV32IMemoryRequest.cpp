@@ -35,10 +35,13 @@ public:
         auto saved = b.addNewComponent<BitSplitter<32>>("SAVED_TAG");
         w.connect(getInputPin<32>("CURRENT"), current->getInputPin<32>("IN"));
         w.connect(getInputPin<32>("SAVED"), saved->getInputPin<32>("IN"));
-        std::vector<StructuralWiring::PinPtr> differences;
-        for (size_t i = 0; i < 32; ++i)
-            differences.push_back(w.binary<XORGate>("TAG_DIFFERENT_" + std::to_string(i),
-                current->getOutputPin("OUT_" + std::to_string(i)), saved->getOutputPin("OUT_" + std::to_string(i))));
+        std::vector<StructuralWiring::PinPtr> current_bits, saved_bits;
+        for (size_t i = 0; i < 32; ++i) {
+            current_bits.push_back(current->getOutputPin("OUT_" + std::to_string(i)));
+            saved_bits.push_back(saved->getOutputPin("OUT_" + std::to_string(i)));
+        }
+        // One XORGate<32>; the OR tree (a reduction) stays per bit.
+        const auto differences = w.gateBits(circuit::word::GateKind::Xor, "TAG_DIFFERENT", current_bits, saved_bits);
         auto changed = w.reduce("TAG_CHANGED", differences, false);
         w.connect(changed, getOutputPin("CHANGED"));
         w.finish();

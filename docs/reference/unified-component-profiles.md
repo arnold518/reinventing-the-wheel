@@ -6,7 +6,8 @@ A component family is one public kind of hardware. For example, the public
 family is the configured `ALU<W>`, whether its selected implementation is:
 
 - structural: visible children and wires; or
-- behavioral: one compact evaluated black box.
+- behavioral: a compact evaluated model, or an explicitly validated composition
+  of proven compact models.
 
 A parent asks for the family, not for an implementation class:
 
@@ -106,6 +107,58 @@ They are helpers, not a second profile system. Handwritten profiles and helper
 profiles behave identically. `withProfileOverrides()` appends ordinary rules,
 and `withExactFidelity()` appends one exact-path rule.
 
+## Named visualizer presets
+
+`FidelityPresets.hpp` owns the shared native/WASM policy (version 1). These
+are ordinary build profiles, independent of unit/embedded/desktop timing.
+
+| Preset | Selection |
+| --- | --- |
+| `gate` | Strict structural; unsupported storage capacity fails |
+| `logic` | Structural logic, behavioral state/register/RF storage; behavioral native memory above 4,096 logical bit cells |
+| `visual` | Behavioral full memory/register/device visual abstractions; structural remaining logic |
+| `compact` | Prefer behavioral; record structural-only exceptions |
+
+Every visualizer scenario opens in one preset, its `fidelity` in
+`visualizer-v2/static/scenarios.json` (components and programs). There is no
+scenario-defined profile in the menu, URL or saved profiles: explorer
+profiles are keyed `<scenario>::<preset>`, and older keys without a preset
+move to the scenario's default when loaded. A fixed scenario (a test without
+build-profile support) is shown as built, its preset only a label. Inside
+C++, an empty preset keeps the registered test's own build profile; only
+tests and the example-row generator use it (the WebAssembly bridge before a
+page chooses a preset, and `VisualizerSessionProbe --fidelity test`, which
+`tools/run-web-tests.py` selects for its parity checks).
+
+`fidelityPresetRestrictions` describes contract constraints before expensive
+construction. The device system's fixed 256 KiB RAM and scalable endpoints'
+required behavioral devices exclude strict Gate. Scenario payloads expose
+`profile.unavailablePresets`; controls disable those choices, while direct
+requests reject them with a readable reason. Custom exact overrides remain
+explicitly marked custom. Registered component scenarios are checked before
+building internals; the recorded-guest runtime checks before ELF loading.
+
+`visualAbstractionKind` classifies full widgets by public contract. Primitive
+symbols, layout, zoom and opening/closing parts do not alter selection.
+The actual manifest is audited after construction, including required-child
+exceptions. Private internals below a behavioral abstraction retain that
+abstraction's proven implementation. Manual explorer overrides explicitly mark
+the result custom and are stored under `scenario::preset`; the default retains
+its legacy scenario key. Payloads report `fidelityPreset`, `presetVersion` and
+`custom`. Sessions/cache keys include timing and fidelity separately.
+
+## Behavioral compositions
+
+Ordinary behavioral factories must remain childless `BasicComponent` leaves.
+An IO composition must explicitly implement `BehavioralComposition` and validate
+its internals. The console, timer, buttons and framebuffer compact factories
+reuse their structural control builders, compiled into private control models
+with gate-derived timing, plus their existing behavioral register/FIFO/storage
+families. Observer boundaries remain present. Their validator rejects ordinary
+structural gate children and requires registered compact children. The root
+has no duplicated behavioral rule or independent whole-device timing table;
+its constituent models own the behavior and proven delays.
+
 ## Root construction
 
 There is one catalog entry point:
@@ -190,8 +243,10 @@ factory for ordinary and parameterized scenarios.
 The HTML visualizer also exposes the recursive profile directly:
 
 - the left explorer is the component tree;
-- an expanded selectable row requests structural fidelity;
-- a collapsed selectable row requests behavioral fidelity;
+- an expanded selectable row requests structural fidelity and a collapsed one
+  behavioral; the canvas draws a collapsed part closed before Apply, and the
+  read-only S/B badge shows the built fidelity (see
+  `visualizer-v2-profile-explorer.md`);
 - fixed rows have only one implementation and cannot be toggled;
 - `Apply & Run` saves the sparse exact-path overrides, creates a fresh
   simulation session, and returns the topology produced by that profile;
@@ -222,8 +277,10 @@ setting the type name does not carry get a structure key
 `componentLayoutType` in `src/visualizer/VisualizerSession.cpp`): SRAM and FF
 memory devices append their storage bank (`SRAM<32>[SRAMStorageBank<32,8,2>]`,
 `FFArray8[MemoryStorageBank<FFArray,8,4>]`); caches, predictor tables and
-entries, the branch predictor and memory timers append a hash of their child
-names (`…[layout-<16 hex>]`). Placements saved under the bare type do not
+entries, the branch predictor, memory timers, clocked counters and the DRAM
+and NOR-flash command controls append a hash of their child names
+(`…[layout-<16 hex>]`). A device group compiled inside a compact device lays
+out as `…[config-compact]` (its child is the compiled model). Placements saved under the bare type do not
 apply to a structure key. `tools/check-static-layouts.py`
 (`VisualizerStaticLayoutTest`) fails when a child placement is missing, when
 a key is shared by parts with different children, when an SRAM floorplan is

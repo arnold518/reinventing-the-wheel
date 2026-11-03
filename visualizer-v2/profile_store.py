@@ -19,6 +19,19 @@ from typing import Any
 PROFILE_SCHEMA_VERSION = 1
 _PATH_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-\[\]]*$")
 _FIDELITIES = {"structural", "behavioral"}
+# Every scenario opens in one of these (its catalog `fidelity`); there is no
+# separate scenario-defined profile in the visualizer.
+FIDELITY_PRESETS = ('gate', 'logic', 'visual', 'compact')
+
+
+def normalize_fidelity(value):
+    if value not in FIDELITY_PRESETS:
+        raise ValueError(f"Unknown fidelity profile {value!r}")
+    return value
+
+
+def profile_storage_key(scenario, preset):
+    return f'{scenario}::{normalize_fidelity(preset)}'
 _COMPONENT_PATH_PREFIX_MIGRATIONS = {
     "RV32I_SINGLE_CYCLE_SYSTEM_ROOT": "RV32I_PROGRAM_ROOT",
     "RV32I_FIVE_STAGE_PROGRAM_ROOT": "RV32I_PROGRAM_ROOT",
@@ -63,7 +76,7 @@ def migrate_component_paths(overrides: dict[str, str], scenario: str | None = No
     so old CORE subtree choices remain meaningful after a prefix rewrite.
     Canonical paths win if a file happens to contain both forms.
     """
-    root_name = _scenario_roots().get(scenario) if scenario else None
+    root_name = _scenario_roots().get(scenario.split('::')[0]) if scenario else None
     migrated: dict[str, str] = {}
     for path, fidelity in overrides.items():
         if path in _ROOT_FIDELITY_MIGRATIONS:
@@ -114,6 +127,33 @@ def migrate_component_paths(overrides: dict[str, str], scenario: str | None = No
                     return match[1] + new + match[2][len(old):]
         return path
 
+    def device_path(path):
+        parts = path.split('.')
+        if not re.match(r'^(CLOCKED_COUNTER|SYNCHRONOUS_FIFO|DEVICE_REGISTER_PORT|BUS_ERROR_TARGET|'
+                        r'ADDRESS_ROUTER|INSTRUCTION_ACCESS_GUARD|CONSOLE_DEVICE|TIMER_DEVICE|'
+                        r'BUTTON_DEVICE|FRAMEBUFFER_DISPLAY|RV32IM_DEVICE_SYSTEM).*_ROOT$', parts[0]):
+            return path
+        for index, name in enumerate(parts[:-1]):
+            child = parts[index+1]
+            move = None
+            if name == 'PORT' or (index == 0 and name.startswith('DEVICE_REGISTER_PORT')):
+                if child in {'OP','ADDRESS','DATA','MASK','CHECKED_STATUS'}: move = ['REQUEST',child]
+                elif child in {'PENDING','EXECUTED'}: move = ['CONTROL',child]
+            elif name in {'TX_FIFO','EVENTS'} or (index == 0 and name.startswith('SYNCHRONOUS_FIFO')):
+                if child in {'HEAD','TAIL'}: move = ['POINTERS',child]
+                elif child in {'COUNT_STATE','OVERFLOW_STATE'}: move = ['CONTROL',child]
+                elif re.fullmatch(r'SLOT_\d+',child): move = ['STORAGE',child]
+            elif name == 'COUNTER' or (index == 0 and name.startswith('CLOCKED_COUNTER')):
+                if child == 'DIVIDER': move = ['TICK_CONTROL','PHASE']
+            elif name in {'DATA_ROUTER','FETCH_GUARD'} or (index == 0 and name.startswith(('ADDRESS_ROUTER','INSTRUCTION_ACCESS_GUARD'))):
+                if child in {'BUSY','SENT'}: move = ['CONTROL',child]
+                elif child == 'STATUS' or child.startswith(('HELD_','OWNER_')): move = ['REQUEST',child]
+            elif name == 'DISPLAY' or (index == 0 and name.startswith('FRAMEBUFFER_DISPLAY')):
+                if child == 'FRAME_COUNTER': move = ['FRAME_CONTROL',child]
+            if move:
+                return '.'.join(parts[:index+1]+move+parts[index+2:])
+        return path
+
     def current_path(path):
         if root_name and (path == "DUT" or path.startswith("DUT.")):
             path = root_name + path[3:]
@@ -125,7 +165,7 @@ def migrate_component_paths(overrides: dict[str, str], scenario: str | None = No
             group = ("CONTROL" if child in {"BUSY_STATE", "DONE_STATE", "ITERATION"} else
                      "DATAPATH" if child in {"LOW_OR_QUOTIENT", "HIGH_OR_REMAINDER", "STEP"} else "OPERANDS")
             path = match[1] + "." + group + "." + path[len(match[1]) + 1:]
-        path = stage_path(ff_path(path))
+        path = device_path(stage_path(ff_path(path)))
         # The former Register32/MemoryPayloadRegister wrapper is now a direct
         # Register<32>. Limit migration to known register roots; other STORAGE
         # branches (notably register files) have a different hierarchy.
@@ -152,10 +192,21 @@ def migrate_component_paths(overrides: dict[str, str], scenario: str | None = No
 
 
 class ProfileStore:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, default_fidelity=None):
         self.path = path
         self.lock = threading.RLock()
         self.data = self._load()
+        # Profiles saved before every scenario had a named fidelity profile
+        # are keyed by the scenario alone: they belong to its default profile.
+        if default_fidelity:
+            scenarios = self.data["scenarios"]
+            for key in [k for k in scenarios if "::" not in k]:
+                try:
+                    target = profile_storage_key(key, default_fidelity(key))
+                except (KeyError, ValueError):
+                    continue
+                entry = scenarios.pop(key)
+                scenarios.setdefault(target, entry)
 
     def _empty(self) -> dict[str, Any]:
         return {

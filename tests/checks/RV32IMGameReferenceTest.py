@@ -1,87 +1,57 @@
 #!/usr/bin/env python3
-"""Cross-check exact compiled guest frames/reports with host C reference runs.
+"""Cross-check a guest fixture's compiled frames and report with a host run.
 
-Host C is a compiler/renderer reference. RV32IMGameRulesTest independently
-asserts the rules; the circuit runner independently checks ISA and devices.
+The same guest C is compiled for the host with stand-in devices
+(tests/fixtures/rv32im/games/reference-host.c). Its frames, console and report
+are compared with the circuit run (--runner RecordedGuestProbe), or, for a
+long fixture with --reference-only, with the computer player's prediction.
+RV32IMGameRulesTest independently asserts the rules; the circuit runner
+independently checks every instruction and device access.
 """
-import argparse, hashlib, json, os, pathlib, shutil, subprocess, sys, tempfile
+import argparse, json, pathlib, subprocess, sys
 ROOT=pathlib.Path(__file__).resolve().parents[2]
-p=argparse.ArgumentParser(description=__doc__)
-p.add_argument('--runner',type=pathlib.Path)
-p.add_argument('--recording',type=pathlib.Path,help='Compare an existing circuit recording without running a binary')
-p.add_argument('--reference-only',action='store_true')
-p.add_argument('--guest',choices=['bringup','2048','sokoban','snake','pong','tetris','2048-merge','tetris-line-clear','pong-rally','snake-wall'],default='bringup')
-p.add_argument('--output',type=pathlib.Path)
-a=p.parse_args()
-if not a.reference_only and not (a.runner or a.recording):p.error('--runner or --recording is required for circuit comparison')
-if a.runner and a.recording:p.error('Choose --runner or --recording')
-guest=ROOT/'tools/rv32im/guest';fixtures=ROOT/'tests/fixtures/rv32im/games'
-fixture=next(f for f in json.loads((fixtures/'manifest.json').read_text())['guests'] if f['name']==a.guest)
-kind=fixture['id'];events=json.loads((fixtures/fixture['script']).read_text())['events']
-compiler=os.environ.get('CC','cc')
-native_output=None
-if a.runner and not a.reference_only:
-    # Use the same bounded recording CLI as the acceptance campaign. Preserve
-    # each fresh run rather than discarding its JSON and resource/provenance
-    # evidence after the assertions; successful artifacts can be compared
-    # again without executing the same native workload unnecessarily.
-    artifact_root=a.runner.resolve().parent.parent/'recorded-guest-native'
-    artifact_root.mkdir(parents=True,exist_ok=True)
-    native_output=pathlib.Path(tempfile.mkdtemp(prefix=a.guest+'-',dir=artifact_root))
-    subprocess.run([sys.executable,str(ROOT/'tools/rv32im/run-recorded.py'),a.guest,
-                    '--runner',str(a.runner.resolve()),'--output',str(native_output),
-                    '--timeout','3500'],check=True,timeout=3550)
-with tempfile.TemporaryDirectory(prefix='circuitsim-guest-reference-') as directory:
-    directory=pathlib.Path(directory);objects=[]
-    source_names=['platform.c','bringup.c'] if not kind else ['platform.c','games.c','main.c']
-    common=['-std=c11','-O1','-fno-builtin','-Wall','-Wextra','-Werror','-I',str(guest),'-DCIRCUITSIM_GUEST_REFERENCE',*[f'-D{k}={v}' for k,v in fixture['defines'].items()],'-DREFERENCE_BUTTONS='+','.join(str(e['button']) for e in events),'-DREFERENCE_DOWN='+','.join(str(int(e['down'])) for e in events)]
-    for name in source_names:
-        obj=directory/(name+'.o');subprocess.run([compiler,*common,'-Dmain=guest_main','-c',str(guest/name),'-o',str(obj)],check=True);objects.append(str(obj))
-    binary=directory/'reference';subprocess.run([compiler,*common,str(ROOT/'tests/fixtures/rv32im/games/reference-host.c'),*objects,'-o',str(binary)],check=True)
-    expected=json.loads(subprocess.check_output([str(binary)],text=True))
-    acceptance={'2048-merge':(8,0),'tetris-line-clear':(100,0),'snake-wall':(0,2),'pong-rally':(0,0)}
-    if a.guest in acceptance:
-        assert tuple(expected['report'][4:6])==acceptance[a.guest],('Acceptance rule outcome',a.guest,expected['report'])
-    assert len(expected['frames'])==fixture['presentations']
-    if a.reference_only:
-        if a.output:
-            a.output.mkdir(parents=True,exist_ok=True)
-            (a.output/'expected.json').write_text(json.dumps(expected))
-        print(f"PASS host guest/reference build {a.guest}: {len(expected['frames'])} frames (circuit not run)")
-        raise SystemExit(0)
-    # Keep the circuit's output/errors visible if a budget or check fails.
-    if a.recording:
-        recording_text=a.recording.read_text()
-    else:
-        recording_text=(native_output/'recording.json').read_text()
-    actual=json.loads(recording_text)
-    for key in ['elfSha256','scriptSha256']:assert actual[key]==fixture[key],('Fixture mismatch',key)
-    if a.runner or 'inputs' in actual:
-        expected_inputs=[{'time':int(e['tick']),'sequence':int(e['sequence']),'button':e['button'],'down':e['down']} for e in events]
-        actual_inputs=[{**e,'time':int(e['time']),'sequence':int(e['sequence'])} for e in actual['inputs']]
-        assert actual_inputs==expected_inputs,('Sampled input log differs',actual_inputs,expected_inputs)
+sys.path.insert(0,str(ROOT/'tools/rv32im'))
+from long_gameplay.reference import manifest, host_reference
 
-    assert len(actual['frames'])==len(expected['frames']),(len(actual['frames']),len(expected['frames']))
-    for i,(frame,pixels) in enumerate(zip(actual['frames'],expected['frames'])):
-        assert frame['pixels']==pixels,('Frame differs',i)
-        assert set(bytes.fromhex(frame['known']))=={255},('Unknown frame bits',i)
-        assert frame['sequence']==i+1,('Sequence differs',i)
-    words=[int.from_bytes(bytes.fromhex(actual['report'])[i:i+4],'little') for i in range(0,36,4)]
-    stable=range(7) if kind else [1,2,3,4]
-    for index in stable:assert words[index]==expected['report'][index],('Report differs',index,words,expected['report'])
-    if kind:assert words[8]==expected['report'][8]==0,('Input lost or left queued',words[8])
-    assert actual['setupViolations']==0
-    if a.output:
-        a.output.mkdir(parents=True,exist_ok=True)
-        (a.output/'recording.json').write_text(recording_text)
-        (a.output/'expected.json').write_text(json.dumps(expected))
-        (a.output/'frame-hashes.json').write_text(json.dumps([hashlib.sha256(bytes.fromhex(f['pixels'])).hexdigest() for f in actual['frames']],indent=2))
-    if native_output:
-        (native_output/'expected.json').write_text(json.dumps(expected))
-        verdict={'guest':a.guest,'artifactDirectory':str(native_output),
-                 'referenceCheckerSha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),
-                 'exactFrames':len(actual['frames']),'cycles':actual['cycles'],'setupViolations':actual['setupViolations']}
-        (native_output/'reference-verdict.json').write_text(json.dumps(verdict,indent=2)+'\n')
-        # Only publish the index after every exact frame/report assertion passes.
-        (native_output.parent/(a.guest+'.json')).write_text(json.dumps(verdict,indent=2)+'\n')
-    print(f"PASS {a.guest}: {len(actual['frames'])} exact frames, stable reports, no lost input, ISA/device checks and zero setup violations; {actual['cycles']} cycles / {actual['executionSeconds']}s")
+names=[f['name'] for f in manifest()['guests']]
+p=argparse.ArgumentParser(description=__doc__)
+p.add_argument('--runner',type=pathlib.Path,help='RecordedGuestProbe: run the circuit and compare')
+p.add_argument('--reference-only',action='store_true')
+p.add_argument('--guest',choices=names,default='bringup')
+a=p.parse_args()
+if not a.reference_only and not a.runner:p.error('--runner is required for a circuit comparison')
+fixture=next(f for f in manifest()['guests'] if f['name']==a.guest)
+long=fixture['version']=='long'
+script=json.loads((ROOT/'tests/fixtures/rv32im/games'/fixture['script']).read_text())
+# The key outcome of each short game (score, final state).
+OUTCOMES={'2048-short':(8,0),'sokoban-short':(1,1),'snake-short':(1,0),'pong-short':(0,0),
+          'tetris-short':(100,0),'snake-leds-short':(0,2)}
+expected=host_reference(fixture)
+assert len(expected['frames'])==fixture['presentations'],('Frame count',len(expected['frames']),fixture['presentations'])
+report=expected['report']
+if a.guest in OUTCOMES:assert tuple(report[4:6])==OUTCOMES[a.guest],('Outcome',a.guest,report)
+if long:
+    metrics=fixture['metrics']
+    assert report[0]==0x4c47534d and report[3]==len(script['batches']) and report[8]==0,('Session report',report)
+    assert (report[4],report[5],report[6])==(metrics['totalScore'],metrics['finalStatus'],metrics['finalFingerprint']),('Player prediction',report,metrics)
+if a.reference_only:
+    print(f"PASS host reference {a.guest}: {len(expected['frames'])} frames, report {report[3:7]} (circuit not run)")
+    raise SystemExit(0)
+
+run=subprocess.run([str(a.runner),a.guest,'ff','2000000','100000','compact'],capture_output=True,text=True)
+if run.returncode:sys.stderr.write(run.stderr[-4000:]);raise SystemExit(run.returncode)
+actual=json.loads(run.stdout)
+for key in ['elfSha256','scriptSha256']:assert actual[key]==fixture[key],('Fixture mismatch',key)
+assert len(actual['frames'])==len(expected['frames']),(len(actual['frames']),len(expected['frames']))
+for i,(frame,pixels) in enumerate(zip(actual['frames'],expected['frames'])):
+    assert frame['pixels']==pixels,('Frame differs',i)
+    assert set(bytes.fromhex(frame['known']))=={255},('Unknown frame bits',i)
+    assert frame['sequence']==i+1,('Sequence differs',i)
+assert actual['console']==expected['console'],('Console differs',actual['console'],expected['console'])
+words=[int.from_bytes(bytes.fromhex(actual['report'])[i:i+4],'little') for i in range(0,36,4)]
+stable=range(7) if fixture['id'] else [1,2,3,4]
+for index in stable:assert words[index]==report[index],('Report differs',index,words,report)
+if fixture['id']:assert words[8]==report[8]==0,('Input lost or left queued',words[8])
+assert actual['setupViolations']==0
+print(f"PASS {a.guest}: {len(actual['frames'])} exact frames, console and report match the host run; "
+      f"{actual['cycles']} cycles, {actual['instructions']} instructions, {actual['executionSeconds']:.1f} s")

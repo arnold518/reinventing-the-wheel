@@ -34,6 +34,17 @@ int main(void) {
  for(int x=2;x<6;++x)g.cells[x]=1;
  g.piece=0;g.rotation=0;g.x=0;g.y=14;game_action(&g,4,0);CHECK(g.status==GAME_LOST);reset_check(&g);
  game_action(&g,9,0);CHECK(g.paused==1);int y=g.y;game_action(&g,6,0);CHECK(g.y==y);game_action(&g,9,0);game_action(&g,6,0);CHECK(g.y==y+1);
- puts("PASS: merge, win/loss, pushes/walls, snake taps/food/tail/self/wall, two-player Pong/bounce/miss, Tetris rotation/line-clear/top-out, pause/restart");
+ // game_board draws the same cells as game_cell, through a few hundred moves of each game.
+ for(unsigned kind=GAME_2048;kind<=GAME_TETRIS;++kind){
+  game_init(&g,kind);unsigned seed=kind*7919u;
+  const unsigned cols=kind==GAME_2048?4:8,rows=kind==GAME_2048?4:kind==GAME_TETRIS?16:8;
+  for(int step=0;step<400;++step){
+   uint8_t board[128];game_board(&g,board);
+   if(kind!=GAME_PONG)for(unsigned y=0;y<rows;++y)for(unsigned x=0;x<cols;++x)CHECK(board[y*cols+x]==game_cell(&g,x,y));
+   seed=seed*1103515245u+12345u;unsigned b=(seed>>16)%7;if(b==5)b=6;
+   if(g.status)game_action(&g,5,0);else game_action(&g,b,0);
+  }
+ }
+ puts("PASS: merge, win/loss, pushes/walls, snake taps/food/tail/self/wall, two-player Pong/bounce/miss, Tetris rotation/line-clear/top-out, pause/restart; one-pass board equals per-cell queries");
  return 0;
 }

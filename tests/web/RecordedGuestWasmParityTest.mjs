@@ -90,6 +90,8 @@ for(const guest of guests){
   const expected=expectedRecords.get(guest);
   const bridge=new module.WasmVisualizer();
   try{
+    // RecordedGuestProbe defaults to the compact preset; select the same one.
+    bridge.setFidelityProfile('compact');
     const actual=JSON.parse(bridge.runRecordedGuestJson(guest,false,false,500000));
     assert.deepEqual(deterministic(actual),deterministic(expected),guest);
     assert.equal(actual.setupViolations,0);
@@ -101,7 +103,8 @@ for(const guest of guests){
 
 {
     const bridge=new module.WasmVisualizer();
-    try{const actual=JSON.parse(bridge.runRecordedGuestSurfaceJson('bringup',97,65,500000));
+    try{bridge.setFidelityProfile('compact');
+        const actual=JSON.parse(bridge.runRecordedGuestSurfaceJson('bringup',97,65,500000));
         assert.deepEqual(deterministic(actual),deterministic(largeExpected));
         assert(actual.frames.every(f=>f.width===97&&f.height===65&&f.pixels.length===97*65*2&&/^f+$/.test(f.known)));
         assert.equal(actual.setupViolations,0);
