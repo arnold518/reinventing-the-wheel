@@ -4797,29 +4797,33 @@ function syncScenarioSelection(value) {
 
 // The published long-game recordings (site assets), as menu rows. A page
 // without them (the native server) simply has no such group.
-// Compact recordings, then the same games recorded with the core built from
-// its stages (Visual), when published.
-const RECORDINGS_MANIFESTS = [["../assets/system/long-games/manifest.json", ""],
-  ["../assets/system/long-games/visual/manifest.json", " · Visual"]];
+// The published long-game recordings, from the site's index of recording
+// sets (Compact, and Visual once its campaign is launched). The native
+// server serves no site assets, so it lists none.
+const RECORDINGS_INDEX = "../assets/system/long-games/recordings.json";
 const RECORDING_TITLES = {"2048": "2048", sokoban: "Sokoban", snake: "Snake", pong: "Pong",
   tetris: "Tetris", "snake-leds": "Snake with LEDs"};
 async function loadPublishedRecordings() {
+  const runtime = (window.CIRCUITSIM_RUNTIME || {}).mode || "http";
+  if (runtime === "http") return [];
   const entries = [];
-  for (const [address, suffix] of RECORDINGS_MANIFESTS) {
-    try {
-      const manifest = new URL(address, document.baseURI);
-      const response = await fetch(manifest);
-      if (!response.ok) continue;
-      const campaign = await response.json();
-      for (const game of campaign.games || []) {
+  try {
+    const index = new URL(RECORDINGS_INDEX, document.baseURI);
+    const response = await fetch(index);
+    if (!response.ok) return [];
+    for (const set of (await response.json()).sets || []) {
+      const manifest = new URL(set.manifest, index);
+      const reply = await fetch(manifest);
+      if (!reply.ok) continue;
+      for (const game of (await reply.json()).games || []) {
         if (game.status !== "passed" || !game.playlist) continue;
         const base = game.name.replace(/-long$/, "");
         entries.push({path: new URL(game.playlist, manifest).pathname.replace(/^.*\/assets\//, "../assets/"),
-          title: `${RECORDING_TITLES[base] || base} · ${game.frames} frames${suffix}`});
+          title: `${RECORDING_TITLES[base] || base} · ${game.frames} frames${set.label || ""}`});
       }
-    } catch {
-      // A page without published recordings (the native server) lists none.
     }
+  } catch {
+    // No index (an unpublished site): no recordings in the menu.
   }
   return entries;
 }

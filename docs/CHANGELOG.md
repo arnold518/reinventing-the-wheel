@@ -5,6 +5,16 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-11-04
+
+### Recording menu no longer requests a missing file (Pages smoke failure)
+
+- Every simulator page asked for the Visual recordings' manifest before any
+  Visual campaign existed; the 404 failed `RV32IBuildingBlocksBrowserTest`
+  in the Pages workflow. The menu now reads an index of published recording
+  sets (`assets/system/long-games/recordings.json`), which a campaign extends
+  when it launches. Checks: the smoke suite passes locally (14 of 14).
+
 ## 2026-11-03
 
 ### Compressed recordings; Visual long-game campaign prepared

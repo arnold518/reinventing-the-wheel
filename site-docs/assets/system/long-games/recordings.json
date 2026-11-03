@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "sets": [
+    {
+      "manifest": "manifest.json",
+      "label": ""
+    }
+  ]
+}

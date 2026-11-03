@@ -372,6 +372,15 @@ def launch(a):
     if output.stat().st_dev!=public.stat().st_dev:raise RuntimeError('Output and publication must share a filesystem for atomic publication')
     if (public/'manifest.json').exists() and not a.games:raise RuntimeError('Long game publication already exists')
     save(public/'source-manifest.json',provenance);save(output/'source-manifest.json',provenance)
+    # List the set in the site's index of recordings (the viewer's menu).
+    sets_root=ROOT/'site-docs/assets/system/long-games'
+    if public!=sets_root and public.is_relative_to(sets_root):
+        index_file=sets_root/'recordings.json'
+        index=json.loads(index_file.read_text()) if index_file.exists() else {'schemaVersion':1,'sets':[]}
+        entry=(public/'manifest.json').relative_to(sets_root).as_posix()
+        if all(s['manifest']!=entry for s in index['sets']):
+            label=' · '+a.fidelity.capitalize()+(' · every signal' if a.ticks else '')
+            index['sets'].append({'manifest':entry,'label':label});save(index_file,index)
     manifest={'version':2,'status':'queued','unit':('circuitsim-long-games-ticks-' if a.ticks else 'circuitsim-long-games-')+str(int(time.time())),
               'fidelityPreset':a.fidelity,'presetVersion':1,'timingProfile':a.timing,'period':a.period,
               'publicationPath':relative,'captureTicks':a.ticks,

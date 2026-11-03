@@ -73,3 +73,21 @@ python3 tools/rv32im/run-long-gameplays.py status --output build-milestone/long-
 It publishes under `site-docs/assets/system/long-games/visual/`. Afterwards:
 add the Visual rows to § 5.6, rerun `RecordedCircuitBrowserTest` on one
 Visual game, close this record.
+
+## 2026-11-04 — Pages workflow failure after the push
+
+The Pages workflow for `acaa085` (run 41647256071) built the site but failed
+its smoke browser tests: `RV32IBuildingBlocksBrowserTest` reported a console
+error, "Failed to load resource: 404", and the runner stopped after 4 of 14
+checks. Reproduced locally; the 404 was the viewer menu requesting
+`assets/system/long-games/visual/manifest.json`, which exists only once a
+Visual campaign has been launched (every simulator page asks for it).
+
+Fix: the menu reads `assets/system/long-games/recordings.json`, an index of
+the published recording sets that always exists (now: the Compact set);
+`run-long-gameplays.py launch` adds its set to the index when it publishes
+under `long-games/`. The native server (no site assets) requests nothing.
+After the fix the page loads with no failed request, and the whole smoke
+suite passes locally on 8893 (14 of 14; the first local attempt at the last
+ten was killed by a 2.2 GB memory cap of this host, not by a test, and passed
+under 2.8 GB). Not yet pushed.
