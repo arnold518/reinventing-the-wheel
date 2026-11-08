@@ -25,6 +25,7 @@ public:
                     std::shared_ptr<const DelayTwin> gates);
     const char* getTypeName() const override { return type_.c_str(); }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 private:
     std::string type_;
     std::shared_ptr<const DelayTwin> gates_;

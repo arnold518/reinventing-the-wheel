@@ -1,6 +1,7 @@
 #include "RegisterFileBehavioral.hpp"
 #include "simulator/Simulator.hpp"
 #include "simulator/SignalTrace.hpp"
+#include "simulator/StateArchive.hpp"
 #include <algorithm>
 
 namespace circuit::storage {
@@ -41,5 +42,22 @@ RegisterFileBehavioral::Snapshot RegisterFileBehavioral::getRegisterStateAtTime(
     if(history_.empty())return registers_;
     auto upper=std::upper_bound(history_.begin(),history_.end(),time,[](auto t,const auto& entry){return t<entry.first;});
     return upper==history_.begin()?history_.front().second:(--upper)->second;
+}
+void RegisterFileBehavioral::saveOwnState(circuit::state::Writer& out)const{
+    out.size(registers_.size());
+    for(const auto& word:registers_)out.logic(word);
+    out.logic(previous_clock_);
+}
+void RegisterFileBehavioral::restoreOwnState(circuit::state::Reader& in){
+    const auto count=registers_.size();
+    registers_.assign(in.size(),{});
+    for(auto& word:registers_){word=in.logicList();in.expectSize(word,width_,"register file word");}
+    in.expectSize(registers_,count,"register file");
+    previous_clock_=in.logic();
+}
+// Viewing history restarts at the restored registers.
+void RegisterFileBehavioral::stateRestored(SimulationTime now,const Simulator& sim){
+    history_.clear();
+    if(sim.isHistoryRecordingEnabled())history_.emplace_back(now,registers_);
 }
 }

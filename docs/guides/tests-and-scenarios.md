@@ -163,8 +163,13 @@ Each long fixture is a computer player's session
 (`tools/rv32im/long_gameplay/plans.py`), frozen into the fixture by
 `build-guests.py`: the player runs the real C rules through ctypes and stops
 at its goal. `LongGameplayProbe FIXTURE NEW-DIR [--period P] [--fidelity F]
-[--part-frames N] [--ticks]` runs it through the checked runner and writes
-the topology, one checkpoint per frame in parts, and the result.
+[--part-frames N] [--ticks] [--save-every CYCLES]` runs it through the checked
+runner and writes the topology, one checkpoint per frame in parts, and the
+result. `--save-every` also writes a machine save about every CYCLES cycles
+to `saves/` ([machine state saves](../reference/machine-state-saves.md)), for
+replays in the browser. Each run keeps `resume.bin`, a save with the results
+so far, taken whenever a circuit part is written; `LongGameplayProbe FIXTURE
+DIR --resume [same options]` continues an interrupted run from it.
 `tools/rv32im/run-long-gameplays.py` runs all six serially in a background
 user unit and publishes each finished game under
 `site-docs/assets/system/long-games/<game>/` (playlist, parts, topology,
@@ -207,6 +212,16 @@ markers. Open its `ticks.json` rather than `playlist.json`.
 `--trace-disk-gib` bounds the compressed trace bytes (default 12 GiB). The
 native exporter links zlib.
 
+`MachineStateResume_pong-short_Test` and `MachineStateResume_smoke-long_Test`
+(`MachineStateProbe FIXTURE --save N --compare M [--fidelity visual]
+[--out DIR]`) prove a save exact: an uninterrupted Visual run saves at
+cycles N and M, a second run restores the save at N into a freshly built
+machine and saves at M, and the two saves at M must be equal byte for byte;
+the frames after N must also be equal. `--out` keeps the saves for size
+measurements. `GameReplayScenarioTest` also runs `GameSessionProbe FIXTURE
+SAVE`: a session stepped and viewed in pieces, and one that jumps back to its
+save, must end byte-equal to a single run. Both take minutes (Visual runs at about 100 cycles per second).
+
 `TickRecordingTest` runs `SignalTraceProbe` and compares every tick against
 retained histories, including wide time, X/Z, future pin publications, memory
 writes/fills, registers, cancellation, small drain quanta and chunk rewind.
@@ -217,11 +232,21 @@ as skipped. It checks the full timeline, PRESENT equality, intermediate
 stepping, inspectors, Play and rewind without loading WASM. The fixture must
 be produced by the native exporter; no full game run is required for this check.
 
+`launch --save-at-frames --replay-window W` (or `--save-every N`) publishes
+each game's saves gzip-compressed under `<game>/saves/` with
+`saves/index.json`; the playlist names the index. A Visual recording with
+saves then opens in the simulator (the `game-replay` scenario, Visual only):
+the frame bar restores frame saves and ▶ simulates on from the frame event by
+event. `GameReplayBrowserTest` checks it on a recording named by
+`CIRCUITSIM_GAME_RECORDING` (the replay window is no longer used by the
+viewer).
+
 Use `stop` with the same output to stop the owned unit, and `resume` to start
 the frozen queue again after stopping or reboot. Verified completed games are
-retained and checked before skipping. Interrupted native simulations restart
-their game; arbitrary hardware-state restore is not implemented. Partial
-attempts remain available and are never labeled verified. Pressure retries
+retained and checked before skipping. An interrupted game continues from its
+last resume save in the same attempt (at most one circuit part is simulated
+again); a campaign frozen before resume saves existed restarts the game.
+Partial attempts remain available and are never labeled verified. Pressure retries
 are bounded to three attempts; other game failures do not skip later games.
 Live progress and logs are in `campaign.json` and `jobs/` under the output.
 These long sessions can take days; a healthy launch is not a completed run.

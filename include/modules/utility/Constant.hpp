@@ -16,6 +16,7 @@ public:
     uint64_t getConstantValue() const { return value; }
     void scheduleInitialEvents(Simulator& simulator, SimulationTime current_time) override;
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 
 private:
     uint64_t value;

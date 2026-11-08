@@ -3160,7 +3160,13 @@ function render() {
 
   if (app.playing && !app.stateRequestInFlight && performance.now() - app.lastPlaybackTick > app.playbackInterval) {
     app.lastPlaybackTick = performance.now();
-    if (app.currentIndex >= app.timestampCount - 1) setPlaying(false);
+    // A recorded game plays on, simulating as it goes.
+    if (game && app.currentIndex >= app.timestampCount - 1) {
+      if (!game.busy && !game.playStep) {
+        game.playStep = true;
+        gameStep(1).catch((error) => { setPlaying(false); showError(error); }).finally(() => { game.playStep = false; });
+      }
+    } else if (app.currentIndex >= app.timestampCount - 1) setPlaying(false);
     else {
       setStateIndex(app.currentIndex + 1).catch((error) => {
         setPlaying(false);
@@ -4241,6 +4247,19 @@ function checkpointForIndex(index) {
 }
 
 function updateCheckpointControls() {
+  if (game) {
+    ui.checkpointBack.disabled = app.requestedIndex === 0 && game.frame === 0;
+    ui.checkpointForward.disabled = game.frame >= game.frames.length - 1;
+    ui.checkpointBack.title = "Previous frame";
+    ui.checkpointForward.title = "Next frame";
+    ui.stepForward.disabled = Boolean(game.ended) && app.requestedIndex >= app.timestampCount - 1;
+    // Before the first kept event there is nothing simulated: the frame's
+    // save is where it starts (or older history was dropped).
+    ui.stepBack.disabled = app.requestedIndex === 0;
+    ui.stepBack.title = app.requestedIndex === 0
+      ? "Nothing earlier is simulated here; |◀ goes to the previous frame" : "Step backward";
+    return;
+  }
   const previous = app.checkpoints.some((checkpoint) => checkpoint.index < app.requestedIndex);
   const next = app.checkpoints.some((checkpoint) => checkpoint.index > app.requestedIndex);
   ui.checkpointBack.disabled = !previous;
@@ -4274,20 +4293,49 @@ function syncSliderFill() {
   ui.slider.style.setProperty("--frac", String(max > 0 ? Number(ui.slider.value) / max : 0));
 }
 
-// Simulation time as the profile defines it: picoseconds (shown in ps, ns,
-// us or ms) when its tick has a length, otherwise abstract ticks.
+// Picoseconds, exact: the largest unit the value reaches (ms, µs, ns, ps)
+// with every digit down to the picosecond, in groups of three, so that
+// neighbouring events (often a few ps apart) never read the same.
+function formatPicoseconds(ps) {
+  const units = [[1000000000n, "ms", 9], [1000000n, "µs", 6], [1000n, "ns", 3]];
+  const [scale, unit, digits] = units.find(([scale]) => ps >= scale) || [1n, "ps", 0];
+  const whole = (ps / scale).toLocaleString();
+  if (!digits) return `${whole} ${unit}`;
+  const fraction = (ps % scale).toString().padStart(digits, "0").replace(/(\d{3})(?=\d)/g, "$1\u2009");
+  return `${whole}.${fraction} ${unit}`;
+}
+
+// Simulation time as the profile defines it: exact picoseconds when its tick
+// has a length, otherwise abstract ticks. Wide times arrive as decimal
+// strings and are never rounded through a Number.
 function formatSimulationTime(time) {
-  // Wide recordings arrive as decimal ticks. Do not round them through Number.
-  if (typeof time === "string") return `${BigInt(time).toLocaleString()} ticks`;
-  const picoseconds = Number(app.timing?.tickPicoseconds || 0);
-  if (!picoseconds) return `${Number(time).toLocaleString()} ticks`;
-  const ps = Number(time) * picoseconds;
-  const [scale, unit] = ps >= 1e9 ? [1e9, "ms"] : ps >= 1e6 ? [1e6, "µs"] : ps >= 1e3 ? [1e3, "ns"] : [1, "ps"];
-  return `${(ps / scale).toLocaleString(undefined, { maximumFractionDigits: scale === 1 ? 0 : 3 })} ${unit}`;
+  const ticks = BigInt(String(time));
+  const picoseconds = BigInt(Math.round(Number(app.timing?.tickPicoseconds || 0)));
+  if (!picoseconds) return `${ticks.toLocaleString()} ticks`;
+  return formatPicoseconds(ticks * picoseconds);
+}
+
+// A recorded game: the clock cycle a time falls in and how far into it.
+function gameCyclePosition(time) {
+  if (!game || !game.period || game.origin == null) return "";
+  const t = BigInt(String(time)) - game.origin;
+  if (t < 0n) return "";
+  const cycle = t / game.period, into = t % game.period;
+  const picoseconds = BigInt(Math.round(Number(app.timing?.tickPicoseconds || 0)));
+  const offset = picoseconds ? formatPicoseconds(into * picoseconds) : `${into.toLocaleString()} ticks`;
+  return ` · cycle ${cycle.toLocaleString()} + ${offset}`;
 }
 
 function setTimeLabel(state) {
   const checkpoint = checkpointForIndex(state.index);
+  // A recorded game: the exact time, then the clock cycle and the mark on
+  // the second line (the component counts move to its tooltip).
+  if (game) {
+    ui.timeLabel.textContent = `Time: ${formatSimulationTime(state.time)}`;
+    ui.timeLabel.title = checkpoint ? (checkpoint.detail || checkpoint.label) : "";
+    ui.statsLabel.textContent = gameCyclePosition(state.time).replace(/^ · /, "") + (checkpoint ? ` | ${checkpoint.label}` : "");
+    return;
+  }
   if (checkpoint) {
     ui.timeLabel.textContent = `Time: ${formatSimulationTime(state.time)} | ${checkpoint.label}`;
     ui.timeLabel.title = checkpoint.detail || checkpoint.label;
@@ -4367,6 +4415,7 @@ async function setStateIndex(index) {
     app.requestedIndex = state.index;
     ui.slider.value = String(state.index);
     syncSliderFill();
+    if (game) { game.frame = gameFrameAt(state.time); updateGameStatus(); }
     setTimeLabel(state);
     updateCheckpointControls();
     requestRender();
@@ -4380,11 +4429,18 @@ async function setStateIndex(index) {
 
 function step(delta) {
   if (app.playing) setPlaying(false);
+  if (game) { gameStep(delta).catch(showError); return; }
   setStateIndex(app.requestedIndex + delta).catch(showError);
 }
 
 function stepCheckpoint(delta) {
   if (app.playing) setPlaying(false);
+  // A recorded game: frame to frame. Back first returns to this frame's start.
+  if (game) {
+    const target = delta > 0 ? game.frame + 1 : (app.requestedIndex > 0 ? game.frame : game.frame - 1);
+    gameJumpFrame(target).catch(showError);
+    return;
+  }
   const sorted = [...app.checkpoints].sort((a, b) => a.index - b.index);
   const checkpoint = delta < 0
     ? sorted.filter((item) => item.index < app.requestedIndex).pop()
@@ -4460,6 +4516,7 @@ function updateTopologyProgress() {
   const base = baseStatsText();
   const metricsTitle = performanceMetricsTitle();
   ui.statsLabel.title = metricsTitle ? `${base}\n${metricsTitle}` : base;
+  if (game) return;  // its line shows the clock cycle (setTimeLabel)
   if (
     app.topologyEncoding !== "progressive-v1"
     || (
@@ -4650,7 +4707,8 @@ function buildLocalModel(payload) {
         : `${payload.recording.checkpoints} presentation checkpoints`}` : '';
     recordingStatus.title='Saved circuit states at PRESENT; intermediate gate transitions are not retained.';
   }
-  if(ui.timing)ui.timing.disabled=Boolean(payload.recording);
+  app.recordingInfo=payload.recording||null;
+  if(ui.timing)ui.timing.disabled=Boolean(payload.recording||game);
   app.timing = payload.timing || { name: "unit", tickPicoseconds: 0, available: ["unit"] };
   if (ui.timing) {
     ui.timing.value = app.timing.name;
@@ -4678,7 +4736,19 @@ function buildLocalModel(payload) {
     if(payload.recording && ![...ui.fidelity.options].some(o=>o.value===preset)){
       ui.fidelity.add(new Option(payload.recording.fidelityProfile || 'Recorded fidelity',preset,true,true));
     }
-    ui.fidelity.title=payload.recording?'Fidelity is fixed by this recording.':('Named profile; explorer overrides are saved separately for each profile. '+Object.values(app.profile.unavailablePresets || {}).join(' '));
+    // A recording: the fidelities this game was recorded in are its choices.
+    const entry=(payload.recording||game)?recordingEntry(new URLSearchParams(window.location.search).get('recording')):null;
+    if(entry){
+      for(const option of ui.fidelity.options){
+        option.textContent=option.dataset.baseLabel || option.textContent;
+        option.disabled=!entry.paths[option.value];
+        option.title=option.disabled?'This game is not recorded in this fidelity.':'';
+        if(option.disabled)option.textContent+=' (not recorded)';
+      }
+      ui.fidelity.disabled=Object.keys(entry.paths).length<2;
+    }
+    ui.fidelity.title=entry?'Recorded in '+Object.keys(entry.paths).map(name=>name[0].toUpperCase()+name.slice(1)).join(' and ')+'; switching keeps the frame.'
+      :payload.recording?'Fidelity is fixed by this recording.':('Named profile; explorer overrides are saved separately for each profile. '+Object.values(app.profile.unavailablePresets || {}).join(' '));
   }
   app.layoutKey = payload.layoutKey || payload.scenario;
   app.rootId = payload.rootId;
@@ -4803,10 +4873,13 @@ function syncScenarioSelection(value) {
 const RECORDINGS_INDEX = "../assets/system/long-games/recordings.json";
 const RECORDING_TITLES = {"2048": "2048", sokoban: "Sokoban", snake: "Snake", pong: "Pong",
   tetris: "Tetris", "snake-leds": "Snake with LEDs"};
+// One menu row per game; each recorded fidelity (Compact, Visual) is a
+// choice of the Fidelity menu while the recording is open.
+let publishedRecordings = [];
 async function loadPublishedRecordings() {
   const runtime = (window.CIRCUITSIM_RUNTIME || {}).mode || "http";
   if (runtime === "http") return [];
-  const entries = [];
+  const games = new Map();
   try {
     const index = new URL(RECORDINGS_INDEX, document.baseURI);
     const response = await fetch(index);
@@ -4815,23 +4888,170 @@ async function loadPublishedRecordings() {
       const manifest = new URL(set.manifest, index);
       const reply = await fetch(manifest);
       if (!reply.ok) continue;
-      for (const game of (await reply.json()).games || []) {
+      const published = await reply.json();
+      const preset = published.fidelityPreset || "compact";
+      for (const game of published.games || []) {
         if (game.status !== "passed" || !game.playlist) continue;
         const base = game.name.replace(/-long$/, "");
-        entries.push({path: new URL(game.playlist, manifest).pathname.replace(/^.*\/assets\//, "../assets/"),
-          title: `${RECORDING_TITLES[base] || base} · ${game.frames} frames${set.label || ""}`});
+        if (!games.has(game.name)) games.set(game.name, {name: game.name, paths: {},
+          title: `${RECORDING_TITLES[base] || base} · ${game.frames} frames`});
+        games.get(game.name).paths[preset] = new URL(game.playlist, manifest).pathname.replace(/^.*\/assets\//, "../assets/");
       }
     }
   } catch {
     // No index (an unpublished site): no recordings in the menu.
   }
+  // A game opens in Compact, like the short versions, when it has it.
+  const entries = [...games.values()].map(game => ({...game, path: game.paths.compact || Object.values(game.paths)[0]}));
+  publishedRecordings = entries;
   return entries;
 }
+function recordingEntry(path) {
+  return publishedRecordings.find(entry => Object.values(entry.paths).includes(path)) || null;
+}
 
-function openRecording(path) {
+// A long game recorded with a machine save after every frame, opened in the
+// WebAssembly simulator. The page holds the whole machine restored from the
+// shown frame's save, so every wire, register and memory word is there. The
+// frame bar and |◀ ▶| jump between frames (restoring their saves); ▶ and
+// the event bar move event by event, simulating more cycles in the page
+// whenever stepping reaches the end of what has been simulated.
+let game = null;
+const GAME_STEP_CYCLES = 20;
+async function detectGameSession() {
+  const params = new URLSearchParams(window.location.search);
+  const recording = params.get("recording");
+  if (!recording || ((window.CIRCUITSIM_RUNTIME || {}).mode || "http") !== "wasm") return;
+  try {
+    const url = new URL(recording, document.baseURI);
+    if (url.origin !== location.origin) return;
+    const response = await fetch(url);
+    if (!response.ok) return;
+    const playlist = await response.json();
+    if (playlist.kind !== "circuitsim-circuit-playlist" || typeof playlist.saves !== "string") return;
+    const indexUrl = new URL(playlist.saves, url);
+    const reply = await fetch(indexUrl);
+    if (!reply.ok) return;
+    const index = await reply.json();
+    if (index.kind !== "circuitsim-machine-saves" || !Array.isArray(index.saves) || !index.saves.length) return;
+    const frames = playlist.checkpoints;
+    const frame = Math.max(0, Math.min(Number(params.get("frame") || 0) || 0, frames.length - 1));
+    // The clock: a save's `settled` is the last tick before its cycle's edge.
+    const period = BigInt(index.period || 0), first = index.saves[0];
+    const origin = period ? BigInt(String(first.settled)) + 1n - period * BigInt(first.cycle) : null;
+    game = {recording, guest: playlist.guest, frames, indexUrl, saves: index.saves, frame, period, origin,
+      timing: index.timingProfile || "embedded", fidelity: index.fidelityPreset || "visual", busy: false};
+    window.circuitsimGameSession = true;
+    document.body.classList.add("game-session");
+  } catch {
+    game = null;
+  }
+}
+function gameSaveUrl(frame) {
+  const exact = game.saves.find(save => save.frame === frame + 1 && save.cycle === game.frames[frame].cycle);
+  const before = game.saves.filter(save => save.cycle <= game.frames[frame].cycle);
+  const save = exact || before[before.length - 1] || game.saves[0];
+  return new URL(save.file, game.indexUrl).pathname;
+}
+// The frame the shown moment belongs to: the last PRESENT at or before it.
+function gameFrameAt(time) {
+  const t = BigInt(String(time));
+  let frame = 0;
+  for (let i = 0; i < game.frames.length; ++i) if (BigInt(String(game.frames[i].time)) <= t) frame = i;
+  return frame;
+}
+function applyGameTimeline(timeline) {
+  // An advance sends only its change: ticks dropped from the front, the
+  // window's new first tick, and the new ticks at the end.
+  if (!timeline.timestamps) {
+    const kept = app.timestamps.slice(Number(timeline.dropped) || 0);
+    timeline.timestamps = [...(timeline.front || []), ...kept, ...(timeline.added || [])];
+    if (timeline.timestamps.length !== Number(timeline.timestampCount))
+      throw new Error(`Event list out of step (${timeline.timestamps.length} here, ${timeline.timestampCount} in the simulator)`);
+  }
+  app.timestamps = timeline.timestamps && timeline.timestamps.length ? timeline.timestamps : [0];
+  app.timestampCount = Number(timeline.timestampCount) || app.timestamps.length;
+  app.checkpoints = (timeline.checkpoints || []).filter(checkpoint => Number.isFinite(Number(checkpoint.index)));
+  game.cycle = timeline.cycle;
+  game.ended = Boolean(timeline.ended);
+  ui.slider.max = String(Math.max(0, app.timestampCount - 1));
+  renderCheckpointMarks();
+  updateGameStatus();
+}
+function renderFrameMarks() {
+  const ticks = document.getElementById("game-frame-ticks");
+  if (!ticks || ticks.childElementCount === game.frames.length) return;
+  ticks.innerHTML = "";
+  const last = Math.max(1, game.frames.length - 1);
+  for (let i = 0; i < game.frames.length; ++i) {
+    const tick = document.createElement("span");
+    tick.style.setProperty("--at", String(i / last));
+    tick.title = `Frame ${i + 1}`;
+    ticks.appendChild(tick);
+  }
+}
+function updateGameStatus() {
+  const bar = document.getElementById("game-frames");
+  document.getElementById("game-frame-row")?.classList.remove("hidden");
+  renderFrameMarks();
+  if (bar) {
+    bar.max = String(game.frames.length - 1);
+    bar.value = String(game.frame);
+    bar.style.setProperty("--frac", String(game.frames.length > 1 ? game.frame / (game.frames.length - 1) : 0));
+    bar.title = `Frame ${game.frame + 1} of ${game.frames.length}`;
+  }
+  const status = document.getElementById("recording-status");
+  if (status) {
+    status.classList.remove("hidden");
+    status.textContent = `${game.guest} · frame ${game.frame + 1} of ${game.frames.length} · `
+      + (game.ended ? `the program halted at cycle ${Number(game.cycle || 0).toLocaleString()}` : `simulated to cycle ${Number(game.cycle || 0).toLocaleString()}`);
+    status.title = "The whole machine restored from the frame's save and simulated in this page: step with ▶, jump frames with ▶| or the frame bar.";
+  }
+}
+async function gameRequest(path) {
+  game.busy = true;
+  const status = document.getElementById("recording-status");
+  if (status) status.textContent = path.includes("advance") ? `${game.guest} · simulating ${GAME_STEP_CYCLES} more cycles…` : `${game.guest} · restoring frame ${game.frame + 1}…`;
+  try {
+    const response = await visualizerRequest(apiUrl(`${path}${path.includes("?") ? "&" : "?"}session=${encodeURIComponent(app.sessionId)}`));
+    if (!response.ok) throw new Error(await response.text());
+    applyGameTimeline(await response.json());
+  } finally {
+    game.busy = false;
+  }
+}
+async function gameJumpFrame(frame) {
+  if (!game || game.busy) return;
+  frame = Math.max(0, Math.min(frame, game.frames.length - 1));
+  game.frame = frame;
+  await gameRequest(`api/game/frame?save=${encodeURIComponent(gameSaveUrl(frame))}`);
+  const url = new URL(window.location);
+  if (frame) url.searchParams.set("frame", String(frame)); else url.searchParams.delete("frame");
+  window.history.replaceState(null, "", url);
+  // The frame's first cycles at once, so its events are there to step through.
+  await gameRequest(`api/game/advance?cycles=${GAME_STEP_CYCLES}`);
+  await setStateIndex(0);
+}
+// Steps past the end of what has been simulated: simulate a few more cycles.
+async function gameStep(delta) {
+  if (!game || game.busy) return;
+  if (delta > 0 && app.requestedIndex >= app.timestampCount - 1) {
+    if (game.ended) { if (app.playing) setPlaying(false); return; }
+    const at = BigInt(String(app.timestamps[app.requestedIndex]));
+    await gameRequest(`api/game/advance?cycles=${GAME_STEP_CYCLES}`);
+    // Dropping old history renumbers the events: the next one is found by time.
+    const next = app.timestamps.findIndex(time => BigInt(String(time)) > at);
+    await setStateIndex(next >= 0 ? next : app.timestampCount - 1);
+    return;
+  }
+  await setStateIndex(app.requestedIndex + delta);
+}
+
+function openRecording(path, frame = null) {
   const url = new URL(window.location);
   url.search = "";
   url.searchParams.set("recording", path);
+  if (frame) url.searchParams.set("frame", String(frame));
   window.location.assign(url);
 }
 
@@ -4847,13 +5067,13 @@ async function loadScenarios() {
   if (!response.ok) throw new Error(await response.text());
   const payload = await response.json();
   const params = new URLSearchParams(window.location.search);
-  scenarioCatalogApi = await import('./scenario_catalog.mjs');
+  scenarioCatalogApi = await import('./scenario_catalog.mjs?v=2');
   scenarioCatalogData = payload.catalog;
   scenarioOptions = payload.scenarios;
   const selected = params.get("scenario") || payload.default;
   const recording = params.get("recording");
   const recordings = await loadPublishedRecordings();
-  const listed = recording && recordings.some(r => r.path === recording);
+  const listed = recording && Boolean(recordingEntry(recording));
   ui.scenario.innerHTML = "";
   for (const group of scenarioCatalogApi.menuOptions(scenarioOptions, payload.groups)) {
     // The open recording appears in the long-game group below instead.
@@ -4878,7 +5098,7 @@ async function loadScenarios() {
   }
   if (recording) {
     const key = syncScenarioSelection(payload.default);
-    if (listed) ui.scenario.value = "recording:" + recording;
+    if (listed) ui.scenario.value = "recording:" + recordingEntry(recording).path;
     return key;
   }
   return syncScenarioSelection(selected);
@@ -4900,6 +5120,14 @@ async function loadCircuit(scenario) {
   }
   // Documentation can choose the initial core without overwriting a saved
   // explorer profile. Explicit Apply remains the only profile write.
+  // A recorded game opens its machine from the shown frame's save.
+  if (game && scenario === "game-replay") {
+    query.set("timing", game.timing);
+    query.set("fidelity", game.fidelity);
+    query.set("replay", gameSaveUrl(game.frame));
+    query.set("fixture", game.guest);
+    query.set("cycles", "0");
+  }
   const coreFidelity = new URLSearchParams(window.location.search).get("core_fidelity");
   if (coreFidelity && /^rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+$/.test(scenario)) {
     query.set("core_fidelity", coreFidelity);
@@ -4912,8 +5140,21 @@ async function loadCircuit(scenario) {
   loading.textContent = "Preparing circuit overview…";
   await nextPaint();
   buildLocalModel(payload);
+  if (game && scenario === "game-replay") {
+    app.recordingInfo = {guest: game.guest};
+    updateGameStatus();
+  }
   await nextPaint();
   await refreshComponentStates(app.currentIndex, app.stateRequestId);
+  // A recording opened at a frame (switching fidelity keeps the frame).
+  const frame = Number(new URLSearchParams(window.location.search).get("frame"));
+  if (payload.recording && Number.isSafeInteger(frame) && frame > 0 && frame < app.timestampCount) await setStateIndex(frame);
+  // A recorded game starts at its frame's first event, with its first cycles
+  // already simulated.
+  if (game && scenario === "game-replay") {
+    await gameRequest(`api/game/advance?cycles=${GAME_STEP_CYCLES}`);
+    await setStateIndex(0);
+  }
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
   document.body.dataset.circuitsimStatus = 'ready';
@@ -5072,6 +5313,14 @@ ui.timing.addEventListener("change", () => {
   if(requested && [...ui.fidelity.options].some(o=>o.value===requested))ui.fidelity.value=requested;
 }
 ui.fidelity.addEventListener('change',()=>{
+  // A recording: open the same game recorded in the chosen fidelity, at the
+  // same frame.
+  const recorded=recordingEntry(new URLSearchParams(window.location.search).get('recording'));
+  if(recorded){
+    const path=recorded.paths[ui.fidelity.value];
+    if(path)openRecording(path,game?game.frame:app.currentIndex);
+    return;
+  }
   const url=new URL(window.location);
   const scenarioKey=url.searchParams.get('scenario') || app.scenario;
   if(scenarioKey && ui.fidelity.value===scenarioFidelity(scenarioKey))url.searchParams.delete('fidelity');
@@ -5094,7 +5343,12 @@ ui.stepForward.addEventListener("click", () => step(1));
 ui.checkpointForward.addEventListener("click", () => stepCheckpoint(1));
 ui.resetSim.addEventListener("click", () => {
   if (app.playing) setPlaying(false);
+  if (game) { gameJumpFrame(0).catch(showError); return; }
   setStateIndex(0).catch(showError);
+});
+document.getElementById("game-frames")?.addEventListener("change", (event) => {
+  if (app.playing) setPlaying(false);
+  gameJumpFrame(Number(event.target.value)).catch(showError);
 });
 ui.slider.addEventListener("input", () => {
   if (app.playing) setPlaying(false);
@@ -5170,8 +5424,9 @@ window.addEventListener("resize", () => {
   try {
     document.body.dataset.circuitsimStatus = "loading";
     resizeCanvas();
+    await detectGameSession();
     const selected = await loadScenarios();
-    await loadCircuit(selected);
+    await loadCircuit(game ? "game-replay" : selected);
     requestRender();
     document.body.dataset.circuitsimStatus = "ready";
     document.body.dataset.circuitsimRuntime = (

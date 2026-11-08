@@ -1,4 +1,5 @@
 #include "visualizer/VisualizerSession.hpp"
+#include "tests/GuestScenarioTests.hpp"
 #include "components/selection/FidelityPresets.hpp"
 #include "visualizer/MemoryInspector.hpp"
 #include "visualizer/DeviceInspector.hpp"
@@ -802,6 +803,19 @@ VisualizerSession::VisualizerSession(
         simulator_->advanceAndRecord(test_->getRunDuration());
     }
 
+    rebuildTimeline();
+
+    session_id_ = "wasm-" + std::to_string(next_session_id.fetch_add(1));
+    const auto fingerprint = normalizedProfileFingerprint(root_);
+    layout_key_ = fingerprint == "explicit"
+        ? scenario_key_
+        : scenario_key_ + "@" + fingerprint;
+    buildTopology();
+}
+
+// Every tick the history holds, plus memory activity and checkpoints. A game
+// replay's history starts at its restored save, so earlier ticks are dropped.
+void VisualizerSession::rebuildTimeline() {
     timestamps_ = simulator_->getUniqueTimestamps();
     const auto activity_times = memoryActivityTimestamps(root_);
     timestamps_.insert(timestamps_.end(), activity_times.begin(), activity_times.end());
@@ -810,15 +824,79 @@ VisualizerSession::VisualizerSession(
     }
     std::sort(timestamps_.begin(), timestamps_.end());
     timestamps_.erase(std::unique(timestamps_.begin(), timestamps_.end()), timestamps_.end());
+    if (const auto* game = dynamic_cast<const GuestScenarioTest*>(test_.get()); game && game->isGameReplay())
+        timestamps_.erase(timestamps_.begin(), std::lower_bound(timestamps_.begin(), timestamps_.end(), game->gameHistoryStart()));
     if (timestamps_.empty()) timestamps_.push_back(0);
     simulator_->setCircuitStateAtTime(timestamps_.front());
+}
 
-    session_id_ = "wasm-" + std::to_string(next_session_id.fetch_add(1));
-    const auto fingerprint = normalizedProfileFingerprint(root_);
-    layout_key_ = fingerprint == "explicit"
-        ? scenario_key_
-        : scenario_key_ + "@" + fingerprint;
-    buildTopology();
+GuestScenarioTest& VisualizerSession::gameReplay() {
+    auto* game = dynamic_cast<GuestScenarioTest*>(test_.get());
+    if (!game || !game->isGameReplay()) throw std::logic_error("This session is not a game replay");
+    return *game;
+}
+
+// Grows the timeline by the new ticks only, and drops what the session
+// trimmed; answers with that change (the viewer keeps the same list).
+std::string VisualizerSession::gameAdvanceJson(uint64_t cycles) {
+    const auto before = timestamps_.empty() ? SimulationTime{0} : timestamps_.back();
+    gameReplay().gameAdvance(cycles);
+    memory_inspectors_.clear();
+    const auto start = gameReplay().gameHistoryStart();
+    const auto cut = std::lower_bound(timestamps_.begin(), timestamps_.end(), start);
+    const size_t dropped = static_cast<size_t>(std::distance(timestamps_.begin(), cut));
+    timestamps_.erase(timestamps_.begin(), cut);
+    // A trim keeps each value re-timed to the window's start.
+    const bool front = timestamps_.empty() || timestamps_.front() != start;
+    if (front) timestamps_.insert(timestamps_.begin(), start);
+    auto added = simulator_->uniqueTimestampsAfter(before);
+    for (const auto time : memoryActivityTimestamps(root_)) if (time > before) added.push_back(time);
+    for (const auto& checkpoint : test_->getCheckpoints()) if (checkpoint.time > before) added.push_back(checkpoint.time);
+    std::sort(added.begin(), added.end());
+    added.erase(std::unique(added.begin(), added.end()), added.end());
+    timestamps_.insert(timestamps_.end(), added.begin(), added.end());
+    std::string out;
+    JsonObject object(out);
+    object.number("dropped", dropped);
+    object.raw("front", front ? arrayJson(std::vector<SimulationTime>{start}, [](SimulationTime value) {
+        const auto decimal = std::to_string(value);
+        return value <= MAX_EXACT_JSON_TIME ? decimal : "\"" + decimal + "\""; }) : std::string("[]"));
+    object.raw("added", arrayJson(added, [](SimulationTime value) {
+        const auto decimal = std::to_string(value);
+        return value <= MAX_EXACT_JSON_TIME ? decimal : "\"" + decimal + "\""; }));
+    object.raw("checkpoints", checkpointsJson());
+    object.number("timestampCount", timestamps_.size());
+    object.number("cycle", gameReplay().gameCycle());
+    object.boolean("ended", gameReplay().gameEnded());
+    object.end();
+    return out;
+}
+
+std::string VisualizerSession::gameFastForwardJson(uint64_t cycles) {
+    gameReplay().gameFastForward(cycles);
+    memory_inspectors_.clear();
+    rebuildTimeline();
+    return gameTimelineJson();
+}
+
+std::string VisualizerSession::gameJumpJson(std::shared_ptr<const std::vector<uint8_t>> save) {
+    gameReplay().gameJump(std::move(save));
+    memory_inspectors_.clear();
+    rebuildTimeline();
+    return gameTimelineJson();
+}
+
+// The current stretch's timeline, in the topology response's format.
+std::string VisualizerSession::gameTimelineJson() {
+    std::string out;
+    JsonObject object(out);
+    object.raw("timestamps", timestampsJson());
+    object.raw("checkpoints", checkpointsJson());
+    object.number("timestampCount", timestamps_.size());
+    object.number("cycle", gameReplay().gameCycle());
+    object.boolean("ended", gameReplay().gameEnded());
+    object.end();
+    return out;
 }
 
 VisualizerSession::~VisualizerSession() = default;
@@ -1298,6 +1376,34 @@ std::string VisualizerSession::componentStateJson(
     return out;
 }
 
+std::string VisualizerSession::checkpointsJson() const {
+    std::vector<SimulationTest::SimulationCheckpoint> checkpoints = test_?test_->getCheckpoints():std::vector<SimulationTest::SimulationCheckpoint>{};
+    std::sort(checkpoints.begin(), checkpoints.end(), [](const auto& left, const auto& right) {
+        if (left.time != right.time) return left.time < right.time;
+        if (left.row_index != right.row_index) return left.row_index < right.row_index;
+        return left.label < right.label;
+    });
+    return arrayJson(checkpoints, [&](const auto& checkpoint) {
+        const auto found = std::lower_bound(timestamps_.begin(), timestamps_.end(), checkpoint.time);
+        std::string out;
+        JsonObject item(out);
+        item.tick("time", checkpoint.time);
+        item.string("label", checkpoint.label);
+        item.string("detail", checkpoint.detail);
+        item.number("rowIndex", checkpoint.row_index);
+        item.number("index", static_cast<size_t>(std::distance(timestamps_.begin(), found)));
+        item.end();
+        return out;
+    });
+}
+
+std::string VisualizerSession::timestampsJson() const {
+    return arrayJson(timestamps_, [](SimulationTime value) {
+        const auto decimal = std::to_string(value);
+        return value <= MAX_EXACT_JSON_TIME ? decimal : "\"" + decimal + "\"";
+    });
+}
+
 std::string VisualizerSession::topologyResponseJson() {
     const auto profile_fingerprint = normalizedProfileFingerprint(root_);
     const auto initial_slice = topologySliceJson({root_->getID()});
@@ -1352,24 +1458,7 @@ std::string VisualizerSession::topologyResponseJson() {
     }
     components_json += ']';
 
-    std::vector<SimulationTest::SimulationCheckpoint> checkpoints = test_?test_->getCheckpoints():std::vector<SimulationTest::SimulationCheckpoint>{};
-    std::sort(checkpoints.begin(), checkpoints.end(), [](const auto& left, const auto& right) {
-        if (left.time != right.time) return left.time < right.time;
-        if (left.row_index != right.row_index) return left.row_index < right.row_index;
-        return left.label < right.label;
-    });
-    const auto checkpoint_json = arrayJson(checkpoints, [&](const auto& checkpoint) {
-        const auto found = std::lower_bound(timestamps_.begin(), timestamps_.end(), checkpoint.time);
-        std::string out;
-        JsonObject item(out);
-        item.tick("time", checkpoint.time);
-        item.string("label", checkpoint.label);
-        item.string("detail", checkpoint.detail);
-        item.number("rowIndex", checkpoint.row_index);
-        item.number("index", static_cast<size_t>(std::distance(timestamps_.begin(), found)));
-        item.end();
-        return out;
-    });
+    const auto checkpoint_json = checkpointsJson();
     const auto metrics = test_?test_->getPerformanceMetrics():std::vector<SimulationTest::PerformanceMetric>{};
     const auto metrics_json = arrayJson(metrics, [](const auto& metric) {
         std::string out;
@@ -1381,10 +1470,7 @@ std::string VisualizerSession::topologyResponseJson() {
         item.end();
         return out;
     });
-    const auto timestamp_json = arrayJson(timestamps_, [](SimulationTime value) {
-        const auto decimal = std::to_string(value);
-        return value <= MAX_EXACT_JSON_TIME ? decimal : "\"" + decimal + "\"";
-    });
+    const auto timestamp_json = timestampsJson();
     std::string overrides_json;
     JsonObject overrides(overrides_json);
     for (const auto& [path, fidelity] : exact_overrides_) overrides.string(path, fidelity);

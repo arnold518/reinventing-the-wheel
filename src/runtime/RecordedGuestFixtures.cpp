@@ -20,8 +20,10 @@ RecordedGuestFixture recordedGuestFixture(std::string_view name){
         options.presentation_inputs=f.batches;
         if(!f.batches.empty()){
             // A long session: one batch of button changes after each frame.
+            // The event budget covers the cycle budget in Visual (about
+            // 18,000 events per cycle; Compact needs about 300).
             options.max_cycles=20000000;options.max_instructions=10000000;options.max_frames=1024;
-            options.max_events=20000000000ULL;options.max_device_reads=65536;
+            options.max_events=400000000000ULL;options.max_device_reads=65536;
         }
         return {f.name,f.elf_sha,f.script_sha,bytes(f.hex),f.input,options};
     }

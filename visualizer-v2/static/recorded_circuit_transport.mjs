@@ -264,6 +264,7 @@ export function validateRecordedPlaylist(value) {
     next+=part.count;
   }
   require(next===value.checkpoints.length,'Playlist count differs');
+  require(value.saves===undefined||(typeof value.saves==='string'&&value.saves.length>0&&value.saves.length<=512),'Invalid playlist saves');
   for(const checkpoint of value.checkpoints){
     const time=exactTime(checkpoint.time);require(time>previous,'Playlist times must increase');previous=time;
     require(Number.isSafeInteger(checkpoint.cycle)&&checkpoint.cycle>=0,'Invalid playlist cycle');
@@ -387,7 +388,10 @@ export async function createRecordedCircuitTransport(source) {
     result.timing={name:recordedTiming,tickPicoseconds:recordedTiming==='unit'?0:1,available:[recordedTiming],
       description:`Recorded with the ${recordedTiming} timing profile`+(record.recording.configuration?.period?`, clock period ${record.recording.configuration.period} ticks`:'')+'; fixed for this capture.'};
     result.recording={guest:record.recording.guest,capturePolicy:tickRecord?.capturePolicy||record.capturePolicy,sourceRuntime:record.sourceRuntime,
-      checkpoints:timeline.length,timestamps:result.timestampCount,fidelityProfile:record.recording.profileName || 'Recorded fidelity'};
+      checkpoints:timeline.length,timestamps:result.timestampCount,fidelityProfile:record.recording.profileName || 'Recorded fidelity',
+      cycles:timeline.map(item=>item.cycle),timingProfile:recordedTiming,
+      // The machine saves a replay starts from (a site file next to the playlist).
+      saves:playlist?.saves?sameSite(playlist.saves,presentationUrl).href:null};
     for(const component of result.components){
       const entry=layoutEntry(component,layout),type=component.layoutType||component.type;
       const prefix=Object.entries(palette.prefix_colors||{}).find(([key])=>type.startsWith(key));

@@ -10,7 +10,10 @@
 #include "simulator/Simulator.hpp"
 #include <memory>
 #include <string>
+#include <functional>
 #include <vector>
+
+namespace circuit::state { class Writer; class Reader; }
 
 /**
  * A directly evaluated simulation component.
@@ -105,6 +108,25 @@ public:
     virtual void scheduleInitialEvents(Simulator& simulator, SimulationTime current_time);
     virtual void evaluate(SimulationTime current_time, Simulator& simulator) = 0;
     ~BasicComponent() override;
+
+    // Saving a machine (circuit::state::saveMachine). Pins, wires and the
+    // timing state below are saved for every part; a part says what else it
+    // holds. Unknown: not yet declared, and such a part cannot be saved, so a
+    // forgotten member can never silently change a resumed run.
+    enum class StateSupport { Unknown, Stateless, Saved };
+    virtual StateSupport stateSupport() const { return StateSupport::Unknown; }
+    // Members beyond pins and timing; only for StateSupport::Saved.
+    virtual void saveOwnState(circuit::state::Writer&) const {}
+    virtual void restoreOwnState(circuit::state::Reader&) {}
+    // The timing state every part has: the delay table's per-input memory and
+    // the inertial-delay changes still due. Events are named by their number
+    // in the saved queue (-1: no longer queued).
+    void saveTimingState(circuit::state::Writer& out, const std::function<int64_t(const Event*)>& event_number) const;
+    void restoreTimingState(circuit::state::Reader& in, const std::function<std::shared_ptr<Event>(int64_t)>& event_at);
+    static void setSetupViolations(size_t count);
+    // After a restore, with the simulator's restored time: a part that keeps
+    // its own history for viewing starts it at the restored state.
+    virtual void stateRestored(SimulationTime, const Simulator&) {}
 
 private:
     struct TimedOutputs;

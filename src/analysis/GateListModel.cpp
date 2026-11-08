@@ -1,4 +1,5 @@
 #include "GateListModel.hpp"
+#include "simulator/StateArchive.hpp"
 #include "TimingGraph.hpp"
 #include "TimingCircuit.hpp"
 #include "components/IOComponent.hpp"
@@ -341,6 +342,40 @@ void GateListModel::step(const std::vector<std::vector<LogicValue>>& inputs) {
     propagate();
     // A reset that rises with these inputs clears its state now.
     for (size_t round = 0; round < 8 && apply_resets(); ++round) propagate();
+}
+
+void GateListModel::saveState(circuit::state::Writer& out) const {
+    out.logic(value_);
+    out.size(heap_.size());
+    for (int node : heap_) out.i64(node);
+    out.bytes(queued_);
+    out.size(leaf_pass_.size());
+    for (unsigned pass : leaf_pass_) out.u32(pass);
+    out.size(leaf_out_.size());
+    for (const auto& outputs : leaf_out_) {
+        out.size(outputs.size());
+        for (const auto& [name, bits] : outputs) { out.text(name); out.logic(bits); }
+    }
+    out.u32(pass_);
+    out.logic(previous_clock_);
+}
+
+void GateListModel::restoreState(circuit::state::Reader& in) {
+    const size_t nodes = value_.size(), leaves = leaf_pass_.size();
+    value_ = in.logicList(); in.expectSize(value_, nodes, "gate-list nodes");
+    heap_.assign(in.size(), 0);
+    for (int& node : heap_) node = static_cast<int>(in.i64());
+    queued_ = in.bytes();
+    leaf_pass_.assign(in.size(), 0);
+    for (unsigned& pass : leaf_pass_) pass = in.u32();
+    in.expectSize(leaf_pass_, leaves, "gate-list leaves");
+    leaf_out_.assign(in.size(), {});
+    for (auto& outputs : leaf_out_) {
+        outputs.assign(in.size(), {});
+        for (auto& [name, bits] : outputs) { name = in.text(); bits = in.logicList(); }
+    }
+    pass_ = in.u32();
+    previous_clock_ = in.logic();
 }
 
 } // namespace circuit::analysis

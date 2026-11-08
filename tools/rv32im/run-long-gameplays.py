@@ -77,6 +77,30 @@ def compress_published(root):
                         buildManifestSha256=sha(game/'build-manifest.txt.gz'))
         save(game/'evidence.json',evidence);print('compressed',game.name,flush=True)
 
+def publish_saves(native,ready,manifest,guest):
+    """Machine saves for replays (circuit::state, LongGameplayProbe
+    --save-every): each gzip-compressed under saves/ with an index the viewer
+    reads ("Step through events" restores the nearest one in the browser)."""
+    index_file=native/'saves'/'index.jsonl'
+    if not index_file.exists():return None
+    target=ready/'saves';target.mkdir()
+    rows=[json.loads(line) for line in index_file.read_text().splitlines() if line.strip()]
+    rows.sort(key=lambda row:row['cycle'])
+    assert rows and len({row['cycle'] for row in rows})==len(rows),'Replay saves are missing or repeated'
+    entries=[]
+    for row in rows:
+        # LongGameplayProbe writes them gzip-compressed already.
+        source=native/'saves'/row['file'];data=gzip.decompress(source.read_bytes())
+        assert len(data)==row['bytes'],('save size',row['file'])
+        packed=target/row['file'];os.link(source,packed)
+        entries.append({'cycle':row['cycle'],'settled':row['settled'],'frame':row['frame'],'file':packed.name,
+                        'bytes':len(data),'compressedBytes':packed.stat().st_size,'sha256':sha(packed)})
+    save(target/'index.json',{'schemaVersion':1,'kind':'circuitsim-machine-saves','guest':guest,
+        'fidelityPreset':manifest['fidelityPreset'],'timingProfile':manifest['timingProfile'],'period':manifest['period'],
+        'saveEvery':manifest.get('saveEvery',0),'saveFrames':manifest.get('saveFrames',False),
+        'window':manifest.get('replayWindow',0),'saves':entries})
+    return entries
+
 class Pressure(Exception):pass
 class Stop(BaseException):pass
 
@@ -208,6 +232,8 @@ def finalize(output,manifest,job,attempt):
     playlist={'schemaVersion':1,'kind':'circuitsim-circuit-playlist','guest':recording_name,'parts':parts,
               'fidelityPreset':manifest['fidelityPreset'],'presetVersion':1,
               'checkpoints':[{'time':f['time'],'cycle':f['cycle']} for f in actual['frames']]}
+    saves=publish_saves(native,ready,manifest,recording_name)
+    if saves:playlist['saves']='saves/index.json'
     save(ready/'playlist.json',playlist)
     # Full-tick packages keep their own file contract; others are compressed.
     if not manifest.get('captureTicks'):compress_ready(ready)
@@ -218,7 +244,12 @@ def finalize(output,manifest,job,attempt):
         ticks=json.loads((ready/'ticks.json').read_text())
         for chunk in ticks['chunks']:os.link(native/chunk['file'],ready/chunk['file'])
         run_command([manifest['nodeExecutable'],str(frozen/'tools/package-tick-recording.mjs'),str(ready)],attempt,'package-ticks',manifest,job,output)
-    peak=int(next(s for s in (attempt/'capture-resources.txt').read_text().splitlines() if 'Maximum resident set size' in s).split(':')[1])
+    # An interrupted capture's resource file has no peak (its process was
+    # stopped before /usr/bin/time wrote one); the resumed capture's has.
+    peaks=[int(line.split(':')[1]) for path in attempt.glob('capture*-resources.txt')
+           for line in path.read_text().splitlines() if 'Maximum resident set size' in line]
+    if not peaks:raise RuntimeError('No capture reported its peak memory')
+    peak=max(peaks)
     evidence={'schemaVersion':1,'guest':job['name'],'exactHostReference':True,'allFramesRetained':True,
               'fidelityPreset':actual['fidelityPreset'],'profileName':actual['profileName'],'profileFingerprint':actual['profileFingerprint'],
               'frames':job['frames'],'parts':len(parts),'metrics':job['metrics'],'cycles':actual['cycles'],
@@ -231,6 +262,9 @@ def finalize(output,manifest,job,attempt):
               'buildManifestSha256':sha(ready/('build-manifest.txt' if manifest.get('captureTicks') else 'build-manifest.txt.gz')),
               'playlistSha256':sha(ready/'playlist.json'),'sourceManifest':'../source-manifest.json',
               'compressed':not manifest.get('captureTicks')}
+    if saves:
+        evidence.update(saves=len(saves),savesCompressedBytes=sum(e['compressedBytes'] for e in saves),
+                        savesIndexSha256=sha(ready/'saves'/'index.json'))
     if manifest.get('captureTicks'):
         evidence.update(capturePolicy='all-signal-ticks',tickManifestSha256=sha(ready/'ticks.json'),
                         tickPackage=json.loads((ready/'ticks.package.json').read_text()))
@@ -268,6 +302,10 @@ def worker(output):
                         for scope in graph['scopes']:assert sha(published/scope['file'])==scope['sha256']
                     playlist=json.loads((published/'playlist.json').read_text())
                     for part in playlist['parts']:assert sha(published/part['file'])==part['sha256']
+                    if 'savesIndexSha256' in evidence:
+                        assert sha(published/'saves'/'index.json')==evidence['savesIndexSha256']
+                        for entry in json.loads((published/'saves'/'index.json').read_text())['saves']:
+                            assert sha(published/'saves'/entry['file'])==entry['sha256']
                     if manifest.get('captureTicks'):
                         assert sha(published/'ticks.json')==evidence['tickManifestSha256']
                         ticks=json.loads((published/'ticks.json').read_text())
@@ -282,15 +320,26 @@ def worker(output):
                 for name,key in [('guest.elf','elfSha256'),('input.json','batchesSha256'),('expected.json','expectedSha256')]:
                     if sha(case/name)!=job[key]:raise RuntimeError('Frozen fixture changed: '+job['name'])
                 for retry in range(3):
-                    attempt=output/'jobs'/job['name']/f'attempt-{time.time_ns()}';attempt.mkdir(parents=True)
+                    # An interrupted capture (memory guard, stop, reboot) continues
+                    # from its last resume save (taken at each circuit part)
+                    # in the same attempt instead of starting at cycle 0.
+                    previous=Path(job['attemptDirectory']) if job.get('attemptDirectory') else None
+                    resume=(previous is not None and job['status']!='failed' and not manifest.get('captureTicks')
+                            and (previous/'native'/'resume.bin').exists())
+                    if resume:attempt=previous
+                    else:attempt=output/'jobs'/job['name']/f'attempt-{time.time_ns()}';attempt.mkdir(parents=True)
                     job.update(status='running',attemptDirectory=str(attempt),startedUnix=time.time());job.pop('error',None)
                     save(output/'campaign.json',manifest);publish_status(output,manifest)
                     prepared=output/'frozen/prepared'/job['name']
                     try:
-                        print('RUN',job['name'],job['frames'],'frames',flush=True)
+                        print('RESUME' if resume else 'RUN',job['name'],job['frames'],'frames',flush=True)
+                        label='capture-'+str(len(list(attempt.glob('capture*-resources.txt')))) if resume else 'capture'
                         run_command([str(output/'frozen/bin/LongGameplayProbe'),job['name'],str(attempt/'native'),
                                      '--period',str(manifest['period']),'--fidelity',manifest['fidelityPreset'],'--part-frames','16',
-                                     *(['--ticks'] if manifest.get('captureTicks') else [])],attempt,'capture',manifest,job,output,native=True)
+                                     *(['--save-every',str(manifest['saveEvery'])] if manifest.get('saveEvery') else []),
+                                     *(['--save-at-frames'] if manifest.get('saveFrames') else []),
+                                     *(['--resume'] if resume else []),
+                                     *(['--ticks'] if manifest.get('captureTicks') else [])],attempt,label,manifest,job,output,native=True)
                         finalize(output,manifest,job,attempt)
                         print('PASS',job['name'],flush=True);break
                     except Pressure as error:
@@ -327,6 +376,10 @@ def launch(a):
     from long_gameplay.reference import manifest as fixture_manifest, host_reference, FIXTURES
     output=a.output.resolve()
     if output.exists():raise RuntimeError('Use a new campaign output directory')
+    saves=a.save_every>0 or a.save_at_frames
+    if saves!=(a.replay_window>0) or a.save_every<0 or a.replay_window<0:
+        raise RuntimeError('Replay saves (--save-every, --save-at-frames) and --replay-window go together')
+    if saves and a.ticks:raise RuntimeError('Replay saves are for checkpoint recordings, not signal-tick captures')
     # The smoke fixture checks the equipment; it runs only when named.
     rows=[f for f in fixture_manifest()['guests'] if f['version']=='long' and (f['name']!='smoke-long' or a.games)]
     if a.games:
@@ -383,7 +436,7 @@ def launch(a):
             index['sets'].append({'manifest':entry,'label':label});save(index_file,index)
     manifest={'version':2,'status':'queued','unit':('circuitsim-long-games-ticks-' if a.ticks else 'circuitsim-long-games-')+str(int(time.time())),
               'fidelityPreset':a.fidelity,'presetVersion':1,'timingProfile':a.timing,'period':a.period,
-              'publicationPath':relative,'captureTicks':a.ticks,
+              'publicationPath':relative,'captureTicks':a.ticks,'saveEvery':a.save_every,'saveFrames':a.save_at_frames,'replayWindow':a.replay_window,
               'scope':'Computer players\' sessions on the 64 x 48 games machine; every frame retained.',
               'publicationRoot':str(public),'nodeExecutable':str(frozen/'bin/node'),
               'provenance':{k:v for k,v in provenance.items() if k!='sourceSha256'},
@@ -404,6 +457,9 @@ def main():
     p.add_argument('--prepare-only',action='store_true',help='Freeze and publish queued status; resume starts the background unit')
     p.add_argument('--fidelity',choices=['gate','logic','visual','compact'],default='compact')
     p.add_argument('--ticks',action='store_true',help='Retain every signal-change tick in bounded compressed chunks')
+    p.add_argument('--save-every',type=int,default=0,help='Machine save for replays about every N cycles (0: none)')
+    p.add_argument('--save-at-frames',action='store_true',help='Machine save for replays right after each frame')
+    p.add_argument('--replay-window',type=int,default=0,help='Cycles a replay from a save runs in the browser')
     p.add_argument('--trace-disk-gib',type=int,default=12,help='Total campaign compressed trace disk budget (default 12 GiB)')
     a=p.parse_args()
     if a.native_wall_days is not None and not 1<=a.native_wall_days<=180:p.error('Native wall budget must be 1-180 days')

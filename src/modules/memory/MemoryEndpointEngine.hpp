@@ -8,6 +8,8 @@
 #include <memory>
 #include <optional>
 
+namespace circuit::state { class Writer; class Reader; }
+
 namespace circuit::memory {
 using namespace memory_device;
 using Signals = std::map<std::string, Bits>;
@@ -28,6 +30,8 @@ inline LogicValue clean(LogicValue a) { return a == H || a == L ? a : X; }
 inline LogicValue bit(bool value) { return value ? H : L; }
 // A state bit or register bit losing its reset: 0 stays 0, the rest is unknown.
 inline void fade(LogicValue& value) { if (value != L) value = X; }
+void saveSignals(circuit::state::Writer& out, const Signals& signals);
+Signals restoreSignals(circuit::state::Reader& in);
 // The one-entry response buffer (MemoryResponseBuffer as built).
 struct ResponseBuffer {
     LogicValue full = L;
@@ -93,6 +97,9 @@ public:
         return presenting_ ? "command-issue" : waiting_ ? "command-wait" : "idle";
     }
     bool maintenanceActive() const { return refreshing_ && active_; }
+    // Saving a machine: the access in progress and every register.
+    void saveState(circuit::state::Writer& out) const;
+    void restoreState(circuit::state::Reader& in);
     bool done = false, available = true;
     // LAST: the result shown is the transaction's last (burst words before it
     // are not). `space`: the transaction port holds no response (set by the
@@ -151,6 +158,11 @@ public:
     virtual std::map<std::string, uint64_t> commandCounts() const { return {}; }
     Bits read(const std::string& name, size_t width) const { return signal(outputs, name, width); }
     SimulationTime deadline() const { return due_; }
+    // Saving a machine. Only technologies whose models have been audited
+    // save; the others report false and cannot be saved.
+    virtual bool savesState() const { return false; }
+    void saveState(circuit::state::Writer& out) const;
+    void restoreState(circuit::state::Reader& in);
     MemoryStorage storage;
 protected:
     size_t width_;

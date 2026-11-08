@@ -198,6 +198,7 @@ set(CORE_LOGIC_SOURCES
     src/rv32i/RV32IInstructionOracle.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
+    src/simulator/MachineState.cpp
     src/visualizer/DeviceInspector.cpp
     src/visualizer/VisualizerSession.cpp
     src/tests/FullCircuitTest.cpp

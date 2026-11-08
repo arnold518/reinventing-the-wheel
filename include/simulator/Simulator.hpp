@@ -59,6 +59,9 @@ public:
     std::optional<SimulationTime> nextEventTime() const;
     void setCircuitStateAtTime(SimulationTime target_time);
     std::vector<SimulationTime> getUniqueTimestamps() const;
+    // The recorded ticks after `after`, sorted: each history read from its
+    // end, so a session that grows only pays for what is new.
+    std::vector<SimulationTime> uniqueTimestampsAfter(SimulationTime after) const;
     // Read-only observation. Inputs use their driving wire; primitive outputs
     // can have pin-only history. Neither method scrubs or advances the circuit.
     const PinHistory& signalHistory(const std::shared_ptr<PinBase>& pin) const;
@@ -74,6 +77,33 @@ public:
     const SimulatorPerformanceCounters& getPerformanceCounters() const noexcept;
     void resetPerformanceCounters() noexcept;
     void clear();
+
+    // Saving and restoring a machine (circuit::state::saveMachine).
+    struct QueuedEventRecord {
+        SimulationTime time;
+        EventPriority priority;
+        uint64_t order;
+        std::shared_ptr<Event> event;
+    };
+    using HeadlessPinState = std::pair<std::shared_ptr<PinBase>, std::pair<SimulationTime, std::vector<LogicValue>>>;
+    // The queued events in processing order, without withdrawn ones.
+    std::vector<QueuedEventRecord> queuedEvents() const;
+    uint64_t nextSchedulingOrder() const noexcept { return next_scheduling_order; }
+    // With history off: the last value of each output pin that has no wire.
+    std::vector<HeadlessPinState> headlessPinStates() const;
+    // Replaces the time, queue, counters and headless pin values. Recorded
+    // history is cleared; it restarts at `now`.
+    void restoreScheduling(SimulationTime now, uint64_t next_order, std::vector<QueuedEventRecord> events,
+                           const SimulatorPerformanceCounters& counters, std::vector<HeadlessPinState> headless);
+    // Drops recorded history before `start`; each wire and pin keeps the value
+    // it had then, now recorded at `start`. Bounds a long session's memory.
+    void trimHistoryBefore(SimulationTime start);
+    // Back at the present after viewing history (circuit::state::restoreValues).
+    void restoreTime(SimulationTime now) noexcept { current_time = now; }
+    // With history on: every wire and pin-only output starts its history at
+    // its current (restored) value.
+    void seedHistory(SimulationTime now, const std::vector<std::shared_ptr<WireBase>>& wires,
+                     const std::vector<HeadlessPinState>& pins);
 
 private:
     void recordProcessedEvent(const std::shared_ptr<Event>& event) noexcept;

@@ -1,4 +1,5 @@
 #include "modules/memory/FlipFlopCellBehavioral.hpp"
+#include "simulator/StateArchive.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 
@@ -52,4 +53,13 @@ void FlipFlopCellBehavioral::evaluate(SimulationTime current_time, Simulator& si
 
     previous_clk = clk;
     _updateOutputWire(simulator, "Q", stored_value, current_time);
+}
+
+void FlipFlopCellBehavioral::saveOwnState(circuit::state::Writer& out) const {
+    out.logic(stored_value);
+    out.logic(previous_clk);
+}
+void FlipFlopCellBehavioral::restoreOwnState(circuit::state::Reader& in) {
+    stored_value = in.logic();
+    previous_clk = in.logic();
 }

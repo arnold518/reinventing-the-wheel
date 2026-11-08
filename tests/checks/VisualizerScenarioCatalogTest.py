@@ -20,7 +20,9 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
             'ff', 'sram', 'dram', 'rom', 'flash', 'memory-interface', 'memory-cache',
             'registers', 'rv32i-alu', 'rv32i-blocks', 'single', 'baseline',
             'prediction', 'advanced', 'memory-systems', 'examples', 'faults',
-            'performance', 'rv32im', 'rv32im-programs', 'system', 'games', 'developer'])
+            'performance', 'rv32im', 'rv32im-programs', 'system', 'games', 'developer',
+            # The game replay opens from a recording only (hidden from the menu).
+            'replays'])
         def aliases(group):
             return [option['key'] for option in options if option['group'] == group]
         def classes(group):
@@ -117,9 +119,12 @@ const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 const options = scenarioOptions(input.descriptors, input.catalog);
 assert.deepEqual(scenarioOptions([...input.descriptors].reverse(), input.catalog), options);
 const groups = menuOptions(options, input.catalog.groups);
-assert.deepEqual(groups.map(g => g.id), input.catalog.groups.map(g => g.id));
+// Every group but the hidden replays is in the menu, with every scenario
+// that is not a program variant or hidden (the replay opens from a link).
+assert.deepEqual(groups.map(g => g.id), input.catalog.groups.map(g => g.id).filter(id => id !== 'replays'));
 const menu = groups.flatMap(g => g.options);
-assert.deepEqual(menu, options.filter(o => !o.workload || o.core === 'single'));
+assert.deepEqual(menu, options.filter(o => !o.hidden && (!o.workload || o.core === 'single')));
+assert.deepEqual(options.filter(o => o.hidden).map(o => o.key), ['game-replay']);
 assert.equal(menu.filter(o => o.workload).length, 22);
 assert.equal(new Set(menu.map(o => o.key)).size, menu.length);
 for (const o of options) {

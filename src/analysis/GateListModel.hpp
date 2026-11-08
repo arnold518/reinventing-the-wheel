@@ -9,6 +9,8 @@
 class Component;
 class PinBase;
 
+namespace circuit::state { class Writer; class Reader; }
+
 namespace circuit::analysis {
 
 struct GateListProgram;
@@ -50,6 +52,9 @@ public:
     // are retained; observing adds no state, pins, or simulated work.
     std::vector<LogicValue> observation(size_t pin) const;
     size_t nodeCount() const;
+    // Saving a machine: every node's value, the leaves' outputs and the clock.
+    void saveState(circuit::state::Writer& out) const;
+    void restoreState(circuit::state::Reader& in);
 
 private:
     void propagate();

@@ -20,8 +20,8 @@
   },
   "cycles": 2180301,
   "instructions": 511921,
-  "executionSeconds": 4603.668301,
-  "peakNativeRssKiB": 180812,
+  "executionSeconds": 4659.87471,
+  "peakNativeRssKiB": 181052,
   "setupViolations": 0,
   "events": {
     "processed": 626962888,
@@ -34,7 +34,7 @@
     "wireChanges": 270268223,
     "pinChanges": 11010398
   },
-  "runnerSha256": "0d6e249911adaa2a0988a1c8b03776db841ec2280027951c4c1d23a7c11b7edf",
+  "runnerSha256": "e539a3c545b60c279fdce837c5a6b7215711d32e8abc7847f8675ad2fb130185",
   "elfSha256": "34b76d06920e23e0feeb4163cfa2ac5c16cfacf4e2b1274265c56df17f9ea1ad",
   "batchesSha256": "97d58ef358af4c353d56e5237c772e82327f724fa6cd386b265d697803e4a3b9",
   "expectedSha256": "ea6d2c1ed84acb8b03e0bf3d76c4191e32aa5125aadf3fa82b0df2080c5edf3f",
@@ -42,7 +42,10 @@
   "period": 4500,
   "topologySha256": "711f64c21dad0cec4469bbdc61fb9c361613b61722f8d02955fb4c501ed49790",
   "buildManifestSha256": "2b4946640700d9ef501f31be896ece0b6f0f807736f3532326d07c25aeeaafe2",
-  "playlistSha256": "57a30aa623895222d42d3cdf14f493318e253eed9fd0d026e28467d8c54b876c",
+  "playlistSha256": "2008ec4cb15e408df203a28da111da21e7b4364e8aee32ba62aea428f530dd74",
   "sourceManifest": "../source-manifest.json",
-  "compressed": true
+  "compressed": true,
+  "saves": 370,
+  "savesCompressedBytes": 13634789,
+  "savesIndexSha256": "9e2e6d29bdcce6aa7d74f9a74f5ef4711880ceec9d402bb101a3c3b33b793657"
 }

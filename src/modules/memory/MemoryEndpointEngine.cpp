@@ -1,4 +1,5 @@
 #include "MemoryEndpointEngine.hpp"
+#include "simulator/StateArchive.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
 #include "components/TimingProfile.hpp"
 #include "modules/basic/DFlipFlopTiming.hpp"
@@ -266,6 +267,29 @@ DeviceModel::DeviceModel(size_t width, EndpointConfig c, LogicValue fill)
     outputs["READ_DATA"] = Bits(width, Z);
     for (auto p : {"BUSY", "ERROR", "READ_VALID", "FAULT"}) outputs[p] = {L};
 }
+void saveSignals(circuit::state::Writer& out, const Signals& signals) {
+    out.size(signals.size());
+    for (const auto& [name, bits] : signals) { out.text(name); out.logic(bits); }
+}
+Signals restoreSignals(circuit::state::Reader& in) {
+    Signals signals;
+    for (size_t i = 0, n = in.size(); i < n; ++i) { auto name = in.text(); signals[name] = in.logicList(); }
+    return signals;
+}
+void DeviceModel::saveState(circuit::state::Writer& out) const {
+    if (!savesState()) throw std::logic_error("This memory technology's model cannot be saved yet");
+    storage.saveState(out);
+    out.time(due_);
+    saveSignals(out, outputs);
+    out.logic(previous_clock_);
+}
+void DeviceModel::restoreState(circuit::state::Reader& in) {
+    if (!savesState()) throw std::logic_error("This memory technology's model cannot be restored yet");
+    storage.restoreState(in);
+    due_ = in.time();
+    outputs = restoreSignals(in);
+    previous_clock_ = in.logic();
+}
 bool DeviceModel::edge(const Signals& s) {
     const auto clk = signal(s, "CLK")[0];
     const bool edge = previous_clock_ == L && clk == H; previous_clock_ = clk; return edge;
@@ -283,9 +307,11 @@ void DeviceModel::writeWord(SimulationTime t, uint32_t word, const Bits& data, c
         storage.writeLogic(t, word * (width_ / 8) + byte, lane, true);
     }
 }
+// Saves everything it holds: the base model's storage, outputs and clock.
 class FFDeviceModel final : public DeviceModel {
 public:
     FFDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X) {}
+    bool savesState() const override { return true; }
     void update(SimulationTime t, const Signals& s) override {
         const bool rising = edge(s); const auto word = number(signal(s, "WORD_ADDR", 32));
         if (rising && signal(s, "WE") != Bits{L})
@@ -510,5 +536,39 @@ std::unique_ptr<DeviceModel> makeDeviceModel(size_t w, Technology t, EndpointCon
     case Technology::NORFlash: return std::make_unique<NORFlashDeviceModel>(w, c);
     default: throw std::invalid_argument("A container is an endpoint, not a physical technology model");
     }
+}
+void NativeSequence::saveState(circuit::state::Writer& out) const {
+    for (bool flag : {done, available, last, space, access_, writing_, shown_start_, burst_, active_, waiting_, presenting_,
+                      is_write_, is_program_, is_erase_, is_burst_, row_known_, refreshing_, refresh_pending_})
+        out.boolean(flag);
+    out.logic(result);
+    out.u8(static_cast<uint8_t>(status));
+    saveSignals(out, outputs);
+    out.logic(word_reg_); out.logic(data_reg_); out.logic(mask_reg_);
+    out.size(beats_left_);
+    for (const auto* bits : {&shown_.op, &shown_.address, &shown_.data, &shown_.mask}) out.logic(*bits);
+    out.size(wait_count_);
+    out.flags(needs_);
+    out.u32(current_);
+    out.u32(open_row_);
+    out.size(refresh_counter_);
+}
+void NativeSequence::restoreState(circuit::state::Reader& in) {
+    for (bool* flag : {&done, &available, &last, &space, &access_, &writing_, &shown_start_, &burst_, &active_, &waiting_, &presenting_,
+                       &is_write_, &is_program_, &is_erase_, &is_burst_, &row_known_, &refreshing_, &refresh_pending_})
+        *flag = in.boolean();
+    result = in.logicList();
+    const auto code = in.u8();
+    if (code > static_cast<uint8_t>(Status::InvalidRequest)) in.fail("an invalid memory status");
+    status = static_cast<Status>(code);
+    outputs = restoreSignals(in);
+    word_reg_ = in.logicList(); data_reg_ = in.logicList(); mask_reg_ = in.logicList();
+    beats_left_ = static_cast<size_t>(in.u64());
+    for (auto* bits : {&shown_.op, &shown_.address, &shown_.data, &shown_.mask}) *bits = in.logicList();
+    wait_count_ = static_cast<size_t>(in.u64());
+    needs_ = in.flags();
+    current_ = in.u32();
+    open_row_ = in.u32();
+    refresh_counter_ = static_cast<size_t>(in.u64());
 }
 }

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "topologySha256": "dea71d232b31fb8c975818917aec432b9cdb7e4a3b8ace01136063af9839ff27",
+  "nativeCaptureSha256": "b954167a3af7b62e837b7a8d0554edaaaad4a214e03f94937fbc6b12b8ae2fb6",
+  "preparedCaptureSha256": "886bb9ce1686ce3b046357d88e99f543e39292938e1b60e197a72ded5eecac78",
+  "layoutSha256": "4a73f2990421691b89a4444d4070e536ed19d30fe0ebe9c27b41e683458d4aa9",
+  "layoutBytes": 1585164,
+  "captureBytes": 14270251,
+  "sharedLayout": "part-0000.layout.json"
+}

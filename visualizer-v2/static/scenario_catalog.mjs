@@ -52,8 +52,9 @@ export function scenarioOptions(descriptors, catalog) {
 
 // A fixed program occupies one menu row. Core and prediction choose the
 // existing registered scenario; aliases/layout/profile identities do not move.
+// A hidden scenario (the game replay) opens only from a link.
 export function menuOptions(options, groups) {
-  const visible = options.filter(o => !o.workload || o.core === 'single');
+  const visible = options.filter(o => !o.hidden && (!o.workload || o.core === 'single'));
   // The shared option builder already applies semantic component/program
   // ranks. Alphabetizing here would silently override that order.
   return groups.map(group => ({...group, options: visible.filter(o => o.group === group.id)})).filter(g => g.options.length);

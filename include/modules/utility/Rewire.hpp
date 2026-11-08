@@ -42,6 +42,7 @@ public:
 
     static constexpr const char* TypeName = "Rewire";
     const char* getTypeName() const override { return TypeName; }
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
     bool validateMappings() const;
     size_t getTotalInputBits() const;
     size_t getTotalOutputBits() const;

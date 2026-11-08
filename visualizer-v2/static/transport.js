@@ -4,7 +4,7 @@
 
   async function wasmTransport() {
     if (!wasmTransportPromise) {
-      wasmTransportPromise = import("./wasm_transport.js?v=20")
+      wasmTransportPromise = import("./wasm_transport.js?v=25")
         .then((module) => module.createWasmTransport());
     }
     return wasmTransportPromise;
@@ -12,9 +12,10 @@
 
   global.visualizerRequest = async function visualizerRequest(url, options) {
     const recording = new URLSearchParams(global.location.search).get("recording");
-    if (recording) {
+    // A recorded game with machine saves runs in the simulator (app.js).
+    if (recording && !global.circuitsimGameSession) {
       if (!recordedTransportPromise) {
-        recordedTransportPromise = import("./recorded_circuit_transport.mjs?v=4")
+        recordedTransportPromise = import("./recorded_circuit_transport.mjs?v=5")
           .then((module) => module.createRecordedCircuitTransport(recording));
       }
       return (await recordedTransportPromise).request(url, options);

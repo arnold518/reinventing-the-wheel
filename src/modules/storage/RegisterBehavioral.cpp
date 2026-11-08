@@ -1,4 +1,5 @@
 #include "modules/storage/RegisterBehavioral.hpp"
+#include "simulator/StateArchive.hpp"
 #include "modules/storage/Register.hpp"
 
 RegisterBehavioral::RegisterBehavioral(std::string name, size_t width)
@@ -32,4 +33,14 @@ void RegisterBehavioral::evaluate(SimulationTime time, Simulator& simulator) {
     registerStep(stored_, previous_clock_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WE"),
                  getInputPinDynamic("D")->getValueAsVector());
     _updateOutputWireDynamic(simulator, "Q", stored_, time);
+}
+
+void RegisterBehavioral::saveOwnState(circuit::state::Writer& out) const {
+    out.logic(stored_);
+    out.logic(previous_clock_);
+}
+void RegisterBehavioral::restoreOwnState(circuit::state::Reader& in) {
+    stored_ = in.logicList();
+    in.expectSize(stored_, width_, "register bits");
+    previous_clock_ = in.logic();
 }

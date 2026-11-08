@@ -1,4 +1,5 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
+#include "simulator/StateArchive.hpp"
 #include "MemoryEndpointEngine.hpp"
 
 using namespace circuit::memory;
@@ -26,6 +27,37 @@ BehavioralMemoryEndpoint::BehavioralMemoryEndpoint(std::string n, size_t w, Tech
     c.validate(w, t); state_ = std::make_unique<State>(w, t, c);
 }
 BehavioralMemoryEndpoint::~BehavioralMemoryEndpoint() = default;
+BasicComponent::StateSupport BehavioralMemoryEndpoint::stateSupport() const {
+    return state_->device->savesState() ? StateSupport::Saved : StateSupport::Unknown;
+}
+void BehavioralMemoryEndpoint::saveOwnState(circuit::state::Writer& out) const {
+    const auto& s = *state_;
+    savePublished(out);
+    out.time(s.scheduled);
+    out.logic(s.pending);
+    out.logic(s.buffer.full);
+    out.logic(s.buffer.data);
+    out.logic(s.buffer.status);
+    s.sequence.saveState(out);
+    s.device->saveState(out);
+    for (const auto* bits : {&s.request.op, &s.request.address, &s.request.data, &s.request.mask}) out.logic(*bits);
+    out.logic(s.previous);
+    out.boolean(s.started);
+}
+void BehavioralMemoryEndpoint::restoreOwnState(circuit::state::Reader& in) {
+    auto& s = *state_;
+    restorePublished(in);
+    s.scheduled = in.time();
+    s.pending = in.logic();
+    s.buffer.full = in.logic();
+    s.buffer.data = in.logicList();
+    s.buffer.status = in.logicList();
+    s.sequence.restoreState(in);
+    s.device->restoreState(in);
+    for (auto* bits : {&s.request.op, &s.request.address, &s.request.data, &s.request.mask}) *bits = in.logicList();
+    s.previous = in.logic();
+    s.started = in.boolean();
+}
 Technology BehavioralMemoryEndpoint::technology() const noexcept { return state_->technology; }
 bool BehavioralMemoryEndpoint::hasStarted() const noexcept { return state_->started; }
 std::map<std::string, uint64_t> BehavioralMemoryEndpoint::commandCounts() const { return state_->device->commandCounts(); }

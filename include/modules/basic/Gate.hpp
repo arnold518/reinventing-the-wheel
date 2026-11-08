@@ -47,6 +47,7 @@ public:
     static constexpr const char* TypeName = "NOTGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }
@@ -60,6 +61,7 @@ public:
     static constexpr const char* TypeName = "ANDGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }
@@ -73,6 +75,7 @@ public:
     static constexpr const char* TypeName = "NANDGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }
@@ -86,6 +89,7 @@ public:
     static constexpr const char* TypeName = "ORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }
@@ -99,6 +103,7 @@ public:
     static constexpr const char* TypeName = "NORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }
@@ -112,6 +117,7 @@ public:
     static constexpr const char* TypeName = "XORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
 protected:
     void pinsChanged() noexcept override { inputs_.invalidate(); }
     bool inertialDelay() const override { return true; }

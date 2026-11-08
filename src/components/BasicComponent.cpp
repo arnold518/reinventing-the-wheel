@@ -1,5 +1,6 @@
 #include "components/BasicComponent.hpp"
 #include "basic/PinBase.hpp"
+#include "simulator/StateArchive.hpp"
 #include <bit>
 #include <algorithm>
 #include <cstdlib>
@@ -24,6 +25,7 @@ size_t setup_violations = 0;
 
 size_t BasicComponent::setupViolations() { return setup_violations; }
 void BasicComponent::resetSetupViolations() { setup_violations = 0; }
+void BasicComponent::setSetupViolations(size_t count) { setup_violations = count; }
 
 // The delay table, prepared for use while simulating.
 struct BasicComponent::TimedOutputs {
@@ -442,5 +444,111 @@ void BasicComponent::_updateOutputPacked(Simulator& simulator, const std::shared
         simulator.scheduleEvent(circuit::makeEvent<WireUpdateEvent>(at, wire, new_value.resized(pin->getWidth(), wire->getWidth())));
     } else {
         simulator.recordPinChange(at, pin, new_value.toVector(pin->getWidth()));
+    }
+}
+
+namespace {
+void putBytesList(circuit::state::Writer& out, const std::vector<std::vector<uint8_t>>& lists) {
+    out.size(lists.size());
+    for (const auto& list : lists) out.bytes(list);
+}
+std::vector<std::vector<uint8_t>> getBytesList(circuit::state::Reader& in) {
+    std::vector<std::vector<uint8_t>> lists(in.size());
+    for (auto& list : lists) list = in.bytes();
+    return lists;
+}
+}
+
+void BasicComponent::saveTimingState(circuit::state::Writer& out, const std::function<int64_t(const Event*)>& event_number) const {
+    // One flag byte; most parts (plain gates) have neither a table nor a
+    // pending change, so they cost one byte.
+    out.u8(static_cast<uint8_t>((timed_ ? 1 : 0) | (pending_changes_.empty() ? 0 : 2)));
+    if (timed_) {
+        const auto& t = *timed_;
+        out.packedList(t.last_packed);
+        out.size(t.last.size());
+        for (const auto& bits : t.last) out.logic(bits);
+        out.flags(t.changed);
+        out.size(t.changed_at.size());
+        for (const auto& at : t.changed_at) out.optionalTime(at);
+        out.boolean(t.first);
+        out.boolean(t.fresh);
+        out.flags(t.explained);
+        out.times(t.pending);
+        putBytesList(out, t.twin_value);
+        out.boolean(t.twin_answered);
+        out.size(t.bit_changed.size());
+        for (const auto& bits : t.bit_changed) out.signedTimes(bits);
+        out.signedTimes(t.settled);
+        out.times(t.released);
+        out.times(t.before);
+        out.flags(t.disturbed);
+        out.flags(t.published_now);
+        out.times(t.window_start);
+        out.times(t.released_before);
+        out.packedList(t.published);
+        out.boolean(t.twin_state != nullptr);
+        if (t.twin_state) t.twin->saveState(t.twin_state.get(), out);
+    }
+    if (pending_changes_.empty()) return;
+    out.size(pending_changes_.size());
+    for (const auto& [pin, changes] : pending_changes_) {
+        out.text(pin);
+        out.size(changes.size());
+        for (const auto& change : changes) {
+            out.time(change.time);
+            out.logic(change.value);
+            const auto event = change.event.lock();
+            out.i64(event ? event_number(event.get()) : -1);
+        }
+    }
+}
+
+void BasicComponent::restoreTimingState(circuit::state::Reader& in, const std::function<std::shared_ptr<Event>(int64_t)>& event_at) {
+    const auto flags = in.u8();
+    if (flags > 3) in.fail("invalid part flags for " + getID());
+    if (bool(flags & 1) != (timed_ != nullptr)) in.fail(getID() + " has a delay table in only one of the save and the machine");
+    if (timed_) {
+        auto& t = *timed_;
+        const size_t inputs = t.inputs.size(), outputs = t.outputs.size();
+        t.last_packed = in.packedList(); in.expectSize(t.last_packed, inputs, "last input values");
+        t.last.assign(in.size(), {});
+        for (auto& bits : t.last) bits = in.logicList();
+        in.expectSize(t.last, inputs, "last input bits");
+        t.changed = in.flags(); in.expectSize(t.changed, inputs, "changed inputs");
+        t.changed_at.assign(in.size(), std::nullopt);
+        for (auto& at : t.changed_at) at = in.optionalTime();
+        in.expectSize(t.changed_at, inputs, "input change times");
+        t.first = in.boolean();
+        t.fresh = in.boolean();
+        t.explained = in.flags(); in.expectSize(t.explained, outputs, "explained outputs");
+        t.pending = in.times(); in.expectSize(t.pending, outputs, "pending outputs");
+        t.twin_value = getBytesList(in);
+        t.twin_answered = in.boolean();
+        t.bit_changed.assign(in.size(), {});
+        for (auto& bits : t.bit_changed) bits = in.signedTimes();
+        t.settled = in.signedTimes();
+        t.released = in.times();
+        t.before = in.times();
+        t.disturbed = in.flags();
+        t.published_now = in.flags();
+        t.window_start = in.times();
+        t.released_before = in.times();
+        t.published = in.packedList(); in.expectSize(t.published, outputs, "published outputs");
+        if (in.boolean() != (t.twin_state != nullptr)) in.fail(getID() + " has gate-list state in only one of the save and the machine");
+        if (t.twin_state) t.twin->restoreState(t.twin_state.get(), in);
+    }
+    pending_changes_.clear();
+    if (!(flags & 2)) return;
+    pending_changes_.assign(in.size(), {});
+    for (auto& [pin, changes] : pending_changes_) {
+        pin = in.text();
+        changes.assign(in.size(), {});
+        for (auto& change : changes) {
+            change.time = in.time();
+            change.value = in.logic();
+            const auto number = in.i64();
+            if (number >= 0) change.event = event_at(number);
+        }
     }
 }

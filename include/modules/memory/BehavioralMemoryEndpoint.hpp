@@ -17,6 +17,11 @@ public:
     // read, write, read_burst); instrumentation for experiments.
     std::map<std::string, uint64_t> commandCounts() const;
     void evaluate(SimulationTime, Simulator&) override;
+    // Saving a machine: the handshake, response buffer, access sequence and
+    // the device model with its storage. Only audited technologies (FF).
+    StateSupport stateSupport() const override;
+    void saveOwnState(circuit::state::Writer&) const override;
+    void restoreOwnState(circuit::state::Reader&) override;
     const MemoryStorage& memoryStorage() const override;
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t>&) override;
     // Image provisioning only, before the first simulator evaluation. This is

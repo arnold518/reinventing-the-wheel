@@ -6,8 +6,11 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+namespace circuit::state { class Writer; class Reader; }
 
 namespace circuit {
 
@@ -42,6 +45,13 @@ struct DelayTwin {
     // Null for a part without state.
     struct State { virtual ~State() = default; };
     virtual std::unique_ptr<State> start() const { return nullptr; }
+    // Saving a machine: a twin whose start() returns state saves and restores it.
+    virtual void saveState(const State*, circuit::state::Writer&) const {
+        throw std::logic_error("This delay twin cannot save its state");
+    }
+    virtual void restoreState(State*, circuit::state::Reader&) const {
+        throw std::logic_error("This delay twin cannot restore its state");
+    }
     // changed[i][bit]: tick of that bit's last change, -1 if it never changed.
     // settled[o]: tick by which output o is final, -1 if nothing can move it.
     // value[o][bit]: what the gates end on there: 0, 1, or 2 for unknown.

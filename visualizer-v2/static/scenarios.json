@@ -108,6 +108,10 @@
     {
       "id": "developer",
       "title": "Developer circuits"
+    },
+    {
+      "id": "replays",
+      "title": "Long game replays (opened from a recording)"
     }
   ],
   "aliases": {
@@ -554,6 +558,9 @@
     ],
     "ComputerSystemStructureScenarioTest": [
       "computer-system-structure"
+    ],
+    "GameReplayScenarioTest": [
+      "game-replay"
     ]
   },
   "components": {
@@ -1862,6 +1869,14 @@
       "root": "COMPUTER_SYSTEM_ROOT",
       "order": 13,
       "fidelity": "visual"
+    },
+    "GameReplayScenarioTest": {
+      "title": "Long game · replay from a saved machine state",
+      "group": "replays",
+      "order": 0,
+      "fidelity": "visual",
+      "root": "MACHINE",
+      "hidden": true
     }
   },
   "programs": [

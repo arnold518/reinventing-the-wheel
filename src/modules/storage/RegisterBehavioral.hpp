@@ -16,6 +16,9 @@ public:
     RegisterBehavioral(std::string name, size_t width);
     const char* getTypeName() const override { return type_.c_str(); }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Saved; }
+    void saveOwnState(circuit::state::Writer& out) const override;
+    void restoreOwnState(circuit::state::Reader& in) override;
 
 private:
     size_t width_;

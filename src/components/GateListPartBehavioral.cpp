@@ -9,6 +9,7 @@
 #include "modules/memory/FlipFlopCell.hpp"
 #include "basic/WireBase.hpp"
 #include "simulator/Event.hpp"
+#include "simulator/StateArchive.hpp"
 #include <map>
 #include <mutex>
 #include <stdexcept>
@@ -65,6 +66,11 @@ public:
         :Primitive(std::move(name),std::move(type),std::move(pins)),
           program_(std::move(program)),model_(program_->gates){}
     void attachDelays(){setDelays(program_->delays);}
+    // The gates' node values and what was last published; the pin and value
+    // caches are rebuilt on each evaluation.
+    StateSupport stateSupport() const override {return StateSupport::Saved;}
+    void saveOwnState(circuit::state::Writer& out) const override {savePublished(out);model_.saveState(out);}
+    void restoreOwnState(circuit::state::Reader& in) override {restorePublished(in);model_.restoreState(in);}
     void evaluate(SimulationTime time,Simulator& sim) override {
         if(inputs_.empty()){
             for(const auto&[name,width]:model_.inputs())inputs_.push_back(getInputPinDynamic(name));

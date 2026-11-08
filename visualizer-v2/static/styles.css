@@ -542,6 +542,55 @@ body.program-view #topbar {
   min-width: 0;
 }
 
+/* A recorded game with machine saves: the frame bar spans the whole game;
+   the event bar under it spans the stretch simulated since the last frame. */
+body.game-session .timeline-track {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2px;
+}
+#game-frame-row {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+#game-frames {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+/* One mark per frame under the frame bar, like the checkpoint marks. */
+#game-frame-ticks {
+  position: absolute;
+  top: calc(50% + 6px);
+  right: 0;
+  left: 0;
+  height: 4px;
+  pointer-events: none;
+}
+#game-frame-ticks span {
+  position: absolute;
+  top: 0;
+  left: calc(8px + (100% - 16px) * var(--at));
+  width: 1px;
+  height: 4px;
+  background: var(--text-faint);
+  opacity: 0.7;
+}
+body.game-session .timeline-track {
+  gap: 6px;
+}
+body.game-session #time-slider {
+  height: 10px;
+  opacity: 0.85;
+}
+/* The event bar's checkpoint marks sit under it, not between the bars. */
+body.game-session #checkpoint-ticks {
+  top: auto;
+  bottom: -5px;
+}
+
 #checkpoint-ticks {
   position: absolute;
   top: calc(50% + 7px);

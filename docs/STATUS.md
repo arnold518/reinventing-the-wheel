@@ -238,10 +238,14 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
-- [Long games in Visual](records/2026-11-03-visual-long-games.md): prepared,
-  not started. Recordings are now stored compressed (Compact: 58 → 3.5 MB);
-  a Visual smoke campaign passed and opens in the viewer. The six-game
-  Visual campaign (about 25 hours) is ready to launch.
+- [Replayable recordings](records/2026-11-06-replayable-recordings.md): a
+  whole machine saves and restores exactly (`circuit::state`); the six long
+  games are published in Compact and in Visual with a save after every frame
+  (35 MB and 86 MB of saves), and such a recording opens in the page's
+  simulator: frames by the frame bar, events by ▶ and Play, memory (and in
+  Visual the registers) inspectable. Open: ◀ cannot go back past a frame's
+  start, the Visual saves are still version 1, and the full CTest and web
+  suites have not been run on this work.
 
 - [Game scenarios](records/2026-11-03-game-scenarios-plan.md): implemented
   and checked natively, in WebAssembly and in the browser. All six long

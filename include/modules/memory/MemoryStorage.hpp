@@ -9,6 +9,8 @@
 #include <set>
 #include <vector>
 
+namespace circuit::state { class Writer; class Reader; }
+
 // Host-side storage only: no pins, timing, CPU formatting, or device behavior.
 // Each byte uses a value and known-bit mask; Z is stored as X.
 class MemoryStorage {
@@ -49,6 +51,11 @@ public:
     std::map<uint32_t, uint8_t> getByteWritesInTimeRange(SimulationTime start, SimulationTime end) const;
     size_t allocatedDataBytes() const noexcept;
     size_t historicalByteCount() const noexcept { return history_.size(); }
+    // Saving a machine: the fill and every 256-byte block that differs from
+    // it. History is not saved; a restore starts a new epoch at the restored
+    // contents (history on) or keeps none (history off).
+    void saveState(circuit::state::Writer& out) const;
+    void restoreState(circuit::state::Reader& in);
 
 private:
     struct Entry { SimulationTime time; size_t order; PackedByte byte; };

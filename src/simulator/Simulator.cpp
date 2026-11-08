@@ -186,6 +186,19 @@ void Simulator::setCircuitStateAtTime(SimulationTime target_time) {
     current_time = target_time;
 }
 
+std::vector<SimulationTime> Simulator::uniqueTimestampsAfter(SimulationTime after) const {
+    std::vector<SimulationTime> times;
+    const auto collect = [&](const auto& log) {
+        for (const auto& [_, history] : log)
+            for (auto entry = history.rbegin(); entry != history.rend() && entry->first > after; ++entry) times.push_back(entry->first);
+    };
+    collect(_log);
+    collect(_pin_log);
+    std::sort(times.begin(), times.end());
+    times.erase(std::unique(times.begin(), times.end()), times.end());
+    return times;
+}
+
 std::vector<SimulationTime> Simulator::getUniqueTimestamps() const {
     std::set<SimulationTime> timestamps;
     timestamps.insert(0);
@@ -283,6 +296,67 @@ const SimulatorPerformanceCounters& Simulator::getPerformanceCounters() const no
 void Simulator::resetPerformanceCounters() noexcept {
     performance_counters_ = {};
     performance_counters_.maximum_event_queue_depth = event_queue.size();
+}
+
+std::vector<Simulator::QueuedEventRecord> Simulator::queuedEvents() const {
+    auto copy = event_queue;
+    std::vector<QueuedEventRecord> result;
+    result.reserve(copy.size());
+    for (; !copy.empty(); copy.pop()) {
+        const auto& entry = copy.top();
+        if (!entry.event->cancelled) result.push_back({entry.time, entry.priority, entry.order, entry.event});
+    }
+    return result;
+}
+
+std::vector<Simulator::HeadlessPinState> Simulator::headlessPinStates() const {
+    std::vector<HeadlessPinState> result;
+    for (const auto& [pin, state] : _headless_pin_state)
+        if (!state.empty()) result.push_back({pin, state.back()});
+    return result;
+}
+
+void Simulator::restoreScheduling(SimulationTime now, uint64_t next_order, std::vector<QueuedEventRecord> events,
+                                  const SimulatorPerformanceCounters& counters, std::vector<HeadlessPinState> headless) {
+    ++history_revision_;
+    while (!event_queue.empty()) event_queue.pop();
+    _log.clear();
+    _pin_log.clear();
+    _headless_pin_state.clear();
+    current_time = now;
+    next_scheduling_order = next_order;
+    for (auto& record : events) {
+        if (!record.event || record.event->time != record.time || record.event->getPriority() != record.priority || record.order >= next_order)
+            throw std::invalid_argument("Restored event does not match its record");
+        record.event->scheduling_order = record.order;
+        event_queue.push({record.time, record.priority, record.order, std::move(record.event)});
+    }
+    performance_counters_ = counters;
+    for (auto& [pin, state] : headless) _headless_pin_state[pin].push_back(std::move(state));
+}
+
+void Simulator::trimHistoryBefore(SimulationTime start) {
+    const auto trim = [start](auto& history) {
+        auto later = std::upper_bound(history.begin(), history.end(), start,
+            [](SimulationTime time, const auto& entry) { return time < entry.first; });
+        if (later == history.begin()) return;
+        auto kept = std::prev(later);
+        kept->first = start;
+        history.erase(history.begin(), kept);
+        // Give the space back: a session trims again and again.
+        if (history.capacity() > 2 * history.size() + 8) history.shrink_to_fit();
+    };
+    for (auto& [wire, history] : _log) trim(history);
+    for (auto& [pin, history] : _pin_log) trim(history);
+    ++history_revision_;
+}
+
+void Simulator::seedHistory(SimulationTime now, const std::vector<std::shared_ptr<WireBase>>& wires,
+                            const std::vector<HeadlessPinState>& pins) {
+    if (!history_recording_enabled_) return;
+    ++history_revision_;
+    for (const auto& wire : wires) _log[wire].push_back({now, wire->getValueVector()});
+    for (const auto& [pin, state] : pins) _pin_log[pin].push_back(state);
 }
 
 void Simulator::clear() {

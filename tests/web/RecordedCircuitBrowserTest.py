@@ -1,4 +1,9 @@
-"""Actual compiled game checkpoints displayed by the original circuit canvas."""
+"""Actual compiled game checkpoints displayed by the original circuit canvas.
+
+This is the frames-only viewer, used for a recording without machine saves.
+The published games all carry saves (they open as game sessions, checked by
+GameReplayBrowserTest), so the page is served the recording with its saves
+index answered 404, as for a recording made without saves."""
 from pathlib import Path
 from urllib.parse import urljoin
 import gzip,hashlib,json,os,shutil,sys
@@ -27,6 +32,7 @@ with sync_playwright() as playwright:
     page=context.new_page();errors=[];requests=[]
     page.on('pageerror',lambda error:errors.append(str(error)))
     page.on('request',lambda request:requests.append(request.url))
+    page.route('**/saves/index.json',lambda route:route.fulfill(status=404))
     page.goto(urljoin(base,query),wait_until='domcontentloaded')
     page.wait_for_function("['ready','error'].includes(document.body.dataset.circuitsimStatus)",timeout=120_000)
     assert page.locator('body').get_attribute('data-circuitsim-status')=='ready',(errors,page.locator('body').inner_text()[-1000:])
@@ -34,7 +40,11 @@ with sync_playwright() as playwright:
     assert page.evaluate('app.components.get(app.rootId).type')=='ComputerSystem'
     assert page.locator('#recording-status').is_visible()
     assert page.locator('#timing-select').is_disabled()
-    assert page.locator('#fidelity-select').is_disabled()
+    # The Fidelity menu offers only the fidelities this game was recorded in
+    # (one: locked; Compact and Visual: a choice between them).
+    recorded=page.evaluate("[...document.querySelectorAll('#fidelity-select option')].filter(o=>!o.disabled).map(o=>o.value)")
+    assert set(recorded)<={'compact','visual'} and page.evaluate('app.profile.fidelityPreset') in recorded,recorded
+    assert page.locator('#fidelity-select').is_disabled()==(len(recorded)<2),recorded
     components=snapshot['topology']['components']
     display=next(c['id'] for c in components if c.get('deviceViewKind')=='display')
     buttons=next(c['id'] for c in components if c.get('deviceViewKind')=='keyboard')

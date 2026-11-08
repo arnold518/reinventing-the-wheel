@@ -4,6 +4,10 @@
     {
       "manifest": "manifest.json",
       "label": ""
+    },
+    {
+      "manifest": "visual/manifest.json",
+      "label": " \u00b7 Visual"
     }
   ]
 }

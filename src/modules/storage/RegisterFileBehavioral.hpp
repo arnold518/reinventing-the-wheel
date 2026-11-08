@@ -15,6 +15,10 @@ public:
     RegisterFileBehavioral(std::string,size_t width,size_t count,RegisterFileConfig);
     const char* getTypeName()const override{return type_.c_str();}
     void evaluate(SimulationTime,Simulator&)override;
+    StateSupport stateSupport()const override{return StateSupport::Saved;}
+    void saveOwnState(circuit::state::Writer&)const override;
+    void restoreOwnState(circuit::state::Reader&)override;
+    void stateRestored(SimulationTime,const Simulator&)override;
     Snapshot getRegisterStateAtTime(SimulationTime)const override;
 };
 }

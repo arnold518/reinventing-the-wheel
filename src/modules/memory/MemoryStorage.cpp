@@ -1,5 +1,6 @@
 #include "modules/memory/MemoryStorage.hpp"
 #include "simulator/SignalTrace.hpp"
+#include "simulator/StateArchive.hpp"
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
@@ -238,4 +239,60 @@ std::map<uint32_t, uint8_t> MemoryStorage::getByteWritesInTimeRange(SimulationTi
     for (const auto& write : bus_writes_)
         if (write.time > start && write.time <= end) result[write.address] = binary(write.byte);
     return result;
+}
+
+namespace {
+constexpr size_t SavedBlockBytes = 256;
+}
+void MemoryStorage::saveState(circuit::state::Writer& out) const {
+    out.size(capacity_);
+    out.boolean(limits_.paged);
+    out.u8(live_fill_.value);
+    out.u8(live_fill_.known);
+    std::vector<size_t> blocks;
+    for (size_t block = 0; block * SavedBlockBytes < capacity_; ++block) {
+        const size_t end = std::min(capacity_, (block + 1) * SavedBlockBytes);
+        for (size_t at = block * SavedBlockBytes; at < end; ++at)
+            if (!(currentByte(static_cast<uint32_t>(at)) == live_fill_)) { blocks.push_back(block); break; }
+    }
+    out.size(blocks.size());
+    for (const size_t block : blocks) {
+        out.u32(static_cast<uint32_t>(block));
+        const size_t start = block * SavedBlockBytes, end = std::min(capacity_, start + SavedBlockBytes);
+        std::vector<uint8_t> values, known;
+        for (size_t at = start; at < end; ++at) {
+            const auto byte = currentByte(static_cast<uint32_t>(at));
+            values.push_back(byte.value);
+            known.push_back(byte.known);
+        }
+        out.bytes(values);
+        out.bytes(known);
+    }
+}
+void MemoryStorage::restoreState(circuit::state::Reader& in) {
+    if (in.u64() != capacity_) in.fail("a memory of another size");
+    if (in.boolean() != limits_.paged) in.fail("a memory paged in only one of the save and the machine");
+    live_fill_.value = in.u8();
+    live_fill_.known = in.u8();
+    pages_.clear();
+    std::fill(bytes_.begin(), bytes_.end(), live_fill_);
+    for (size_t i = 0, n = in.size(); i < n; ++i) {
+        const size_t block = in.u32(), start = block * SavedBlockBytes;
+        if (start >= capacity_) in.fail("a memory block outside the memory");
+        const auto values = in.bytes(), known = in.bytes();
+        const size_t count = std::min(capacity_, start + SavedBlockBytes) - start;
+        if (values.size() != count || known.size() != count) in.fail("a memory block of the wrong size");
+        for (size_t at = 0; at < count; ++at) setByte(static_cast<uint32_t>(start + at), {values[at], known[at]});
+    }
+    history_.clear(); resets_.clear(); bus_writes_.clear(); touched_words_.clear(); order_ = 0; history_cost_ = 0;
+    if (history_enabled_) {
+        // The new epoch's baseline is a dense copy, so the memory must fit its
+        // resident budget densely (the games machine's 256 KB RAM does).
+        if (capacity_ > limits_.max_resident_bytes / sizeof(PackedByte))
+            throw std::length_error("This memory is too large to start its history at a restored state");
+        epoch_baseline_.resize(capacity_);
+        for (size_t at = 0; at < capacity_; ++at) epoch_baseline_[at] = currentByte(static_cast<uint32_t>(at));
+    } else {
+        std::vector<PackedByte>{}.swap(epoch_baseline_);
+    }
 }

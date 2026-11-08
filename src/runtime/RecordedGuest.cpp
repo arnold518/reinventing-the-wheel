@@ -9,6 +9,10 @@
 #include "components/selection/BuildManifest.hpp"
 #include "rv32im/RV32IMInstruction.hpp"
 #include "simulator/SimulationTest.hpp"
+#include "simulator/MachineState.hpp"
+#include "simulator/StateArchive.hpp"
+#include <bit>
+#include <cstring>
 #include "basic/PinBase.hpp"
 #include "basic/WireBase.hpp"
 #include "simulator/Event.hpp"
@@ -129,6 +133,54 @@ circuit::ParameterMap recordedMachineParameters(const RecordedGuestOptions& o) {
     return parameters;
 }
 namespace {
+// Saves of a checked run: the machine (circuit::state) and the runner's
+// independent models, so a resumed run keeps every check.
+constexpr uint32_t RunTag=0x52554e21;      // "RUN!"
+constexpr uint32_t ResultTag=0x52534c54;   // "RSLT"
+constexpr uint32_t RunEndTag=0x52454e44;   // "REND"
+constexpr uint32_t RunVersion=2;
+uint64_t mixHash(uint64_t h,const void* data,size_t n){const auto* p=static_cast<const unsigned char*>(data);for(size_t i=0;i<n;++i){h^=p[i];h*=1099511628211ull;}return h;}
+// Every number as 64 bits, so native and WebAssembly (32-bit size_t) agree.
+template<class T> uint64_t mixValue(uint64_t h,T v){const uint64_t x=static_cast<uint64_t>(v);return mixHash(h,&x,sizeof x);}
+uint64_t mixText(uint64_t h,const std::string& t){return mixValue(mixHash(h,t.data(),t.size()),uint64_t(t.size()));}
+// What a save must have been made from: program, input and run options.
+uint64_t runIdentity(const rv32i::RV32IElfImage& elf,const std::vector<ButtonInput>& input,const RecordedGuestOptions& o){
+    uint64_t h=1469598103934665603ull;
+    for(const auto& s:elf.segments()){h=mixValue(h,s.address);h=mixValue(h,s.bytes.size());h=mixHash(h,s.bytes.data(),s.bytes.size());}
+    for(const auto& e:input){h=mixValue(h,e.tick);h=mixValue(h,e.sequence);h=mixValue(h,e.button);h=mixValue(h,e.down);}
+    for(const auto& batch:o.presentation_inputs){h=mixValue(h,batch.size());for(const auto& t:batch){h=mixValue(h,t.button);h=mixValue(h,t.down);}}
+    h=mixText(h,o.system);h=mixText(h,o.fidelity_profile);
+    for(auto v:{o.start_time,o.period,o.reset_release,o.origin})h=mixValue(h,v);
+    for(auto v:{o.machine.width,o.machine.height,o.machine.video_bytes,o.machine.console_depth,o.machine.button_depth})h=mixValue(h,v);
+    for(auto v:{o.machine.timer_divisor,o.machine.timer_frequency_hz})h=mixValue(h,v);
+    for(bool v:{o.machine.caches,o.machine.dram,o.compact_children,o.expanded_core})h=mixValue(h,v);
+    return h;
+}
+void putTransaction(circuit::state::Writer& w,const Transaction& t){for(auto v:{t.address,t.op,t.data,t.mask,t.value,t.status})w.u32(v);w.boolean(t.sampled);}
+Transaction getTransaction(circuit::state::Reader& r){Transaction t;for(auto* v:{&t.address,&t.op,&t.data,&t.mask,&t.value,&t.status})*v=r.u32();t.sampled=r.boolean();return t;}
+// The machine's RAM as plain bytes (an unknown byte reads 0, as an unwritten
+// byte of a functional memory does).
+std::vector<uint8_t> ramImage(const MemoryStorage& ram,size_t bytes){
+    const auto bits=ram.readLogic(0,bytes);std::vector<uint8_t> image(bytes,0);
+    for(size_t i=0;i<bytes;++i){uint8_t v=0;bool known=true;
+        for(unsigned b=0;b<8;++b){const auto x=bits[8*i+b];if(x==LogicValue::HIGH)v|=uint8_t(1u<<b);else if(x!=LogicValue::LOW)known=false;}
+        image[i]=known?v:0;}
+    return image;
+}
+// A functional memory as the bytes where it differs from the machine's RAM
+// (normally none: both see the same writes, a cycle apart at most).
+void putFunctional(circuit::state::Writer& w,const rv32i::RV32IFunctionalMemory& m,const std::vector<uint8_t>& ram){
+    const auto bytes=m.readBytes(0,m.sizeBytes());
+    std::vector<uint32_t> differ;for(uint32_t a=0;a<bytes.size();++a)if(bytes[a]!=ram[a])differ.push_back(a);
+    w.size(m.sizeBytes());w.size(differ.size());for(auto a:differ){w.u32(a);w.u8(bytes[a]);}
+}
+void getFunctional(circuit::state::Reader& r,rv32i::RV32IFunctionalMemory& m,const std::vector<uint8_t>& ram){
+    if(r.u64()!=m.sizeBytes()||ram.size()!=m.sizeBytes())r.fail("a reference memory of another size");
+    m.clear();m.loadBytes(0,ram);
+    for(size_t i=0,n=r.size();i<n;++i){const auto a=r.u32();const auto v=r.u8();if(a>=m.sizeBytes())r.fail("a reference byte outside memory");m.writeU8(a,v);}
+}
+void putSeconds(circuit::state::Writer& w,double v){w.u64(std::bit_cast<uint64_t>(v));}
+double getSeconds(circuit::state::Reader& r){return std::bit_cast<double>(r.u64());}
 void validateRun(const std::vector<ButtonInput>& input,const RecordedGuestOptions& o) {
     o.machine.validate();
     if(const auto restrictions=circuit::fidelityPresetRestrictions("system.computer");
@@ -192,11 +244,19 @@ namespace {
 RecordedGuestResult runChecked(const std::shared_ptr<circuit::system::ComputerSystem>& machine,Simulator& sim,
                                const rv32i::RV32IElfImage& elf,const std::vector<ButtonInput>& input,
                                const RecordedGuestOptions& o,Clock::time_point setup_start) {
-    machine->loadElf(elf);
+    // A resumed run takes memory from the save; a running machine refuses images.
+    if(!o.resume)machine->loadElf(elf);
     ComponentBuilder b(machine);
+    // The host's wires on the machine's pins: made by the first run, reused
+    // when a session continues on the same machine.
+    std::map<std::string,std::shared_ptr<WireBase>> existing;
+    for(const auto& wire:machine->getAllWires())if(wire&&wire->getName().rfind("HOST_",0)==0)existing[wire->getName()]=wire;
     std::map<std::string,std::shared_ptr<WireBase>> inputs;
-    for(const auto&[n,p]:machine->getAllInputPins())inputs[n]=b.addNewWireDynamic("HOST_"+n,p->getWidth(),nullptr,{p});
-    for(const auto&[n,p]:machine->getAllOutputPins())b.addNewWireDynamic("HOST_"+n,p->getWidth(),p,{});
+    for(const auto&[n,p]:machine->getAllInputPins()){
+        const auto found=existing.find("HOST_"+n);
+        inputs[n]=found!=existing.end()?found->second:b.addNewWireDynamic("HOST_"+n,p->getWidth(),nullptr,{p});
+    }
+    for(const auto&[n,p]:machine->getAllOutputPins())if(!existing.contains("HOST_"+n))b.addNewWireDynamic("HOST_"+n,p->getWidth(),p,{});
     std::unique_ptr<SignalTraceSubscription> trace_subscription;
     if(o.signal_trace) trace_subscription=std::make_unique<SignalTraceSubscription>(sim,o.signal_trace(machine,sim));
     auto drive=[&](SimulationTime t,const std::string& n,uint64_t value){sim.scheduleEvent(makeWireUpdateEvent(t,inputs.at(n),bits(inputs.at(n)->getWidth(),value)));};
@@ -209,11 +269,15 @@ RecordedGuestResult runChecked(const std::shared_ptr<circuit::system::ComputerSy
             if(result.status!=DrainStatus::EventLimitReached)break;
         }
     };
-    BasicComponent::resetSetupViolations();SimulationTest::scheduleInitialEventsForTree(machine,sim,o.start_time);
-    for(const auto&[n,p]:inputs)drive(o.start_time,n,n=="RST"||n=="ENABLE"||n=="TX_READY");
-    drive(o.reset_release,"RST",0);
+    demand(!o.resume||!o.signal_trace,"A resumed run cannot stream a signal trace");
+    demand(!o.save_at==!o.on_save,"save_at and on_save go together");
+    BasicComponent::resetSetupViolations();
+    // A resumed run takes its queue, pins and wires from the save instead.
+    if(!o.resume){SimulationTest::scheduleInitialEventsForTree(machine,sim,o.start_time);
+        for(const auto&[n,p]:inputs)drive(o.start_time,n,n=="RST"||n=="ENABLE"||n=="TX_READY");
+        drive(o.reset_release,"RST",0);}
     rv32i::RV32IFunctionalMemory reference(0x40000),bus_ram(0x40000);
-    for(const auto&s:elf.segments()){reference.loadBytes(s.address,s.bytes);bus_ram.loadBytes(s.address,s.bytes);}
+    if(!o.resume)for(const auto&s:elf.segments()){reference.loadBytes(s.address,s.bytes);bus_ram.loadBytes(s.address,s.bytes);}
     rv32i::RV32IState state;Devices device(o.machine.videoCapacityBytes());RecordedGuestResult result;
     std::optional<Transaction> pending;std::deque<Transaction> completed;
     std::map<uint32_t,uint8_t> ram_writes;
@@ -234,7 +298,112 @@ RecordedGuestResult runChecked(const std::shared_ptr<circuit::system::ComputerSy
         if(o.on_event)events.push_back({kind,0,cycle,state.instruction_count,value,std::move(text)});};
     auto emit=[&](SimulationTime time){
         for(auto& e:events){e.time=time;e.instructions=state.instruction_count;o.on_event(e);}events.clear();};
-    for(size_t cycle=0;cycle<o.max_cycles;++cycle){
+    // Seconds of run time, including the run before a resumed save.
+    double elapsed_before=0;
+    auto elapsed=[&]{return elapsed_before+std::chrono::duration<double>(Clock::now()-start).count();};
+    const uint64_t identity=runIdentity(elf,input,o);
+    // Saved at the top of a cycle: the previous cycle ended with advance(end),
+    // so the circuit has settled and no timeline event is waiting.
+    auto save_run=[&](uint64_t cycle,RecordedGuestOptions::SaveContent content){
+        const bool with_results=content==RecordedGuestOptions::SaveContent::WithResults;
+        circuit::state::Writer w;
+        w.tag(RunTag);w.u32(RunVersion);w.u64(identity);w.u64(cycle);
+        // The machine section carries its length, so a session that continues
+        // on the same machine can take only the runner's part (resume_in_place).
+        {circuit::state::Writer machine_part;circuit::state::saveMachine(machine,sim,machine_part);w.bytes(machine_part.data());}
+        w.boolean(released);w.size(line_start);w.size(event_index);w.size(sampled_event_index);w.size(batch_index);
+        w.size(scheduled_inputs.size());
+        for(const auto& e:scheduled_inputs){w.time(e.tick);w.u64(e.sequence);w.u8(e.button);w.boolean(e.down);}
+        w.u32(state.pc);for(auto x:state.x)w.u32(x);w.boolean(state.halted);w.boolean(state.trapped);
+        w.u8(static_cast<uint8_t>(state.trap_cause));w.u64(state.instruction_count);
+        {const auto ram=ramImage(machine->ramStorage(),reference.sizeBytes());putFunctional(w,reference,ram);putFunctional(w,bus_ram,ram);}
+        for(auto v:{device.timer,device.divider,device.levels,device.sequence,device.leds,device.blink,device.cycles})w.u32(v);
+        w.boolean(device.overflow);
+        w.size(device.buttons.size());for(auto b:device.buttons)w.u32(b);
+        w.bytes(std::vector<uint8_t>(device.console.begin(),device.console.end()));
+        w.bytes(device.video);w.bytes(device.known);
+        w.boolean(pending.has_value());if(pending)putTransaction(w,*pending);
+        w.size(completed.size());for(const auto& t:completed)putTransaction(w,t);
+        w.size(ram_writes.size());for(const auto&[a,v]:ram_writes){w.u32(a);w.u8(v);}
+        w.bytes(previous_pixels);w.bytes(previous_known);
+        w.size(BasicComponent::setupViolations());
+        w.text(result.console);w.u64(result.presentations);w.u64(result.changed_frames);
+        w.boolean(with_results);
+        if(with_results){
+            w.tag(ResultTag);
+            w.size(result.frames.size());
+            for(const auto& f:result.frames){w.time(f.time);w.u32(f.sequence);w.size(f.width);w.size(f.height);w.size(f.stride);w.bytes(f.pixels);w.bytes(f.known);}
+            w.size(result.frame_cycles.size());for(auto v:result.frame_cycles)w.u64(v);
+            w.size(result.frame_instructions.size());for(auto v:result.frame_instructions)w.u64(v);
+            w.size(result.frame_seconds.size());for(auto v:result.frame_seconds)putSeconds(w,v);
+            w.size(result.frame_inputs.size());for(const auto& i:result.frame_inputs){w.u32(i.levels);w.u32(i.count);w.u32(i.head);w.boolean(i.overflow);}
+            w.size(result.frame_leds.size());for(auto v:result.frame_leds)w.u32(v);
+            w.size(result.applied_inputs.size());for(const auto& e:result.applied_inputs){w.time(e.tick);w.u64(e.sequence);w.u8(e.button);w.boolean(e.down);}
+            w.size(result.device_reads.size());for(const auto& d:result.device_reads){w.time(d.tick);w.u32(d.address);w.u32(d.value);}
+            putSeconds(w,result.capture_seconds);putSeconds(w,elapsed());
+        }
+        w.tag(RunEndTag);
+        o.on_save(cycle,checkedTimeAdd(o.origin,checkedTimeMultiply(o.period,cycle))-1,content,w.take());
+    };
+    size_t first_cycle=0;
+    if(o.resume){
+        circuit::state::Reader r(*o.resume);
+        r.tag(RunTag,"run");const auto version=r.u32();if(version!=1&&version!=RunVersion)r.fail("an unsupported run save version");
+        if(r.u64()!=identity)r.fail("a run of another program, input or options");
+        first_cycle=static_cast<size_t>(r.u64());
+        if(!first_cycle||first_cycle>=o.max_cycles)r.fail("a save outside the cycle budget");
+        // Version 1 (recordings made before 2026-11-06 13:00) keeps the machine
+        // inline, without its length: it can only be restored in full.
+        if(version==1){if(o.resume_in_place)r.fail("a version 1 save cannot continue in place");circuit::state::restoreMachine(machine,sim,r);}
+        else{const auto machine_part=r.bytes();
+         if(!o.resume_in_place){circuit::state::Reader m(machine_part);circuit::state::restoreMachine(machine,sim,m);if(!m.done())m.fail("bytes after the machine");}}
+        released=r.boolean();line_start=static_cast<size_t>(r.u64());event_index=static_cast<size_t>(r.u64());
+        sampled_event_index=static_cast<size_t>(r.u64());batch_index=static_cast<size_t>(r.u64());
+        scheduled_inputs.assign(r.size(),{});
+        for(auto& e:scheduled_inputs){e.tick=r.time();e.sequence=r.u64();e.button=r.u8();e.down=r.boolean();}
+        if(event_index>scheduled_inputs.size()||sampled_event_index>event_index||batch_index>o.presentation_inputs.size())r.fail("input cursors outside the input");
+        state.pc=r.u32();for(auto& x:state.x)x=r.u32();state.halted=r.boolean();state.trapped=r.boolean();
+        state.trap_cause=static_cast<rv32i::RV32IExecutionTrapCause>(r.u8());state.instruction_count=r.u64();
+        {const auto ram=ramImage(machine->ramStorage(),reference.sizeBytes());getFunctional(r,reference,ram);getFunctional(r,bus_ram,ram);}
+        for(auto* v:{&device.timer,&device.divider,&device.levels,&device.sequence,&device.leds,&device.blink,&device.cycles})*v=r.u32();
+        device.overflow=r.boolean();
+        device.buttons.assign(r.size(),0);for(auto& b:device.buttons)b=r.u32();
+        {const auto bytes=r.bytes();device.console.assign(bytes.begin(),bytes.end());}
+        device.video=r.bytes();device.known=r.bytes();
+        if(device.video.size()!=o.machine.videoCapacityBytes()||device.known.size()!=device.video.size())r.fail("video memory of another size");
+        if(r.boolean())pending=getTransaction(r);
+        for(size_t i=0,n=r.size();i<n;++i)completed.push_back(getTransaction(r));
+        for(size_t i=0,n=r.size();i<n;++i){const auto a=r.u32();ram_writes[a]=r.u8();}
+        previous_pixels=r.bytes();previous_known=r.bytes();
+        BasicComponent::setSetupViolations(static_cast<size_t>(r.u64()));
+        result.console=r.text();result.presentations=r.u64();result.changed_frames=r.u64();
+        if(r.boolean()){
+            r.tag(ResultTag,"results");
+            result.frames.assign(r.size(),{});
+            for(auto& f:result.frames){f.time=r.time();f.sequence=r.u32();f.width=static_cast<size_t>(r.u64());f.height=static_cast<size_t>(r.u64());f.stride=static_cast<size_t>(r.u64());f.pixels=r.bytes();f.known=r.bytes();}
+            result.frame_cycles.assign(r.size(),0);for(auto& v:result.frame_cycles)v=r.u64();
+            result.frame_instructions.assign(r.size(),0);for(auto& v:result.frame_instructions)v=r.u64();
+            result.frame_seconds.assign(r.size(),0);for(auto& v:result.frame_seconds)v=getSeconds(r);
+            result.frame_inputs.assign(r.size(),{});for(auto& i:result.frame_inputs){i.levels=r.u32();i.count=r.u32();i.head=r.u32();i.overflow=r.boolean();}
+            result.frame_leds.assign(r.size(),0);for(auto& v:result.frame_leds)v=r.u32();
+            result.applied_inputs.assign(r.size(),{});for(auto& e:result.applied_inputs){e.tick=r.time();e.sequence=r.u64();e.button=r.u8();e.down=r.boolean();}
+            result.device_reads.assign(r.size(),{});for(auto& d:result.device_reads){d.tick=r.time();d.address=r.u32();d.value=r.u32();}
+            result.capture_seconds=getSeconds(r);elapsed_before=getSeconds(r);
+        }
+        r.tag(RunEndTag,"run end");
+        if(!r.done())r.fail("bytes after the end");
+        result.resumed_cycle=first_cycle;result.cycles=first_cycle;
+    }
+    // A session opened at a save without running: stop where it starts.
+    if(o.stop_after_cycles&&first_cycle&&o.stop_after_cycles<=first_cycle){
+        if(o.save_at)if(const auto content=o.save_at(first_cycle,result.presentations);content!=RecordedGuestOptions::SaveContent::None)save_run(first_cycle,content);
+        result.stopped=true;result.state=state;result.instructions=state.instruction_count;result.events=sim.getPerformanceCounters();
+        result.setup_violations=BasicComponent::setupViolations();result.execution_seconds=elapsed();
+        return result;
+    }
+    for(size_t cycle=first_cycle;cycle<o.max_cycles;++cycle){
+        if(o.save_at&&cycle&&!(o.resume&&cycle==first_cycle))
+            if(const auto content=o.save_at(cycle,result.presentations);content!=RecordedGuestOptions::SaveContent::None)save_run(cycle,content);
         const auto edge=checkedTimeAdd(o.origin,checkedTimeMultiply(o.period,cycle));
         // Reset gets real clock edges too; the origin marks the first loop edge.
         if(!cycle){for(SimulationTime e=checkedTimeAdd(o.start_time,o.period/2);e<o.reset_release;e=checkedTimeAdd(e,o.period)){drive(e,"CLK",1);drive(checkedTimeAdd(e,o.period/2),"CLK",0);} }
@@ -335,7 +504,7 @@ RecordedGuestResult runChecked(const std::shared_ptr<circuit::system::ComputerSy
             if(has_leds){const auto shown=shownLeds(device.leds,device.blink,device.cycles);
                 demand(out(machine,"LEDS")==shown,"LED pins differ from the LED register model");result.frame_leds.push_back(shown);}
             result.frame_cycles.push_back(cycle+1);result.frame_instructions.push_back(state.instruction_count);
-            result.frame_seconds.push_back(std::chrono::duration<double>(Clock::now()-start).count());
+            result.frame_seconds.push_back(elapsed());
             if(o.presentation_observer)o.presentation_observer(machine,sim,fall-1);
             if(o.on_event){note(GuestRunEvent::Kind::Presented,cycle,uint32_t(device.sequence),has_leds?std::to_string(result.frame_leds.back()):std::string{});emit(fall-1);}
             if(batch_index<o.presentation_inputs.size()){
@@ -364,13 +533,39 @@ RecordedGuestResult runChecked(const std::shared_ptr<circuit::system::ComputerSy
             result.state=state;result.instructions=state.instruction_count;result.events=sim.getPerformanceCounters();
             result.ram_allocated_bytes=machine->ramStorage().allocatedDataBytes();result.video_allocated_bytes=machine->videoStorage().allocatedDataBytes();
             result.setup_violations=BasicComponent::setupViolations();demand(!result.setup_violations,"Guest run observed setup violations");
-            result.execution_seconds=std::chrono::duration<double>(Clock::now()-start).count();
+            result.execution_seconds=elapsed();
             if(o.on_event){note(GuestRunEvent::Kind::Halted,cycle);emit(end);}
+            return result;
+        }
+        if(o.stop_after_cycles&&result.cycles>=o.stop_after_cycles){
+            // The state here is the top of the next cycle: a save made now
+            // continues the run (a replay's next window).
+            if(o.save_at)if(const auto content=o.save_at(result.cycles,result.presentations);content!=RecordedGuestOptions::SaveContent::None)save_run(result.cycles,content);
+            result.stopped=true;result.state=state;result.instructions=state.instruction_count;result.events=sim.getPerformanceCounters();
+            result.setup_violations=BasicComponent::setupViolations();demand(!result.setup_violations,"Guest run observed setup violations");
+            result.execution_seconds=elapsed();
             return result;
         }
     }
     throw std::runtime_error("Guest cycle budget exhausted");
 }
+}
+uint32_t savedRunVersion(const std::vector<uint8_t>& save){
+    circuit::state::Reader in(save);in.tag(RunTag,"run");return in.u32();
+}
+uint64_t savedRunCycle(const std::vector<uint8_t>& save){
+    circuit::state::Reader in(save);in.tag(RunTag,"run");const auto version=in.u32();
+    if(version!=1&&version!=RunVersion)in.fail("an unsupported run save version");
+    in.u64();return in.u64();
+}
+std::vector<uint8_t> savedMachine(const std::vector<uint8_t>& save){
+    circuit::state::Reader in(save);in.tag(RunTag,"run");const auto version=in.u32();
+    if(version!=1&&version!=RunVersion)in.fail("an unsupported run save version");
+    in.u64();in.u64();
+    if(version!=1)return in.bytes();
+    // Inline: the machine section and the runner's part after it; readers of
+    // the machine stop at its end.
+    return {save.begin()+static_cast<std::ptrdiff_t>(in.offset()),save.end()};
 }
 std::string recordedGuestJson(const RecordedGuestResult& r){
     std::ostringstream s;s<<std::setprecision(10);s<<"{\"version\":1,\"cycles\":"<<r.cycles<<",\"instructions\":"<<r.instructions<<",\"setupViolations\":"<<r.setup_violations

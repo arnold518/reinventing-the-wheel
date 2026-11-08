@@ -5,7 +5,123 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-11-08
+
+### Compact long games published with a save after every frame
+
+- The Compact core (`RV32IMCoreBehavioral`) declares its state, so a Compact
+  machine saves and restores; the six Compact recordings were re-recorded
+  with a save after each frame (35 MB of saves, frames unchanged) and now
+  open in the page's simulator with main memory inspectable, like Visual.
+- Fixed: restoring a version 2 save passed a save callback without a save
+  point, which the runner refuses.
+- `RecordedCircuitBrowserTest` keeps checking the frames-only viewer by
+  hiding the saves index.
+- Checks: all six games passed the campaign's host-reference checks with the
+  same frames as before; `MachineStateResume_pong-short-compact_Test`;
+  `GameReplayBrowserTest` on Compact and Visual Pong and
+  `RecordedCircuitBrowserTest` on preview 8893; strict MkDocs build
+  (preview configuration). Not run: the full CTest and web suites.
+
+### Visual long games published with a save after every frame
+
+- The six Visual recordings were re-recorded with a machine save after each
+  frame and replace the set without saves (120 MB: 34 MB of frames, 86 MB of
+  saves); a Visual recording now opens in the page's simulator.
+- Fixed: the campaign's finalize read a peak memory from every capture's
+  resource file and failed on an interrupted capture's empty one (Pong);
+  Pong was finalized from its finished attempt with the fixed script.
+- Checks: every game passed the campaign's host-reference checks;
+  `GameReplayBrowserTest` passed on the published Visual Pong. Not run: the
+  full CTest and web suites.
+
+## 2026-11-06
+
+### Long games: one menu entry per game, Fidelity picks Compact or Visual
+
+- The recording menu lists each long game once; inside a recording the
+  Fidelity menu offers the fidelities that game was recorded in and opens the
+  other recording at the same frame (`&frame=N`). Replay buttons share one
+  row, and the scenario menu names an open replay.
+- Checked: Pong Compact → Visual at frame 6 and back on preview 8893;
+  `VisualizerScenarioBrowserTest` passes.
+- The time readout is exact: every digit down to the picosecond in the
+  largest unit reached (`1.813 860 041 ms`), never rounded through a Number;
+  in a recorded game the second line shows the clock cycle and the time into
+  it (`cycle 403,077 + 41 ps`). It was rounded to three digits, so events a
+  few picoseconds apart read the same.
+
+### The six long games published in Visual
+
+- All six long sessions recorded with the core built from its stages and
+  published under `site-docs/assets/system/long-games/visual/` (34 MB
+  compressed), listed in the viewer menu through `recordings.json`. § 5.6
+  gains "The same sessions in Visual" with a generated table
+  (`results-tables.py`: `long-games-visual`; host times over 90 minutes are
+  shown in hours).
+- Checks: every game passed the campaign's full-frame, report, input-log and
+  button-level checks against the host reference; `RecordedCircuitBrowserTest`
+  passed on the Visual Pong recording. About 25 hours of simulation; the
+  first attempt stopped on the event budget (fixed 2026-11-04) and Pong was
+  restarted once after a manual reboot.
+- See [the Visual long-games record](records/2026-11-03-visual-long-games.md).
+
+### Save and restore a whole machine; replays of long games
+
+- New `circuit::state` save format (`include/simulator/MachineState.hpp`,
+  [reference](reference/machine-state-saves.md)): simulator time, queue and
+  counters, every wire and pin value, each evaluated part's timing state and
+  own members. Every part type declares its state (`stateSupport`); an
+  undeclared part makes saving fail by name. All 36 leaf kinds of the Visual
+  game machine are declared; the Compact core and non-FF memories are not.
+- The checked runner saves at the top of chosen cycles (machine only or with
+  results), resumes from a save into a fresh machine, and can stop after a
+  number of cycles (saving at the stop). `LongGameplayProbe` gains
+  `--save-at-frames`, `--save-every`, a resume save at each circuit part and
+  `--resume`; `run-long-gameplays.py launch --save-at-frames --replay-window W`
+  publishes saves with an index, and an interrupted game continues from its
+  resume save instead of cycle 0.
+- A Visual recording with saves opens in the simulator: the machine is
+  restored from the shown frame's save (every wire, register and memory word
+  inspectable). A frame bar spans the game (|◀ ▶| and dragging restore frame
+  saves); the event bar under it spans what has been simulated since the
+  frame, and ▶ and Play simulate 20 more cycles when they reach its end.
+  ▶ crosses frames like any other event (it never restores a save); a
+  session keeps a rolling window of the last 600–900 cycles of history
+  (`Simulator::trimHistoryBefore`) and stops at the program's halt.
+  Opening or jumping to a frame simulates its first 20 cycles at once.
+  An advance sends only the change to the timeline (`dropped`, `front`,
+  `added`), found from the end of each history, instead of the whole list. The
+  viewer's script versions are bumped so browsers load the new scripts.
+  `GameReplayScenarioTest` (`game-replay`, hidden from the menu) is the
+  session; `VisualizerSession::gameAdvanceJson/gameJumpJson` and the worker's
+  `/api/game/*` routes drive it. Run saves are version 2 (machine section with
+  its length, for continuing in place); version 1 saves are still restored.
+- Why: frame recordings hold one state per frame and no main memory;
+  storing every event would be about 50 GB. A save is about 80 KB gzip, and a
+  replay recomputes the events exactly.
+- Checks run: `MachineStateProbe` (Pong short 2,500→5,000 and smoke-long
+  20,000→22,000 in Visual: saves byte-equal; a stop-time save equals the
+  uninterrupted top-of-cycle save), `GameReplayScenarioTest.py` with
+  `GameSessionProbe` (stepped, viewed and jumped sessions end byte-equal to
+  one run), a smoke campaign with saves (all host-reference checks), a
+  stopped and resumed smoke-long recording equal to the uninterrupted one,
+  and `GameReplayBrowserTest` on the staged Sokoban recording. Not run: the
+  full CTest and web suites.
+
 ## 2026-11-04
+
+### Long-session event budget large enough for Visual
+
+- Long game sessions allowed 20 billion simulator events, enough for
+  Compact (about 300 events per cycle) but only about 1.1 million cycles in
+  Visual (about 17,800 per cycle). The first Visual campaign stopped on it at
+  2048. The budget is now 400 billion, which covers the 20 million cycle
+  budget in Visual; the cycle budget remains the runaway guard.
+- Checked: `LongGameplayProbe` rebuilt; the Visual campaign was relaunched
+  with it. The campaign itself has not finished. No other tests were rerun:
+  the change affects only the long fixtures' event budget.
+- See [the Visual long-games record](records/2026-11-03-visual-long-games.md).
 
 ### Recording menu no longer requests a missing file (Pages smoke failure)
 

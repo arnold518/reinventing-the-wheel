@@ -16,6 +16,8 @@ class SimulationTest;
 class Simulator;
 class WireBase;
 
+class GuestScenarioTest;
+
 namespace circuit::visualizer {
 class MemoryInspector;
 
@@ -65,6 +67,13 @@ public:
                                   int64_t address = -1, size_t count = 64);
     // Verified settled scenario rows, not inferred expectations from pin history.
     std::string exampleRowsJson() const;
+    // A long game's replay session (game-replay): simulate more cycles from
+    // where it is, or jump to another frame's save. Each returns the current
+    // stretch's timeline (timestamps, checkpoints, timestampCount, cycle).
+    std::string gameAdvanceJson(uint64_t cycles);
+    std::string gameJumpJson(std::shared_ptr<const std::vector<uint8_t>> save);
+    // Cycles without history (a seek), then history again from there.
+    std::string gameFastForwardJson(uint64_t cycles);
 
     const std::string& scenarioKey() const noexcept { return scenario_key_; }
     const std::string& sessionId() const noexcept { return session_id_; }
@@ -76,6 +85,11 @@ private:
     struct WireRecord;
 
     void buildTopology();
+    void rebuildTimeline();
+    GuestScenarioTest& gameReplay();
+    std::string gameTimelineJson();
+    std::string checkpointsJson() const;
+    std::string timestampsJson() const;
     size_t clampedIndex(size_t index) const;
     std::string pinValue(const std::shared_ptr<PinBase>& pin) const;
     std::shared_ptr<PinBase> componentPin(

@@ -59,6 +59,7 @@ public:
               [kind, width](IOComponent* p) { gatePins(p, kind, width); }),
           kind_(kind), width_(width), type_(typeName(kind, width)) {}
     const char* getTypeName() const override { return type_.c_str(); }
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override {
         namespace packed = circuit::logic_values::packed;
         if (!resolved_) {

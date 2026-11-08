@@ -14,6 +14,7 @@ public:
     explicit BitSplitter(std::string name);
     static constexpr const char* TypeName = "BitSplitter";
     const char* getTypeName() const override { return TypeName; }
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
 };
 
@@ -28,6 +29,7 @@ public:
     explicit BitJoiner(std::string name);
     static constexpr const char* TypeName = "BitJoiner";
     const char* getTypeName() const override { return TypeName; }
+    StateSupport stateSupport() const override { return StateSupport::Stateless; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
 };
 

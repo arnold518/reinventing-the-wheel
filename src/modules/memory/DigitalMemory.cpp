@@ -1,4 +1,5 @@
 #include "modules/memory/DigitalMemory.hpp"
+#include "simulator/StateArchive.hpp"
 #include "modules/memory/MemoryPeripheralWiring.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/utility/BitAdapter.hpp"
@@ -101,6 +102,20 @@ void Primitive::publish(Simulator &sim, SimulationTime t, const std::string &pin
         return;
     published_[pin] = value;
     _updateOutputWireDynamic(sim, pin, value, t);
+}
+void Primitive::savePublished(circuit::state::Writer &out) const {
+    out.size(published_.size());
+    for (const auto &[pin, value] : published_) {
+        out.text(pin);
+        out.logic(value);
+    }
+}
+void Primitive::restorePublished(circuit::state::Reader &in) {
+    published_.clear();
+    for (size_t i = 0, n = in.size(); i < n; ++i) {
+        auto pin = in.text();
+        published_[pin] = in.logicList();
+    }
 }
 void Primitive::wake(Simulator &sim, SimulationTime t) {
     sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(t, shared_from_this()));

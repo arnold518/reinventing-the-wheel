@@ -1,4 +1,5 @@
 #include "modules/storage/ClockedStateBit.hpp"
+#include "simulator/StateArchive.hpp"
 #include "modules/storage/ClockedStateBitBehavioral.hpp"
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
@@ -48,4 +49,13 @@ const ComponentFamily ClockedStateBit{
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<ClockedStateBitBehavioral>(context, name);
     }};
+}
+
+void ClockedStateBitBehavioral::saveOwnState(circuit::state::Writer& out) const {
+    out.logic(stored_);
+    out.logic(previous_clock_);
+}
+void ClockedStateBitBehavioral::restoreOwnState(circuit::state::Reader& in) {
+    stored_ = in.logic();
+    previous_clock_ = in.logic();
 }

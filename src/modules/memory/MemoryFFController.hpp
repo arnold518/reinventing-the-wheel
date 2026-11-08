@@ -15,6 +15,9 @@ public:
             s->addPin("FIELDS_KNOWN",PinType::OUTPUT);s->addPin("MASK_KNOWN",PinType::OUTPUT);
         }) {}
     bool respondsOnlyToInputs() const override {return true;}
+    StateSupport stateSupport() const override {return StateSupport::Saved;}
+    void saveOwnState(circuit::state::Writer& out) const override {savePublished(out);}
+    void restoreOwnState(circuit::state::Reader& in) override {restorePublished(in);}
     // Functional values for compact gate execution. Keep the existing timing
     // contract conservative; this does not declare reduced timing deciders.
     bool functionalValues(const Values& in,Values& out) const {

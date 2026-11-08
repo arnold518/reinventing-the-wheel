@@ -86,6 +86,9 @@ class Primitive : public BasicComponent {
     void wake(Simulator &sim, SimulationTime time);
     // Publishes what settled() gives for the values now on the input pins.
     void publishSettled(Simulator &sim, SimulationTime time);
+    // Saving a machine: what each output was last published at.
+    void savePublished(circuit::state::Writer &out) const;
+    void restorePublished(circuit::state::Reader &in);
 
   private:
     std::string type_;

@@ -7,49 +7,49 @@
       "file": "part-0000.json.gz",
       "start": 0,
       "count": 16,
-      "sha256": "4756a4f8a09802b5c8176c16e8f583f0be5fd8951b1ff06daf8f30fe70a50afa"
+      "sha256": "fca6e6f112230667af989a5ad513291f3751b918264595307ee1b98f6c309e9c"
     },
     {
       "file": "part-0001.json.gz",
       "start": 16,
       "count": 16,
-      "sha256": "d29eb6f68c2afaba1fba08476b5b65c26b26a90acb66def97c60c17ff1b210b5"
+      "sha256": "8ad1cfa73a0cf4f54dc8047019f6b036c89c17a101feb44d161a564069f69807"
     },
     {
       "file": "part-0002.json.gz",
       "start": 32,
       "count": 16,
-      "sha256": "4f351b7aeee0e2dbe1a3dabf30be705f9fe164ee172604ba4a354208b8616d78"
+      "sha256": "a2f56db394602800a37f0837fd2e3c6bc37e2598af69eeb47b6341ea4c8f9845"
     },
     {
       "file": "part-0003.json.gz",
       "start": 48,
       "count": 16,
-      "sha256": "48e5d9c5a7113795df1562e35f614d7ee892f398322bee59096ee3821ea5d500"
+      "sha256": "7805da965a8a785b0877d962921b4853527122ee7387bf1ebe059d6c3379cb39"
     },
     {
       "file": "part-0004.json.gz",
       "start": 64,
       "count": 16,
-      "sha256": "c7d30ad20e89e1611bfa40f2d4458e43eba64cb5990a66b292e2fc0a39a1af01"
+      "sha256": "15c04c5e25129991523b72fc8effa2c548414597c759c1668c012563c4f448eb"
     },
     {
       "file": "part-0005.json.gz",
       "start": 80,
       "count": 16,
-      "sha256": "18c1b3308cf0b761d275556f0bcac570956ca8d94e676f5455dcebe517b3c213"
+      "sha256": "4620c8cce56070bd8d5673fbf4be032ad905c519fc4579ef2205e768bd92fea4"
     },
     {
       "file": "part-0006.json.gz",
       "start": 96,
       "count": 16,
-      "sha256": "b1b71614233214665cfd4764f6d4aea8580a91d6ffcaf23f7162b63380b8eebc"
+      "sha256": "bf1d8f2d85920a3b471982ba9c99d70dc49ffc734a48e034a7283cf28256e3fb"
     },
     {
       "file": "part-0007.json.gz",
       "start": 112,
       "count": 12,
-      "sha256": "ee7d16b4a2445586fc9011df0b1897a1f56e4f5b25fccd5ca92697336632140d"
+      "sha256": "7ae7857354e1ac8db413cec0d104ed9b95e49a9e33dd8f0d360094ed8717fec7"
     }
   ],
   "fidelityPreset": "compact",
@@ -551,5 +551,6 @@
       "time": 4267406249,
       "cycle": 948310
     }
-  ]
+  ],
+  "saves": "saves/index.json"
 }

@@ -15,6 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 RESULTS = ROOT / 'site-docs/assets/system/results'
 PAGES = [ROOT / 'site-docs/system/5.6.md', ROOT / 'site-docs/system/5.7.md']
 LONG = ROOT / 'site-docs/assets/system/long-games/manifest.json'
+LONG_VISUAL = ROOT / 'site-docs/assets/system/long-games/visual/manifest.json'
 GAMES = ['bringup', '2048-short', 'sokoban-short', 'snake-short', 'pong-short', 'tetris-short', 'snake-leds-short']
 TITLES = {'bringup': 'Bring-up', '2048-short': '2048', 'sokoban-short': 'Sokoban', 'snake-short': 'Snake',
           'pong-short': 'Pong', 'tetris-short': 'Tetris', 'snake-leds-short': 'Snake with LEDs',
@@ -56,8 +57,13 @@ def short_games():
     return '\n'.join(rows)
 
 
-def long_games():
-    campaign = json.loads(LONG.read_text())
+def host_time(seconds):
+    minutes = round(seconds / 60)
+    return f'{minutes} min' if minutes < 90 else f'{minutes // 60} h {minutes % 60} min'
+
+
+def long_games(manifest=LONG):
+    campaign = json.loads(manifest.read_text())
     rows = ['| Recording | Updates | Frames | Result | Cycles | Instructions | Simulated time | Host time |',
             '| --- | ---: | ---: | --- | ---: | ---: | ---: | ---: |']
     for job in campaign['games']:
@@ -66,10 +72,10 @@ def long_games():
             rows.append(f"| `{name}` | {job['frames'] - 1} | {job['frames']} | {LONG_RESULTS[name]} | {job['status']} | | | |")
             continue
         simulated = job['cycles'] * campaign['period'] / 1e6
-        folder = LONG.parent.relative_to(ROOT / 'site-docs').as_posix()
+        folder = manifest.parent.relative_to(ROOT / 'site-docs').as_posix()
         link = f"[`{name}`](../../simulator/?recording=../{folder}/{job['playlist']})"
         rows.append(f"| {link} | {job['frames'] - 1} | {job['frames']} | {LONG_RESULTS[name]} | {n(job['cycles'])} | "
-                    f"{n(job['instructions'])} | {duration(simulated)} | {job['executionSeconds'] / 60:.0f} min |")
+                    f"{n(job['instructions'])} | {duration(simulated)} | {host_time(job['executionSeconds'])} |")
     return '\n'.join(rows)
 
 
@@ -125,7 +131,7 @@ def clocks():
     return '\n'.join(rows)
 
 
-TABLES = {'short-games': short_games, 'long-games': long_games, 'machines': machines, 'baseline': baseline, 'clocks': clocks}
+TABLES = {'short-games': short_games, 'long-games': long_games, 'long-games-visual': lambda: long_games(LONG_VISUAL), 'machines': machines, 'baseline': baseline, 'clocks': clocks}
 check = '--check' in sys.argv
 stale = False
 for page in PAGES:

@@ -586,6 +586,16 @@
       ],
       "suites": [],
       "timeout": 1200
+    },
+    {
+      "name": "GameReplayBrowserTest",
+      "file": "GameReplayBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [],
+      "timeout": 1800
     }
   ]
 }

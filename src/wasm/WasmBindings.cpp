@@ -2,6 +2,7 @@
 #include "runtime/RecordedGuestFixtures.hpp"
 #include "components/TimingProfile.hpp"
 #include "components/selection/FidelityPresets.hpp"
+#include "tests/GuestScenarioTests.hpp"
 
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -69,6 +70,23 @@ public:
         return "{\"name\":" + quote(profile.name) + ",\"description\":" + quote(profile.description)
             + ",\"tickPicoseconds\":" + std::to_string(profile.tick_picoseconds)
             + ",\"available\":" + available + "]}";
+    }
+
+    // The save the next game-replay scenario starts from (bytes of a long
+    // recording's save file, already decompressed) and how many cycles it runs.
+    void setGameReplay(const std::string& fixture, const emscripten::val& bytes, unsigned cycles) {
+        auto save = std::make_shared<std::vector<uint8_t>>(emscripten::convertJSArrayToNumberVector<uint8_t>(bytes));
+        setGuestReplay({fixture, std::move(save), cycles});
+    }
+
+    // A recorded game's session: simulate more cycles from where it is, or
+    // jump to another frame's save (decompressed bytes). Both return the
+    // current stretch's timeline.
+    std::string gameAdvance(unsigned cycles) { return session().gameAdvanceJson(cycles); }
+    std::string gameFastForward(unsigned cycles) { return session().gameFastForwardJson(cycles); }
+    std::string gameJump(const emscripten::val& bytes) {
+        return session().gameJumpJson(std::make_shared<const std::vector<uint8_t>>(
+            emscripten::convertJSArrayToNumberVector<uint8_t>(bytes)));
     }
 
     std::string loadScenario(
@@ -148,6 +166,10 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
         .function("setTimingProfile", &WasmVisualizer::setTimingProfile)
         .function("timingProfileJson", &WasmVisualizer::timingProfileJson)
         .function("loadScenario", &WasmVisualizer::loadScenario)
+        .function("setGameReplay", &WasmVisualizer::setGameReplay)
+        .function("gameAdvance", &WasmVisualizer::gameAdvance)
+        .function("gameFastForward", &WasmVisualizer::gameFastForward)
+        .function("gameJump", &WasmVisualizer::gameJump)
         .function("previewComponentsJson", &WasmVisualizer::previewComponentsJson)
         .function("setFidelityProfile", &WasmVisualizer::setFidelityProfile)
         .function("stateJson", &WasmVisualizer::stateJson)

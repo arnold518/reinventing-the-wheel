@@ -7,31 +7,31 @@
       "file": "part-0000.json.gz",
       "start": 0,
       "count": 16,
-      "sha256": "ee2c02fa73f6eece0172f761111aa622c010085f8c75fb9038a848be0fbc8926"
+      "sha256": "45d867e67e4d3d5860505a1093ab744f367b5bef39f4eb104759b0bcc6308105"
     },
     {
       "file": "part-0001.json.gz",
       "start": 16,
       "count": 16,
-      "sha256": "8f08c5b0b7b8a690bcf923d7ae78b06c9b8fb3b1eb1bef912dbcb590647c17d5"
+      "sha256": "e2453a54cd0eeb983d803f29d129b682f0c467bd3e264f72d0bf092855c42bfa"
     },
     {
       "file": "part-0002.json.gz",
       "start": 32,
       "count": 16,
-      "sha256": "e9c2e3c39f8a954ab0a274c3893ae9e3bebe14f139bfc280017e6eebf3ccd959"
+      "sha256": "338c4a2ec6c1d7ec6e402b905bcaf5edeae40841fe7084fb9d3e1f1de95a4cfc"
     },
     {
       "file": "part-0003.json.gz",
       "start": 48,
       "count": 16,
-      "sha256": "89052d9b216af562b49f4bcc70cde06b94405dd15e36cfc63a26a3cb0d7b3168"
+      "sha256": "1008d0489ce9bdb0d57438979d226332d9d6f6e2499ed1af40b199edbe77d214"
     },
     {
       "file": "part-0004.json.gz",
       "start": 64,
       "count": 9,
-      "sha256": "dda9a539096f8cde8e1068a00251f1f5a5e8cfcba33c3cbafaf54d8279f5f17b"
+      "sha256": "26ba35710aefe110fdf26a1e20bd19bafe7ec56a14ad7d08949b5fd929cbdf0a"
     }
   ],
   "fidelityPreset": "compact",
@@ -329,5 +329,6 @@
       "time": 2951300249,
       "cycle": 655842
     }
-  ]
+  ],
+  "saves": "saves/index.json"
 }

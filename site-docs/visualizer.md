@@ -107,8 +107,42 @@ move through the session. A full-tick capture (`ticks.json`) retains every
 signal-change time instead, with PRESENT markers for jumping between frames;
 propagation, register changes and memory writes can be inspected between
 them. The six long games are listed in the scenario menu under
-**Computer System / Games (long versions, recorded)**; choosing a scenario
+**Computer System / Games (long versions, recorded)**, one entry per game.
+A game opens in Compact; the Fidelity menu offers the fidelities it was
+recorded in (Compact and Visual) and marks the others "not recorded", and
+switching keeps the frame (`&frame=N` in the address). Choosing a scenario
 from a recording returns to the live visualizer.
+
+A recording made with a machine save after every frame (all six long games,
+in Compact and in Visual) opens in the simulator itself: the whole machine is
+restored from the shown frame's save, so every wire, register and memory word
+can be inspected, main memory included. In Compact the core is one block, so
+its register file has no view of its own there; Visual shows it. The timeline then has two bars. The upper
+one spans the whole game, one step per frame; dragging it or ▶| and |◀ jump
+between frames (about a second each). The thinner one under it spans what has
+been simulated since that frame: ▶ steps event by event and, when it reaches
+the end, the page simulates 20 more cycles (about two seconds) and goes on,
+through the next frame and the presses that follow it like any other event;
+Play does the same continuously. The page keeps the last 600 to 900 cycles
+of events (a Visual cycle records about 360 KB), so the event bar covers the
+recent stretch. The event bar does not restart at the next frame: it keeps
+growing across frames, and its oldest part is dropped as it goes, so its
+thumb moves back when that happens. ◀ steps back through what is kept; at
+its first event (a frame just opened, or the oldest kept event) it is
+disabled, since nothing earlier has been simulated there; |◀ then goes to the
+start of the previous frame. Opening a frame simulates its first 20 cycles.
+At the program's end (its halt) ▶ stops. Opening a recording this way builds the
+machine first, about 20 seconds. A step through a Visual machine moves about
+174,000 values, so it takes a fraction of a second; a Compact machine (about
+1,900 values) steps several times faster.
+
+The time readout is exact. With a timing profile whose tick has a length
+(embedded, desktop: 1 ps), it shows every digit down to the picosecond in the
+largest unit the value reaches, grouped in threes, for example
+`1.813 860 041 ms`, so neighbouring events a few picoseconds apart never read
+the same; the unit profile shows ticks. In a recorded game the second line
+gives the clock cycle and the time into it, for example
+`cycle 403,077 + 41 ps`.
 
 Simulation ticks use an explicit unsigned 64-bit type in the time-width
 migration. Viewer data keeps ordinary numeric timestamps through 2^53−1;

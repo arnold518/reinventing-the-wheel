@@ -23,11 +23,12 @@ with sync_playwright() as p:
       actual: [...document.querySelectorAll('#scenario-select optgroup')].map(g=>({
         title:g.label, keys:[...g.querySelectorAll('option')].map(o=>o.value)})),
       expected: scenarioCatalogData.groups.map(g=>({title:g.title,
-        keys:scenarioOptions.filter(o=>o.group===g.id && (!o.workload || o.core==='single')).map(o=>o.key)
+        keys:scenarioOptions.filter(o=>o.group===g.id && !o.hidden && (!o.workload || o.core==='single')).map(o=>o.key)
       })).filter(g=>g.keys.length)
     })""")
     # The published long-game recordings are one extra group, before the
-    # developer circuits; choosing one opens the recording.
+    # developer circuits, with one entry per game (its recorded fidelities
+    # are the Fidelity menu's choices); choosing one opens the recording.
     recorded = [g for g in menu['actual'] if g['title'] == 'Computer System / Games (long versions, recorded)']
     assert len(recorded) == 1 and len(recorded[0]['keys']) == 6, recorded
     assert all(key.startswith('recording:../assets/system/long-games/') for key in recorded[0]['keys']), recorded

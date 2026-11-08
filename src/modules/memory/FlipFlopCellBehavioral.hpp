@@ -11,6 +11,9 @@ public:
     static constexpr const char* TypeName = "FlipFlopCell";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(SimulationTime current_time, Simulator& simulator) override;
+    StateSupport stateSupport() const override { return StateSupport::Saved; }
+    void saveOwnState(circuit::state::Writer& out) const override;
+    void restoreOwnState(circuit::state::Reader& in) override;
 
 private:
     LogicValue stored_value;

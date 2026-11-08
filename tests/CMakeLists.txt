@@ -916,6 +916,22 @@ target_link_libraries(RecordedCircuitProbe PRIVATE SimulatorLib)
 add_executable(LongGameplayProbe cpp/LongGameplayProbe.cpp)
 find_package(ZLIB REQUIRED)
 target_link_libraries(LongGameplayProbe PRIVATE SimulatorLib ZLIB::ZLIB)
+# A saved machine resumes exactly: the resumed run's save at a later cycle
+# equals the uninterrupted run's, byte for byte (circuit::state).
+add_executable(MachineStateProbe cpp/MachineStateProbe.cpp)
+target_link_libraries(MachineStateProbe PRIVATE SimulatorLib ZLIB::ZLIB)
+add_test(NAME MachineStateResume_pong-short_Test COMMAND MachineStateProbe pong-short --save 2500 --compare 5000)
+add_test(NAME MachineStateResume_smoke-long_Test COMMAND MachineStateProbe smoke-long --save 20000 --compare 22000)
+add_test(NAME MachineStateResume_pong-short-compact_Test COMMAND MachineStateProbe pong-short --save 2500 --compare 5000 --fidelity compact)
+# The recording viewer's stepping: a replay session stepped, viewed and
+# jumped ends in the state of one uninterrupted run.
+add_executable(GameSessionProbe cpp/GameSessionProbe.cpp)
+target_link_libraries(GameSessionProbe PRIVATE SimulatorLib)
+add_test(NAME GameReplayScenarioTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/GameReplayScenarioTest.py
+    --probe $<TARGET_FILE:MachineStateProbe> --runner $<TARGET_FILE:SimulationTestRunner> --session $<TARGET_FILE:GameSessionProbe>)
+set_tests_properties(GameReplayScenarioTest PROPERTIES LABELS "engine;rv32im;games;visualizer" TIMEOUT 900)
+set_tests_properties(MachineStateResume_pong-short_Test MachineStateResume_smoke-long_Test MachineStateResume_pong-short-compact_Test PROPERTIES
+    LABELS "engine;rv32im;games;slow" TIMEOUT 1800 ENVIRONMENT "CIRCUITSIM_TIMING_PROFILE=embedded")
 add_executable(SignalTraceProbe cpp/SignalTraceProbe.cpp)
 target_link_libraries(SignalTraceProbe PRIVATE SimulatorLib ZLIB::ZLIB)
 add_executable(GateInputCacheTest cpp/GateInputCacheTest.cpp)

@@ -50,6 +50,27 @@ struct RecordedGuestOptions {
     // Observation only: reset release, sampled inputs, frames, console lines
     // and the halt, each after its cycle has settled.
     std::function<void(const GuestRunEvent&)> on_event;
+    // Saves (circuit::state::saveMachine plus the runner's own checks). A
+    // save is taken at the top of a cycle: the circuit has settled through
+    // the end of the previous cycle and the cycle's clock edges are not yet
+    // queued. `save_at` is asked at every cycle after the first, and once more
+    // when stop_after_cycles ends the run (the top of the cycle it stops at).
+    //   Machine:     the machine and the runner's models (a replay starts here).
+    //   WithResults: also the results so far (frames, inputs, device reads),
+    //                so a resumed run reports the whole session.
+    enum class SaveContent { None, Machine, WithResults };
+    std::function<SaveContent(uint64_t cycle, uint64_t presentations)> save_at;
+    // settled: the last tick of the previous cycle, when the save's state holds.
+    std::function<void(uint64_t cycle, SimulationTime settled, SaveContent content, std::vector<uint8_t> save)> on_save;
+    // Continue from a save of the same runner build, options, program and
+    // input, into a freshly built machine. Every check continues.
+    std::shared_ptr<const std::vector<uint8_t>> resume;
+    // The machine is already in the save's state (a session continuing where
+    // its last run stopped): only the runner's own state is taken from it.
+    bool resume_in_place = false;
+    // Stop without error once this many cycles (counted from cycle 0) have
+    // run; 0 runs to the program's halt.
+    size_t stop_after_cycles = 0;
 };
 struct DeviceInputSnapshot { uint32_t levels=0,count=0,head=0; bool overflow=false; };
 struct DeviceReadSample { SimulationTime tick; uint32_t address, value; };
@@ -76,6 +97,9 @@ struct RecordedGuestResult {
     std::vector<uint8_t> report, report_known;
     rv32i::RV32IState state;
     SimulatorPerformanceCounters events;
+    // A resumed run: the cycle it started at. Stopped: ended by stop_after_cycles.
+    uint64_t resumed_cycle = 0;
+    bool stopped = false;
 };
 // Batch only. Every memory/I/O instruction is checked against independent ISA
 // and device models. Failure or budget exhaustion throws; no partial success.
@@ -89,5 +113,11 @@ circuit::ParameterMap recordedMachineParameters(const RecordedGuestOptions& o);
 RecordedGuestResult runRecordedGuestOn(const std::shared_ptr<circuit::system::ComputerSystem>& machine,
     Simulator& sim, const std::vector<uint8_t>& elf, const std::vector<ButtonInput>& input,
     const RecordedGuestOptions& o);
+// A run save's cycle, and its machine section (circuit::state::saveMachine),
+// for either save version.
+uint64_t savedRunCycle(const std::vector<uint8_t>& save);
+// 1 or 2; only a version 2 save can continue in place.
+uint32_t savedRunVersion(const std::vector<uint8_t>& save);
+std::vector<uint8_t> savedMachine(const std::vector<uint8_t>& save);
 std::string recordedGuestJson(const RecordedGuestResult&);
 }

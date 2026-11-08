@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=34">
+  <link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
@@ -63,6 +63,10 @@
       <button id="reset-sim" class="icon-button" title="Reset to time 0" aria-label="Reset"></button>
     </div>
     <div class="timeline-track">
+      <div id="game-frame-row" class="hidden">
+        <input id="game-frames" type="range" min="0" max="0" value="0" aria-label="Frames of the recorded game">
+        <div id="game-frame-ticks" aria-hidden="true"></div>
+      </div>
       <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks" aria-label="Simulation timeline">
       <div id="checkpoint-ticks" aria-hidden="true"></div>
       <datalist id="checkpoint-marks"></datalist>
@@ -193,13 +197,13 @@
   </aside>
   <div id="loading">Loading circuit...</div>
   <script src="runtime-config.js?v=1"></script>
-  <script src="transport.js?v=21"></script>
+  <script src="transport.js?v=25"></script>
   <script src="explorer.js?v=6"></script>
   <script src="wire_geometry.js?v=1"></script>
   <script src="rewire_geometry.js?v=4"></script>
   <script src="device_view.js?v=1"></script>
   <script src="memory_cell_view.js?v=1"></script>
   <script src="memory_view.js?v=1"></script>
-  <script src="app.js?v=82"></script>
+  <script src="app.js?v=93"></script>
 </body>
 </html>

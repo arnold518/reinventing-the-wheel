@@ -1,7 +1,7 @@
-import createCircuitSimModule from "./circuitsim_wasm.js?v=13";
+import createCircuitSimModule from "./circuitsim_wasm.js?v=18";
 import {completeProfileLayouts} from "./profile_layouts.mjs?v=1";
 import { LAYOUT_CHANGES_FORMAT, layoutChanges, mergeLayout, mergeLayoutStores } from "./layout_changes.mjs?v=3";
-import { defaultAlias, aliasesFor as catalogAliasesFor, scenarioOptions as makeScenarioOptions } from './scenario_catalog.mjs';
+import { defaultAlias, aliasesFor as catalogAliasesFor, scenarioOptions as makeScenarioOptions } from './scenario_catalog.mjs?v=2';
 import {normalizeFidelityPreset,profileStorageKey} from './fidelity_profiles.mjs';
 
 const DB_NAME = "circuitsim-visualizer-v2";
@@ -268,7 +268,7 @@ async function initialize() {
       fetch(new URL('./scenarios.json', import.meta.url)),
     ]);
     const module = await createCircuitSimModule({
-      locateFile: (path) => new URL(`${path}?v=11`, import.meta.url).toString(),
+      locateFile: (path) => new URL(`${path}?v=16`, import.meta.url).toString(),
       print: (...args) => console.log("[CircuitSim WASM]", ...args),
       printErr: (...args) => console.error("[CircuitSim WASM]", ...args),
     });
@@ -412,6 +412,33 @@ function defaultPlacements(body) {
   return placements;
 }
 
+// A long game's replay: the save named by the page (a file of this site,
+// gzip-compressed) is handed to the module before the game-replay scenario
+// is built from it.
+const MAX_REPLAY_SAVE_BYTES = 64 * 1024 * 1024;
+// A save of this site, gzip-compressed or not, as bytes.
+async function fetchSave(path) {
+  const url = new URL(path, self.location.href);
+  if (url.origin !== self.location.origin) throw new Error("A replay save must come from this site");
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Replay save ${url.pathname}: HTTP ${response.status}`);
+  let bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) {
+    bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+  }
+  if (bytes.length > MAX_REPLAY_SAVE_BYTES) throw new Error("Replay save is too large");
+  return bytes;
+}
+async function prepareReplay(query) {
+  const url = new URL(query.get("replay"), self.location.href);
+  if (url.origin !== self.location.origin) throw new Error("A replay save must come from this site");
+  const fixture = query.get("fixture") || "";
+  const cycles = Number(query.get("cycles") || 0);
+  if (!/^[a-z0-9-]+-long$/.test(fixture)) throw new Error("A replay names its long game");
+  if (!Number.isSafeInteger(cycles) || cycles < 0 || cycles > 100000) throw new Error("A replay runs 0 to 100000 cycles");
+  bridge.setGameReplay(fixture, await fetchSave(url.pathname), cycles);
+}
+
 async function handleRequest(message) {
   await initialize();
   const path = message.path.includes("/api/")
@@ -432,7 +459,18 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
+    if (query.get("replay")) await prepareReplay(query);
     return JSON.stringify(await loadScenario(query.get("scenario") || "ripple-carry-adder-w8", null, null, query.get("core_fidelity"), query.get("timing"),query.get('fidelity')));
+  }
+  // A recorded game's session: more cycles, or another frame's save.
+  if (message.method === "GET" && (path === "/api/game/advance" || path === "/api/game/frame")) {
+    if (query.get("session") !== currentPayload?.sessionId) throw new Error("Unknown or expired visualizer session");
+    if (path === "/api/game/advance") {
+      const cycles = Number(query.get("cycles"));
+      if (!Number.isSafeInteger(cycles) || cycles < 1 || cycles > 100000) throw new TypeError("Invalid cycle count");
+      return query.get("history") === "0" ? bridge.gameFastForward(cycles) : bridge.gameAdvance(cycles);
+    }
+    return bridge.gameJump(await fetchSave(String(query.get("save") || "")));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {

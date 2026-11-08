@@ -6,6 +6,7 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/DFlipFlopTiming.hpp"
 #include "modules/memory/DigitalMemory.hpp"
+#include "simulator/StateArchive.hpp"
 #include <algorithm>
 #include <typeinfo>
 #include <unordered_map>
@@ -166,6 +167,36 @@ public:
         }
     }
 
+    void saveState(const State* state, circuit::state::Writer& out) const override {
+        const auto& m = dynamic_cast<const Memory&>(*state);
+        out.size(m.dirty_words.size());
+        for (auto word : m.dirty_words) out.u64(word);
+        out.bytes(m.value);
+        out.bytes(m.held);
+        out.size(m.time.size());
+        for (auto tick : m.time) out.i64(static_cast<int64_t>(tick));
+        out.size(m.held_since.size());
+        for (auto tick : m.held_since) out.i64(static_cast<int64_t>(tick));
+        out.u8(m.clock);
+        out.boolean(m.started);
+        out.boolean(m.answered);
+    }
+    void restoreState(State* state, circuit::state::Reader& in) const override {
+        auto& m = dynamic_cast<Memory&>(*state);
+        m.dirty_words.assign(in.size(), 0);
+        for (auto& word : m.dirty_words) word = in.u64();
+        m.value = in.bytes();
+        m.held = in.bytes();
+        in.expectSize(m.held, flops.size(), "gate-list flip-flops");
+        m.time.assign(in.size(), 0);
+        for (auto& tick : m.time) tick = static_cast<Tick>(in.i64());
+        m.held_since.assign(in.size(), 0);
+        for (auto& tick : m.held_since) tick = static_cast<Tick>(in.i64());
+        in.expectSize(m.held_since, flops.size(), "gate-list flip-flop times");
+        m.clock = in.u8();
+        m.started = in.boolean();
+        m.answered = in.boolean();
+    }
     std::unique_ptr<State> start() const override {
         if (flops.empty()) return nullptr;
         auto memory = std::make_unique<Memory>();
