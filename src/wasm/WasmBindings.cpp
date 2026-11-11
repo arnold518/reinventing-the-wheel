@@ -19,13 +19,13 @@ namespace {
 
 class WasmVisualizer {
 public:
-    std::string runRecordedGuestJson(const std::string& name, bool caches, bool dram, unsigned max_cycles) {
-        return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles,{},100000,false,true,0,0,
+    std::string runRecordedGuestJson(const std::string& name, bool caches, const std::string& memory, unsigned max_cycles) {
+        return circuit::runtime::runRecordedGuestFixtureJson(name,caches,memory,max_cycles,{},100000,false,true,0,0,
             fidelity_preset_);
     }
 
     std::string runRecordedGuestSurfaceJson(const std::string& name,unsigned width,unsigned height,unsigned max_cycles) {
-        return circuit::runtime::runRecordedGuestFixtureJson(name,false,false,max_cycles,{},100000,false,true,width,height,
+        return circuit::runtime::runRecordedGuestFixtureJson(name,false,{},max_cycles,{},100000,false,true,width,height,
             fidelity_preset_);
     }
 

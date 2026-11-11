@@ -5,7 +5,90 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-11-11
+
+### SRAM is the games machines' main memory; long games re-recorded
+
+- Owner decision (2026-11-09): a 256 KiB zero-wait flip-flop main memory
+  does not exist in real chips, so the games machines now use the on-chip
+  clocked SRAM macro, set up for the games' clock (one access cycle at
+  4.5 ns and at 1000 `unit` ticks). The machine option is
+  `memory=sram|ff|dram` (default `sram`), replacing the 2026-11-08 `sram=1`
+  flag; every `systems/games-machine*.json` names `sram`, and the runners,
+  bindings, `system_experiment` and `RecordedGuestProbe` take a memory name.
+  FF and DRAM stay for comparison. The SRAM access time was checked first
+  (3.33 ns for 65,536 words in `embedded`, inside one cycle; the analog
+  intervals stay placeholders) — see the
+  [SRAM record](records/2026-11-09-sram-main-memory.md).
+- The SRAM endpoint saves and restores its pending request, so the SRAM
+  machine saves (DRAM still cannot). The game and machine scenarios run at
+  the games' clock (1000 ticks in `unit`, was 100, faster than the SRAM
+  machine's 160-tick certificate) with the memory set up for it.
+  `ComputerSystemTimingTest` certifies the SRAM machines at that clock in
+  every profile (all 4,254 ps in `embedded`).
+- Published saves are guarded: `PublishedSavesTest` (CTest) restores a
+  published Pong save from each set in the current build, and the page
+  reloads with `saves=off` and shows the recorded frames when the simulator
+  refuses a save (`GameSaveFallbackBrowserTest`).
+- Older gaps fixed on the way: `GameReplayScenarioTest` was missing from
+  CMake's registry list, the 64 × 48 display had no saved layouts in
+  `game-replay`, and `RecordedGuestWasmParityTest` still named the fixtures
+  retired on 2026-11-03.
+- Results rerun on SRAM (60 runs): § 5.6's short-game table, § 5.7's machine
+  comparison and its new main-memory table (six memories × seven programs;
+  FF needs 0.76–0.78× SRAM's cycles, DRAM 2.83–3.23×, the default caches
+  slow SRAM by 37–63 %), and the clock table. The 2026-11-02 old-machine
+  comparison stays as dated FF evidence.
+- The six long games were re-recorded with a save after every frame:
+  Compact (5.9 h) and Visual (30.1 h). Same frames and instruction counts
+  as the FF recordings, 28–32 % more cycles; all saves are now version 2.
+  § 5.6's tables and size and speed figures are regenerated. The
+  [game scenarios](records/2026-11-03-game-scenarios-plan.md) and SRAM
+  records are closed.
+- Checks: the full native suite (616 CTest tests, serial, 2 h 26 min):
+  614 pass; `VisualizerScenarioCatalogTest` and `VisualizerColorPaletteTest`
+  failed only on another session's uncommitted chapter-6 scenarios and
+  layouts in the shared working tree, and both pass on a clean checkout of
+  this change. `PublishedSavesTest` on Pong and 2048 (Compact and
+  Visual); the 18 failures of the first full run (2026-11-09) were fixed
+  and rerun; the web smoke suite (14), `GameScenarioBrowserTest`,
+  `RecordedCircuitBrowserTest`, `GameReplayBrowserTest` on the published
+  Compact and Visual Pong, `GameSaveFallbackBrowserTest`,
+  `RecordedGuestWasmParityTest` (8 fixtures, exact) and
+  `RV32IMDeviceWasmParityTest`; `results-tables.py --check`.
+- Limits: the display's 4 KiB pixel memory stays a flip-flop memory, and
+  the interconnect is unchanged (three cycles per fetch on a zero-wait
+  memory, traced in the
+  [main-memory comparison](records/2026-11-08-games-machine-main-memory.md)).
+  The FF recordings are kept only
+  outside the repository (`build-milestone/ff-long-games-backup/`).
+
 ## 2026-11-08
+
+### Games machine main memory: SRAM option, clocked setup, measured comparison
+
+- `memory.subsystem.32` takes `clock_period`. With it, `sram` is the
+  clocked on-chip macro with wait states from its proven access time at
+  that clock, and `dram` uses the timing profile's row size and one refresh
+  per the profile's refresh interval, as § 4.8's experiments do. Before,
+  the subsystem's SRAM was the asynchronous chip with a fixed 2 access
+  cycles, and its DRAM had 2-word rows and a refresh every 96 cycles,
+  whatever the clock.
+- The games machine takes `sram=1` (not with `dram=1`) and `clock_period`;
+  the recorded runner passes the run's period for SRAM or DRAM. A run's
+  identity mixes in `sram` only when chosen, so existing FF saves keep
+  theirs. `system_experiment --memory` accepts `sram` and `cached-sram`
+  and reports the memory setup. `ComputerSystemTimingTest` certifies the
+  `sram`, `dram` and `cached-sram` machines (all 4,254 ps in `embedded`).
+- Measured the six memories on the bring-up program and five short games,
+  and traced why FF takes 4.2 cycles per instruction (three cycles per
+  fetch in the interconnect). Results and the trace are in the
+  [record](records/2026-11-08-games-machine-main-memory.md). § 5.3 and
+  § 5.5 list the new options.
+- Checks: `ComputerSystemTimingTest`; 36 experiment runs, all passing the
+  runner's checks with FF's frames, console text and instruction counts;
+  FF bring-up unchanged at 3,714 cycles; strict MkDocs build. Not run: the
+  full CTest suite and the web tests. Nothing was re-recorded.
 
 ### Compact long games published with a save after every frame
 

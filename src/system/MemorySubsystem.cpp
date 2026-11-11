@@ -2,6 +2,9 @@
 #include "system/SystemRegistration.hpp"
 #include "system/Json.hpp"
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
+#include "modules/memory/MemoryProtocol.hpp"
+#include "components/TimingProfile.hpp"
+#include <algorithm>
 #include "components/ComponentBuilder.tpp"
 #include "components/StructuralNetBuilder.hpp"
 #include <bit>
@@ -27,7 +30,7 @@ void memorySubsystemPins(IOComponent* self, const MemorySubsystemConfig& config)
 MemorySubsystemConfig memorySubsystemFromParameters(const ParameterMap& p) {
     MemorySubsystemConfig c;
     for (const auto& [key, _] : p)
-        if (key != "technology" && key != "words" && key != "caches")
+        if (key != "technology" && key != "words" && key != "caches" && key != "clock_period")
             throw std::invalid_argument("Unknown memory subsystem parameter " + key);
     if (const auto it = p.find("technology"); it != p.end()) {
         if (it->second == "ff") c.memory.technology = memory::Technology::FF;
@@ -40,6 +43,22 @@ MemorySubsystemConfig memorySubsystemFromParameters(const ParameterMap& p) {
     if (words < 16 || !std::has_single_bit(words) || words > (size_t{1} << 28))
         throw std::invalid_argument("Memory words must be a power of two from 16");
     c.memory.device.depth_words = words;
+    // A real memory as a system would set it up (as in the memory-system
+    // experiments of 4.8): SRAM is the on-chip clocked macro, its wait states
+    // from the proven access time at the clock; DRAM has the profile's
+    // datasheet row size and one REFRESH per tREFI at the clock.
+    SimulationTime period = 0;
+    if (const auto it = p.find("clock_period"); it != p.end()) period = parseUnsigned(it->second, "clock period");
+    const auto& reference = timing::activeTimingProfile().memory;
+    if (c.memory.technology == memory::Technology::SRAM) {
+        c.memory.device.clocked = true;
+        if (period) c.memory.device.access_cycles = memory::staticAccessCycles(32, memory::Technology::SRAM, c.memory.device, period);
+    }
+    if (c.memory.technology == memory::Technology::DRAM) {
+        c.memory.device.words_per_row = std::min(words, reference.dram_row_words);
+        if (period && reference.dram_refresh_interval)
+            c.memory.device.refresh_interval_cycles = static_cast<size_t>(std::max<SimulationTime>(24, reference.dram_refresh_interval / period));
+    }
     if (const auto it = p.find("caches"); it != p.end()) {
         if (it->second != "none" && it->second != "default") throw std::invalid_argument("Memory caches must be none or default");
         if (it->second == "default") {

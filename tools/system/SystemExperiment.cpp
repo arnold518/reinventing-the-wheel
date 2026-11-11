@@ -1,7 +1,7 @@
 // Runs one recorded game on one machine, every memory/I-O access checked by
 // the recorded runner, and prints its result as JSON.
 //
-//   system_experiment --guest NAME [--machine NAME] [--memory ff|cached-ff|cached-dram]
+//   system_experiment --guest NAME [--machine NAME] [--memory ff|sram|dram|cached-ff|cached-sram|cached-dram]
 //                     [--fidelity compact|logic|visual] [--period TICKS]
 //                     [--recording NEW.json] [--max-cycles N]
 //
@@ -10,6 +10,7 @@
 // and move to one tick after the falling edge of the new period. --recording
 // writes the visualizer's presentation-checkpoint recording.
 #include "runtime/RecordedGuestFixtures.hpp"
+#include "system/MemorySubsystem.hpp"
 #include "visualizer/VisualizerSession.hpp"
 #include "components/TimingProfile.hpp"
 #include <charconv>
@@ -35,14 +36,15 @@ int main(int argc, char** argv) {
             if (i + 1 >= argc) throw std::invalid_argument(std::string("Missing value for ") + argv[i]);
             a[argv[i]] = argv[i + 1];
         }
-        if (!a.contains("--guest")) throw std::invalid_argument("Usage: system_experiment --guest NAME [--machine NAME] [--memory ff|cached-ff|cached-dram] [--fidelity compact|logic|visual] [--period TICKS] [--recording NEW.json] [--max-cycles N]");
+        if (!a.contains("--guest")) throw std::invalid_argument("Usage: system_experiment --guest NAME [--machine NAME] [--memory ff|sram|dram|cached-ff|cached-sram|cached-dram] [--fidelity compact|logic|visual] [--period TICKS] [--recording NEW.json] [--max-cycles N]");
         auto f = circuit::runtime::recordedGuestFixture(a.at("--guest"));
         auto& o = f.options;
         if (!a.at("--machine").empty()) o.system = a.at("--machine");
         const auto& memory = a.at("--memory");
-        if (memory != "ff" && memory != "cached-ff" && memory != "cached-dram") throw std::invalid_argument("Unknown memory " + memory);
-        o.machine.caches = memory != "ff";
-        o.machine.dram = memory == "cached-dram";
+        const std::string technology = memory.starts_with("cached-") ? memory.substr(7) : memory;
+        if (technology != "ff" && technology != "sram" && technology != "dram") throw std::invalid_argument("Unknown memory " + memory);
+        o.machine.caches = memory.starts_with("cached-");
+        o.machine.memory = circuit::system::mainMemoryFromName(technology);
         o.fidelity_profile = a.at("--fidelity") == "compact" ? "" : a.at("--fidelity");
         o.compact_children = true;
         if (a.contains("--max-cycles")) o.max_cycles = number(a.at("--max-cycles"));
@@ -74,6 +76,15 @@ int main(int argc, char** argv) {
         json.insert(1, "\"guest\":\"" + f.name + "\",\"system\":\"" + o.system + "\",\"memory\":\"" + memory + "\",\"fidelity\":\"" +
                            a.at("--fidelity") + "\",\"timingProfile\":\"" + circuit::timing::activeTimingProfile().name + "\",\"elfSha256\":\"" +
                            f.elf_sha256 + "\",\"scriptSha256\":\"" + f.script_sha256 + "\",");
+        // How the main memory was set up for this clock (SRAM wait states,
+        // DRAM row size and refresh), from the same rule the machine used.
+        if (technology != "ff") {
+            const auto setup = circuit::system::memorySubsystemFromParameters(
+                {{"technology", technology}, {"clock_period", std::to_string(o.period)}}).memory.device;
+            json.insert(1, "\"memorySetup\":{\"clocked\":" + std::string(setup.clocked ? "true" : "false") + ",\"accessCycles\":" +
+                               std::to_string(setup.access_cycles) + ",\"wordsPerRow\":" + std::to_string(setup.words_per_row) +
+                               ",\"refreshIntervalCycles\":" + std::to_string(setup.refresh_interval_cycles) + "},");
+        }
         if (record) {
             std::ofstream stream(a.at("--recording"));
             if (!stream) throw std::runtime_error("Cannot create the recording");

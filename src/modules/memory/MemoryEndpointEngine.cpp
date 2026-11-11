@@ -282,6 +282,7 @@ void DeviceModel::saveState(circuit::state::Writer& out) const {
     out.time(due_);
     saveSignals(out, outputs);
     out.logic(previous_clock_);
+    saveOwnState(out);
 }
 void DeviceModel::restoreState(circuit::state::Reader& in) {
     if (!savesState()) throw std::logic_error("This memory technology's model cannot be restored yet");
@@ -289,6 +290,7 @@ void DeviceModel::restoreState(circuit::state::Reader& in) {
     due_ = in.time();
     outputs = restoreSignals(in);
     previous_clock_ = in.logic();
+    restoreOwnState(in);
 }
 bool DeviceModel::edge(const Signals& s) {
     const auto clk = signal(s, "CLK")[0];
@@ -370,18 +372,30 @@ SimulationTime staticAccessTime(size_t width, Technology technology, const Endpo
 
 // SRAM as the fused endpoint sees it: an access restarts on any change of
 // the controller's address, data, mask, CE_N or WE_N; READY and the read word
-// appear one access time later; a write lands then.
+// appear one access time later; a write lands then. Saves the request it
+// holds as well (the access time follows from the configuration).
 class SRAMDeviceModel final : public DeviceModel {
     Bits address_, data_, mask_;
     LogicValue ce_ = X, we_ = X, oe_ = X, clock_ = X;
     bool seen_ = false;
     SimulationTime access_time_;
+    void saveOwnState(circuit::state::Writer& out) const override {
+        out.logic(address_); out.logic(data_); out.logic(mask_);
+        for (const auto value : {ce_, we_, oe_, clock_}) out.logic(value);
+        out.boolean(seen_);
+    }
+    void restoreOwnState(circuit::state::Reader& in) override {
+        address_ = in.logicList(); data_ = in.logicList(); mask_ = in.logicList();
+        for (auto* value : {&ce_, &we_, &oe_, &clock_}) *value = in.logic();
+        seen_ = in.boolean();
+    }
     bool selected() const { return known(address_) && number(address_) < config_.depth_words; }
     Bits output() const {
         if (ce_ != L || we_ != H || oe_ != L) return Bits(width_, Z);
         return selected() ? storage.readLogic(number(address_) * (width_ / 8), width_ / 8) : Bits(width_, X);
     }
 public:
+    bool savesState() const override { return true; }
     SRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), access_time_(staticAccessTime(w, Technology::SRAM, c)) {
         outputs["READY"] = {L};
     }

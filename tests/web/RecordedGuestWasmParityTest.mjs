@@ -5,7 +5,8 @@ import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 const [js,wasm,probe]=process.argv.slice(2);
-const guests=['bringup','2048','sokoban','snake','pong','tetris','2048-merge','tetris-line-clear','pong-rally','snake-wall'];
+// The short fixtures (the long ones are checked by their campaign).
+const guests=['bringup','bringup-leds','2048-short','sokoban-short','snake-short','pong-short','tetris-short','snake-leds-short'];
 // An acceptance campaign already runs native repetitions, fidelity and quantum
 // comparisons. Reuse its immutable baseline only when its complete provenance
 // matches this checkout and binary; an invalid cache is a failure, not fallback.
@@ -30,9 +31,9 @@ async function cachedNativeRecord(guest){
   assert.equal(evidence.fixtureManifestSha256,provenance.fixtureManifestSha256,'Native recording fixtures differ');
   assert.deepEqual(evidence.sourceSha256,provenance.sourceSha256,'Native recording source differs');
   assert.equal(evidence.recordingSha256,sha(bytes),'Native recording bytes differ');
-  assert.equal(evidence.machine,'ff');assert.equal(evidence.logicProfile,'compact');
+  assert.equal(evidence.machine,'sram');assert.equal(evidence.logicProfile,'compact');
   assert.equal(evidence.quantumEvents,100000);assert.equal(evidence.limits.cycles,500000);
-  assert.equal(record.configuration.caches,false);assert.equal(record.configuration.dram,false);
+  assert.equal(record.configuration.caches,false);assert.equal(record.configuration.memory,'sram');
   assert.equal(record.configuration.quantumEvents,100000);
   const fixture=provenance.manifest.guests.find(item=>item.name===guest);
   assert.equal(sha(await readFile(resolve(provenance.fixtureRoot,fixture.elf))),fixture.elfSha256,'Current ELF fixture bytes differ');
@@ -60,7 +61,7 @@ if(process.env.CIRCUITSIM_LARGE_NATIVE_RECORDING){
     if(provenance){assert.deepEqual(evidence.sourceSha256,provenance.sourceSha256);assert.equal(evidence.fixtureManifestSha256,provenance.fixtureManifestSha256);}
     largeExpected=JSON.parse(bytes);
     assert.equal(largeExpected.configuration.width,97);assert.equal(largeExpected.configuration.height,65);
-}else largeExpected=JSON.parse(execFileSync(probe,['bringup','ff','500000','100000','compact','97','65'],{encoding:'utf8',timeout:3600000,maxBuffer:64*1024*1024,stdio:['ignore','pipe','inherit']}));
+}else largeExpected=JSON.parse(execFileSync(probe,['bringup','sram','500000','100000','compact','97','65'],{encoding:'utf8',timeout:3600000,maxBuffer:64*1024*1024,stdio:['ignore','pipe','inherit']}));
 const exportDirectory=process.env.CIRCUITSIM_WASM_GUEST_RECORDINGS;
 let wasmBinary=await readFile(wasm);
 const exportIdentity=exportDirectory?{
@@ -92,7 +93,7 @@ for(const guest of guests){
   try{
     // RecordedGuestProbe defaults to the compact preset; select the same one.
     bridge.setFidelityProfile('compact');
-    const actual=JSON.parse(bridge.runRecordedGuestJson(guest,false,false,500000));
+    const actual=JSON.parse(bridge.runRecordedGuestJson(guest,false,'',500000));
     assert.deepEqual(deterministic(actual),deterministic(expected),guest);
     assert.equal(actual.setupViolations,0);
     assert(actual.presentations>=2&&actual.changedFrames>=1);

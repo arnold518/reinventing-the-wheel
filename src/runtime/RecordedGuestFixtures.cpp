@@ -42,9 +42,9 @@ void retime(RecordedGuestFixture& f,SimulationTime period){
     f.input=retimedInputs(f,period);
     f.options.period=period;f.options.reset_release=2*period;f.options.origin=3*period;
 }
-std::string runRecordedGuestFixtureJson(const std::string& name,bool caches,bool dram,size_t max_cycles,std::function<void(uint64_t,uint64_t,uint64_t)> progress,size_t quantum_events,bool expanded_core,bool compact_children,size_t width,size_t height,std::string fidelity_profile,std::string system){
+std::string runRecordedGuestFixtureJson(const std::string& name,bool caches,const std::string& memory,size_t max_cycles,std::function<void(uint64_t,uint64_t,uint64_t)> progress,size_t quantum_events,bool expanded_core,bool compact_children,size_t width,size_t height,std::string fidelity_profile,std::string system){
     if (!circuit::timing::unitTiming()) throw std::invalid_argument("Recorded fixtures use the unit timing profile");
-    auto f=recordedGuestFixture(name);f.options.machine.caches=caches;f.options.machine.dram=dram;f.options.max_cycles=max_cycles;f.options.progress=std::move(progress);
+    auto f=recordedGuestFixture(name);f.options.machine.caches=caches;if(!memory.empty())f.options.machine.memory=circuit::system::mainMemoryFromName(memory);f.options.max_cycles=max_cycles;f.options.progress=std::move(progress);
     if(width)f.options.machine.width=width;
     if(height)f.options.machine.height=height;
     f.options.quantum_events=quantum_events;f.options.expanded_core=expanded_core;f.options.compact_children=compact_children;

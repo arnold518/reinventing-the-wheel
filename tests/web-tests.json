@@ -596,6 +596,16 @@
       ],
       "suites": [],
       "timeout": 1800
+    },
+    {
+      "name": "GameSaveFallbackBrowserTest",
+      "file": "GameSaveFallbackBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [],
+      "timeout": 1800
     }
   ]
 }

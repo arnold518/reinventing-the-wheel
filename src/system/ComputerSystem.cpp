@@ -230,6 +230,19 @@ size_t GameMachineOptions::videoCapacityBytes() const {
     device::FramebufferConfig geometry{width, height, video_bytes};
     return video_bytes ? geometry.capacityBytes() : std::max(size_t{4096}, geometry.capacityBytes());
 }
+const char* mainMemoryName(MainMemory m) {
+    switch (m) {
+    case MainMemory::SRAM: return "sram";
+    case MainMemory::FF: return "ff";
+    case MainMemory::DRAM: return "dram";
+    }
+    throw std::invalid_argument("Unknown main memory");
+}
+MainMemory mainMemoryFromName(const std::string& name) {
+    for (auto m : {MainMemory::SRAM, MainMemory::FF, MainMemory::DRAM})
+        if (name == mainMemoryName(m)) return m;
+    throw std::invalid_argument("A games machine's memory is sram, ff or dram, not " + name);
+}
 void GameMachineOptions::validate() const {
     device::FramebufferConfig{width, height, video_bytes}.validate();
     if ((video_bytes && video_bytes < 4096) || !timer_divisor || !device::validFifoDepth(console_depth)
@@ -237,7 +250,7 @@ void GameMachineOptions::validate() const {
         throw std::invalid_argument("Invalid games machine timer, queue or video options");
 }
 GameMachineOptions gameMachineOptions(const ParameterMap& p) {
-    static const std::set<std::string> keys{"caches", "dram", "timer_divisor", "timer_frequency_hz", "width",
+    static const std::set<std::string> keys{"caches", "memory", "clock_period", "timer_divisor", "timer_frequency_hz", "width",
                                             "height", "video_bytes", "console_depth", "button_depth"};
     for (const auto& [key, _] : p)
         if (!keys.contains(key)) throw std::invalid_argument("Unknown games machine option " + key);
@@ -248,7 +261,8 @@ GameMachineOptions gameMachineOptions(const ParameterMap& p) {
         return v == 1;
     };
     o.caches = flag("caches");
-    o.dram = flag("dram");
+    if (const auto it = p.find("memory"); it != p.end()) o.memory = mainMemoryFromName(it->second);
+    o.clock_period = parameterOr(p, "clock_period", 0);
     o.timer_divisor = static_cast<uint32_t>(parameterOr(p, "timer_divisor", 1));
     o.timer_frequency_hz = static_cast<uint32_t>(parameterOr(p, "timer_frequency_hz", 0));
     o.width = parameterOr(p, "width", 64);
@@ -270,8 +284,10 @@ SystemDescription withGameOptions(SystemDescription d, const GameMachineOptions&
     };
     for (auto& p : d.parts)
         if (p.family == "memory.subsystem.32") {
-            p.parameters["technology"] = o.dram ? "dram" : "ff";
+            p.parameters["technology"] = mainMemoryName(o.memory);
             p.parameters["caches"] = o.caches ? "default" : "none";
+            if (o.clock_period && o.memory != MainMemory::FF) p.parameters["clock_period"] = std::to_string(o.clock_period);
+            else p.parameters.erase("clock_period");
         }
     set("TIMER", "divisor", std::to_string(o.timer_divisor), "");
     set("TIMER", "frequency_hz", std::to_string(o.timer_frequency_hz), "");

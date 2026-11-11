@@ -18,14 +18,15 @@ int main(int argc, char** argv) {
         const bool unit = circuit::timing::unitTiming();
         struct Case { std::string machine; circuit::ParameterMap options; std::string label; };
         std::vector<Case> cases{
-            {"games-machine", {}, "ff"}, {"games-machine", {{"caches", "1"}}, "cached-ff"},
-            {"games-machine", {{"caches", "1"}, {"dram", "1"}}, "cached-dram"},
-            {"games-machine", {{"width", "128"}, {"height", "96"}, {"console_depth", "2"}, {"button_depth", "7"}}, "ff-128x96"},
-            {"games-machine-two-bus", {}, "ff"}, {"games-machine-registered-bridge", {}, "ff"}, {"games-machine-leds", {}, "ff"}};
+            {"games-machine", {}, "sram"}, {"games-machine", {{"caches", "1"}}, "cached-sram"},
+            {"games-machine", {{"memory", "ff"}}, "ff"}, {"games-machine", {{"caches", "1"}, {"memory", "ff"}}, "cached-ff"},
+            {"games-machine", {{"memory", "dram"}}, "dram"}, {"games-machine", {{"caches", "1"}, {"memory", "dram"}}, "cached-dram"},
+            {"games-machine", {{"width", "128"}, {"height", "96"}, {"console_depth", "2"}, {"button_depth", "7"}}, "sram-128x96"},
+            {"games-machine-two-bus", {}, "sram"}, {"games-machine-registered-bridge", {}, "sram"}, {"games-machine-leds", {}, "sram"}};
         if (argc > 1) {  // one machine only
             std::vector<Case> chosen;
             for (const auto& c : cases) if (c.machine + ":" + c.label == argv[1]) chosen.push_back(c);
-            if (chosen.empty()) throw std::invalid_argument("Unknown case; use machine:memory, e.g. games-machine:ff");
+            if (chosen.empty()) throw std::invalid_argument("Unknown case; use machine:memory, e.g. games-machine:sram");
             cases = chosen;
         }
         for (const auto& c : cases) {
@@ -34,6 +35,10 @@ int main(int argc, char** argv) {
                 .unavailablePolicy(circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException).build();
             auto parameters = c.options;
             parameters["machine"] = c.machine;
+            // An SRAM or DRAM memory is set up for the clock the games run
+            // at, as the recorded runner does: 4.5 ns in a realistic profile,
+            // 1000 ticks in unit.
+            if (!c.label.starts_with("ff") && !c.label.starts_with("cached-ff")) parameters["clock_period"] = unit ? "1000" : "4500";
             auto built = circuit::builtinComponentCatalog().createRoot({"system.computer", "DUT", parameters}, profile);
             auto root = std::dynamic_pointer_cast<circuit::system::ComputerSystem>(built.root);
             root->setMemoryHistoryRecordingEnabled(false);
@@ -57,8 +62,8 @@ int main(int argc, char** argv) {
                       << report.checked_setup_relationships << '\t' << report.checked_hold_relationships << '\n';
             std::cout << "limiting: " << report.limiting_constraint << '\n';
             if (report.status != ClockTimingStatus::SafeUnderContracts || !report.safe_period_ticks ||
-                (unit && *report.safe_period_ticks > 1000) || !report.checked_setup_relationships || !report.checked_hold_relationships)
-                throw std::runtime_error("Machine clock is not certified (unit timing must fit the recorded 1000-tick period)");
+                *report.safe_period_ticks > (unit ? 1000u : 4500u) || !report.checked_setup_relationships || !report.checked_hold_relationships)
+                throw std::runtime_error("Machine clock is not certified (it must fit the period the games run at: 1000 ticks in unit, 4.5 ns otherwise)");
         }
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

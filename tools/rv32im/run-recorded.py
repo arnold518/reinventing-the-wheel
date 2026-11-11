@@ -6,7 +6,7 @@ p=argparse.ArgumentParser(description=__doc__)
 FIXTURES=json.loads((ROOT/'tests/fixtures/rv32im/games/manifest.json').read_text())['guests']
 p.add_argument('guest',choices=[f['name'] for f in FIXTURES if f['version']=='short'])
 p.add_argument('--runner',type=pathlib.Path,required=True)
-p.add_argument('--machine',choices=['ff','cached-ff','cached-dram'],default='ff')
+p.add_argument('--machine',choices=['sram','ff','dram','cached-sram','cached-ff','cached-dram'],default='sram')
 p.add_argument('--output',type=pathlib.Path,required=True)
 p.add_argument('--width',type=int,default=0,help='0: the fixture screen')
 p.add_argument('--height',type=int,default=0,help='0: the fixture screen')

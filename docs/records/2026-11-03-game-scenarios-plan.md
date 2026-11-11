@@ -1,6 +1,6 @@
 # Short game scenarios and long game recordings
 
-Started: 2026-11-03. Status: open (plan; nothing implemented). Code state:
+Started: 2026-11-03. Status: closed (2026-11-10). Code state:
 `alpha` at `5549ee0` plus the uncommitted Device I/O work closed in
 [the device I/O record](2026-10-28-device-io-architecture.md).
 
@@ -20,7 +20,13 @@ Both run on the § 5.6 machine at one realistic fidelity: `games-machine`
 (`games-machine-leds` for the LED game), Compact parts on their proven
 delays, embedded timing, and a 4.5 ns clock.
 
-Next step: phase 1 measurements, then owner decisions D1–D3 below.
+Implemented and published in `acaa085` (2026-11-03): the six short games
+are scenarios under **Computer System / Games**, and the six long sessions
+are published recordings. Follow-up work is in [Visual long
+games](2026-11-03-visual-long-games.md), [replayable
+recordings](2026-11-06-replayable-recordings.md) and [SRAM main
+memory](2026-11-09-sram-main-memory.md), which re-recorded the long games
+on the SRAM machine.
 
 ## 2026-11-03 — Starting point
 
@@ -494,3 +500,11 @@ Correction (same day): the "> 12 MB per Visual frame" figure recorded above
 counted the Visual topology too; a Visual frame is 1.02 MB raw, 15.6 KB
 compressed and 5.6 KB as compressed changes only. Measurements are in
 [the close-ups plan](2026-11-03-long-game-closeups-plan.md).
+
+## 2026-11-10 — Closed
+
+The plan was implemented and committed in `acaa085`; this record had kept
+its first status line. Closed. The long games have since been recorded in
+Visual, given machine saves, and re-recorded on the SRAM main memory (see
+the records linked in the summary); the cycle counts quoted above are the
+FF machine's.

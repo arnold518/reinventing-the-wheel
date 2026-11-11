@@ -9,13 +9,15 @@ Started: 2026-11-06. Status: open (plan; implementation started). Code state:
 A whole simulated machine saves and restores exactly (`circuit::state`,
 [reference](../reference/machine-state-saves.md)). The six long games are
 published in Compact and in Visual with a machine save after every frame
-(Compact 35 MB of saves, Visual 86 MB), and such a recording opens in the
+(Compact 35 MB of saves, Visual 89 MB), and such a recording opens in the
 page's simulator: the frame bar jumps between frames, ▶ and Play step event
 by event, simulating on as needed, and main memory (and in Visual the
 register file) is inspectable. Campaigns resume from their last save after
-an interruption. Open: ◀ cannot go back past a frame's start; the Visual
-saves are version 1; the full CTest and web suites have not been run on this
-work.
+an interruption. On 2026-11-10/11 both sets were re-recorded on the SRAM
+main memory ([SRAM record](2026-11-09-sram-main-memory.md)); all saves are
+now version 2, `PublishedSavesTest` checks that published saves still open
+in the current build, and the page shows the recorded frames when a save no
+longer fits. Open: ◀ cannot go back past a frame's start.
 
 ## 2026-11-06 — Why the current recordings cannot do this
 
@@ -548,3 +550,22 @@ frame 4 of 370 in 17 s, 60 event steps in 7 s, memory readable, next frame,
 Visual and back at the same frame) and with Visual Pong (13 s, 25 s): PASS;
 `RecordedCircuitBrowserTest`: PASS; strict MkDocs build (`mkdocs.preview.yml`):
 PASS. Not run: the full CTest and web suites.
+
+## 2026-11-11 — Both sets re-recorded on SRAM; Visual saves now version 2
+
+The games machines' main memory became SRAM
+([SRAM record](2026-11-09-sram-main-memory.md)), which changes the machine
+and its cycle counts, so the FF saves no longer fit. Both published sets
+were re-recorded with a save after every frame: Compact (5.9 h, 34.5 MB of
+saves) and Visual (30.1 h, 88.8 MB). Frames are the same as before; cycles
+are 28–32 % higher. Every save is now version 2 (the Visual set's version 1
+saves are gone), and the SRAM endpoint saves its pending request.
+
+New with the switch: `PublishedSavesTest` (CTest) restores one published save
+of Pong from each set in the current build, so a change that makes the
+published saves stop fitting fails a test instead of only the page; and the
+page reloads with `saves=off` and shows the recorded frames when the
+simulator refuses a save (`GameSaveFallbackBrowserTest`). This replaces the
+open items "the Visual saves are version 1" and "the full CTest and web
+suites have not been run on this work" (the full native suite and the
+browser checks of the SRAM record ran on the re-recorded sets).

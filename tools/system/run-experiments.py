@@ -7,7 +7,7 @@ is kept) and summarized in OUTPUT/summary.json.
 
   run-experiments.py --tool build/system_experiment --output build/system-experiments \
       [--profile unit|embedded|desktop] [--period TICKS] [--games bringup pong-short ...] \
-      [--machines own|games-machine ...] [--memory ff] [--fidelity compact] [--record]
+      [--machines own|games-machine ...] [--memory sram|ff|dram|cached-...] [--fidelity compact] [--record]
 
 `own` runs each fixture on the machine it was built for (the LED games on the
 LED machine).
@@ -22,7 +22,7 @@ p.add_argument('--period', type=int, default=1000)
 p.add_argument('--games', nargs='+', default=['bringup', '2048-short', 'sokoban-short', 'snake-short', 'pong-short',
                                                'tetris-short'])
 p.add_argument('--machines', nargs='+', default=['games-machine', 'games-machine-two-bus', 'games-machine-registered-bridge'])
-p.add_argument('--memory', default='ff')
+p.add_argument('--memory', default='sram')
 p.add_argument('--fidelity', default='compact')
 p.add_argument('--record', action='store_true', help='also write a visualizer recording per run')
 p.add_argument('--memory-max', default='1500M')

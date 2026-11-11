@@ -10,7 +10,7 @@
       "name": "MEMORY",
       "family": "memory.subsystem.32",
       "parameters": {
-        "technology": "ff",
+        "technology": "sram",
         "words": "65536",
         "caches": "none"
       }

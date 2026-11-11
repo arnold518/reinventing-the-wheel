@@ -134779,6 +134779,26 @@
             "title_bar_ratio": 0.065,
             "pin_size_ratio": 0.012,
             "boundary_area_ratio": 0.025
+        },
+        "RegisterFrontEnd<DISPLAY,WIDTH=64,HEIGHT=48,STRIDE=64,FORMAT=1>[config-compact]": {
+            "aspect_ratio": 0.75,
+            "min_aspect_ratio": 0.4,
+            "title_bar_ratio": 0.06,
+            "pin_size_ratio": 0.018,
+            "boundary_area_ratio": 0.025,
+            "automatic_layout_history": [{"revision":null, "children":{}}],
+            "children": {
+                "MODEL": {
+                    "rel_pos": [0.2658093220338983, 0.20588796610169485],
+                    "rel_width": 0.4683813559322034
+                }
+            },
+            "automatic_layout_revision": "automatic-stub-clearance-v1:9a1d3dc4c50e",
+            "layout_mode": "automatic"
+        },
+        "CompactModel<RegisterFrontEnd<DISPLAY,WIDTH=64,HEIGHT=48,STRIDE=64,FORMAT=1>>": {
+            "min_aspect_ratio": 1.07,
+            "aspect_ratio": 1.07
         }
     },
     "profile_layouts": {
@@ -264471,6 +264491,38 @@
                     }
                 },
                 "automatic_layout_revision": "automatic-stub-clearance-v1:64720361560e",
+                "layout_mode": "automatic"
+            },
+            "FramebufferDisplay[config-width=64,height=48,storage=4096]": {
+                "aspect_ratio": 0.85,
+                "min_aspect_ratio": 0.4,
+                "title_bar_ratio": 0.065,
+                "pin_size_ratio": 0.012,
+                "boundary_area_ratio": 0.025,
+                "automatic_layout_history": [{"revision":null, "children":{}}],
+                "children": {
+                    "PORT": {
+                        "rel_pos": [0.04, 0.37573529411764706],
+                        "rel_width": 0.26
+                    },
+                    "REGISTERS": {
+                        "rel_pos": [0.36, 0.39102941176470596],
+                        "rel_width": 0.26
+                    },
+                    "PIXELS": {
+                        "rel_pos": [0.68, 0.16183823529411764],
+                        "rel_width": 0.28
+                    },
+                    "FRAME_COUNTER": {
+                        "rel_pos": [0.68, 0.5643382352941176],
+                        "rel_width": 0.28
+                    },
+                    "ONE_0": {
+                        "rel_pos": [0.06, 0.9422941176470587],
+                        "rel_width": 0.03
+                    }
+                },
+                "automatic_layout_revision": "automatic-stub-clearance-v1:024b57aa0ceb",
                 "layout_mode": "automatic"
             }
         }

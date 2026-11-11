@@ -136,6 +136,11 @@ machine first, about 20 seconds. A step through a Visual machine moves about
 174,000 values, so it takes a fraction of a second; a Compact machine (about
 1,900 values) steps several times faster.
 
+A save fits only the machine it was made on. If the simulator has changed
+since the game was recorded (another part or delay), it refuses the saves;
+the page then reloads with `saves=off` and shows the recorded frames, saying
+so in the status line.
+
 The time readout is exact. With a timing profile whose tick has a length
 (embedded, desktop: 1 ps), it shows every digit down to the picosecond in the
 largest unit the value reaches, grouped in threes, for example

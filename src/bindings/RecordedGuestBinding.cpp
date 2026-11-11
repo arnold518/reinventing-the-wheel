@@ -30,9 +30,9 @@ void bindRecordedGuest(py::module_& m) {
         py::arg("component"),py::arg("simulator"),py::arg("index"),py::arg("time"),
         py::arg("current")=false);
     m.def("recorded_guest_names", &circuit::runtime::recordedGuestNames);
-    m.def("run_recorded_guest_json", [](const std::string& name,bool caches,bool dram,size_t max_cycles,const std::string& fidelity){
-            return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles,{},100000,false,true,0,0,fidelity);
+    m.def("run_recorded_guest_json", [](const std::string& name,bool caches,const std::string& memory,size_t max_cycles,const std::string& fidelity){
+            return circuit::runtime::runRecordedGuestFixtureJson(name,caches,memory,max_cycles,{},100000,false,true,0,0,fidelity);
         },
-        py::arg("name"), py::arg("caches")=false, py::arg("dram")=false,
+        py::arg("name"), py::arg("caches")=false, py::arg("memory")="",
         py::arg("max_cycles")=500000,py::arg("fidelity")="");
 }

@@ -170,6 +170,9 @@ protected:
     EndpointConfig config_;
     Signals outputs;
     LogicValue previous_clock_ = X;
+    // A technology's own state beyond the storage, outputs and clock.
+    virtual void saveOwnState(circuit::state::Writer&) const {}
+    virtual void restoreOwnState(circuit::state::Reader&) {}
     bool edge(const Signals&);
     // `enable` is the word's write enable: on an unknown enable or mask bit a
     // stored bit stays 0 only where the old and the new bit are both 0.

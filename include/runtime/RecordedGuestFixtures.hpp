@@ -15,8 +15,9 @@ std::vector<std::string> recordedGuestNames();
 RecordedGuestFixture recordedGuestFixture(std::string_view name);
 // Move a fixture's presses to another clock period, keeping their cycles.
 void retime(RecordedGuestFixture&, SimulationTime period);
+// memory: "sram", "ff" or "dram"; empty for the machine's default (SRAM).
 std::string runRecordedGuestFixtureJson(const std::string& name, bool caches=false,
-                                      bool dram=false, size_t max_cycles=500000,
+                                      const std::string& memory={}, size_t max_cycles=500000,
                                       std::function<void(uint64_t,uint64_t,uint64_t)> progress = {},
                                       size_t quantum_events=100000, bool expanded_core=false,
                                       // 0: the fixture's own screen

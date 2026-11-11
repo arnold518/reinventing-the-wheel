@@ -4,7 +4,7 @@
   "parts": [
     {"name": "CORE", "family": "rv32im.core.educational-five-stage"},
     {"name": "MEMORY", "family": "memory.subsystem.32",
-     "parameters": {"technology": "ff", "words": "65536", "caches": "none"}},
+     "parameters": {"technology": "sram", "words": "65536", "caches": "none"}},
     {"name": "CONSOLE", "family": "device.console"},
     {"name": "TIMER", "family": "device.timer", "parameters": {"divisor": "1", "frequency_hz": "0"}},
     {"name": "BUTTONS", "family": "device.buttons"},

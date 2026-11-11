@@ -77,8 +77,11 @@ std::string GuestScenarioTest::replayPreset() const {
     return "visual";
 }
 
+// The games' clock, which the SRAM main memory is set up for and the clock
+// certificate covers (ComputerSystemTimingTest): 1000 ticks in unit, 4.5 ns
+// otherwise.
 SimulationTime certifiedSystemPeriod() {
-    return circuit::timing::unitTiming() ? 100 : 4500;
+    return circuit::timing::unitTiming() ? 1000 : 4500;
 }
 
 GuestScenarioTest::GuestScenarioTest(GuestScenarioSpec spec)
@@ -98,6 +101,8 @@ void GuestScenarioTest::setupCircuit() {
     if (root) return;
     auto fixture = circuit::runtime::recordedGuestFixture(spec_.fixture);
     if (!spec_.machine.empty()) fixture.options.system = spec_.machine;
+    // The memory is set up for the clock the scenario runs at.
+    circuit::runtime::retime(fixture, certifiedSystemPeriod());
     auto built = circuit::builtinComponentCatalog().createRoot(
         {"system.computer", spec_.root, circuit::runtime::recordedMachineParameters(fixture.options)}, profile_);
     root = built.root;

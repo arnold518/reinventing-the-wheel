@@ -62,8 +62,16 @@ void registerComputerSystems(ComponentCatalog&);
 // Options of the built-in games machines, applied to a description: memory
 // technology and caches, timer, display geometry, queue depths. A default
 // option leaves the description unchanged.
+// The main memory's technology: the on-chip SRAM macro by default, a
+// zero-wait flip-flop memory, or DRAM.
+enum class MainMemory { SRAM, FF, DRAM };
+const char* mainMemoryName(MainMemory);
+MainMemory mainMemoryFromName(const std::string&);   // "sram", "ff" or "dram"
 struct GameMachineOptions {
-    bool caches = false, dram = false;
+    bool caches = false;
+    MainMemory memory = MainMemory::SRAM;
+    // The clock an SRAM or DRAM main memory is set up for (ticks; 0: none).
+    uint64_t clock_period = 0;
     uint32_t timer_divisor = 1, timer_frequency_hz = 0;
     size_t width = 64, height = 48, video_bytes = 0, console_depth = 4, button_depth = 4;
     size_t videoCapacityBytes() const;

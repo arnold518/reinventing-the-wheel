@@ -147,10 +147,25 @@ work state changes. Keep dated decisions and validation results in
   strict packaging/preview builds and the complete live WASM menu check
   pass on 8893. The frozen long-game campaign continues independently.
 - Games (§ 5.6, 2026-11-03): each game has a short version, a live scenario
-  run with every check under **Computer System / Games**, and a long
-  version, a computer player's session recorded at every frame. The ten
+  run with every check under **Computer System / Games** that reaches its
+  key event in one or two presses on a 32 × 24 screen, and a long version, a
+  computer player's session recorded at every frame and published in
+  Compact and Visual with a machine save after every frame. The ten
   earlier fixtures, their recordings and gameplay record set were retired;
-  see [game scenarios](records/2026-11-03-game-scenarios-plan.md).
+  see the closed [game scenarios](records/2026-11-03-game-scenarios-plan.md).
+- Main memory (decided by the owner on 2026-11-09, done 2026-11-11): the
+  games machines' 256 KiB main memory is the on-chip clocked SRAM, set up for
+  the games' 4.5 ns clock (it answers one cycle after each request), instead
+  of a zero-wait flip-flop memory that no real chip of this size has; FF and
+  DRAM remain options (`memory=sram|ff|dram`). All machines are certified at
+  4,254 ps (embedded); the § 5.6/5.7 results were rerun (SRAM costs 1.28–1.32×
+  FF's cycles, 5.3–5.7 cycles per instruction) and the six long games were
+  re-recorded in Compact (5.9 h) and Visual (30.1 h) with the same frames.
+  `PublishedSavesTest` fails when a change stops the published saves from
+  fitting; the page then shows the recorded frames. The SRAM's analog
+  intervals in `embedded` are placeholders. See the closed
+  [SRAM record](records/2026-11-09-sram-main-memory.md) and
+  [comparison](records/2026-11-08-games-machine-main-memory.md).
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -241,23 +256,10 @@ work state changes. Keep dated decisions and validation results in
 - [Replayable recordings](records/2026-11-06-replayable-recordings.md): a
   whole machine saves and restores exactly (`circuit::state`); the six long
   games are published in Compact and in Visual with a save after every frame
-  (35 MB and 86 MB of saves), and such a recording opens in the page's
-  simulator: frames by the frame bar, events by ▶ and Play, memory (and in
-  Visual the registers) inspectable. Open: ◀ cannot go back past a frame's
-  start, the Visual saves are still version 1, and the full CTest and web
-  suites have not been run on this work.
-
-- [Game scenarios](records/2026-11-03-game-scenarios-plan.md): implemented
-  and checked natively, in WebAssembly and in the browser. All six long
-  recordings passed and are published (3.5 MB compressed); the viewer check
-  was run on Sokoban and Pong. The full native suite passes (2026-11-03,
-  after three stale checks were fixed); the complete browser suite was not
-  rerun. Each game has a short version, a live scenario under
-  **Computer System / Games** that reaches its key event in one or two
-  presses on a 32 × 24 screen, and a long version, a computer player's session
-  recorded at every frame. The five machine scenarios now run the bring-up
-  program, and the display, timer, button and LED scenarios were
-  strengthened.
+  (35 MB and 89 MB of saves, re-recorded on SRAM on 2026-11-10/11, all
+  version 2), and such a recording opens in the page's simulator: frames by
+  the frame bar, events by ▶ and Play, memory (and in Visual the registers)
+  inspectable. Open: ◀ cannot go back past a frame's start.
 
 - [Word grouping review](records/2026-10-28-word-grouping-review.md) and
   [behavioral gap review](records/2026-10-28-behavioral-gap-review.md):

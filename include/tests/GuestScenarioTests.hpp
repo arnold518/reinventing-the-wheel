@@ -89,7 +89,7 @@ private:
     std::string replayPreset() const;
 };
 
-// The clock period a whole computer is certified for under the active timing
-// profile (§ 5.7): 100 ticks (unit) or 4.5 ns (embedded, desktop).
+// The clock a whole computer runs its games at under the active timing
+// profile (§ 5.7): 1000 ticks (unit) or 4.5 ns (embedded, desktop).
 SimulationTime certifiedSystemPeriod();
 void appendGuestScenarioTests(std::vector<TestRegistryEntry>& entries);

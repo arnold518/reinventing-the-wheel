@@ -123,6 +123,26 @@ def baseline():
     return '\n'.join(rows)
 
 
+MEMORIES = ['sram', 'ff', 'dram', 'cached-sram', 'cached-ff', 'cached-dram']
+
+
+def memories():
+    """Cycles of each main memory, relative to SRAM (the machine's default)."""
+    data = {(r['game'], r['memory']): r for r in load('memory')}
+    rows = ['| Program | ' + ' | '.join(f'`{m}`' for m in MEMORIES) + ' |',
+            '| --- |' + ' ---: |' * len(MEMORIES)]
+    for game in GAMES:
+        cells = [data.get((game, m)) for m in MEMORIES]
+        if not all(cells):
+            continue
+        if any(program_results(c) != program_results(cells[0]) for c in cells):
+            raise SystemExit(f'{game}: memories disagree on frames, console or report')
+        base = cells[0]['cycles']
+        rows.append(f"| {TITLES[game]} | {n(base)} | " + ' | '.join(
+            f"{n(c['cycles'])} ({c['cycles'] / base:.2f}×)" for c in cells[1:]) + ' |')
+    return '\n'.join(rows)
+
+
 def clocks():
     rows = ['| Machine | Memory | Unit profile (ticks) | Embedded profile | Embedded clock | Limiting path (embedded) |',
             '| --- | --- | ---: | ---: | ---: | --- |']
@@ -131,7 +151,7 @@ def clocks():
     return '\n'.join(rows)
 
 
-TABLES = {'short-games': short_games, 'long-games': long_games, 'long-games-visual': lambda: long_games(LONG_VISUAL), 'machines': machines, 'baseline': baseline, 'clocks': clocks}
+TABLES = {'short-games': short_games, 'long-games': long_games, 'long-games-visual': lambda: long_games(LONG_VISUAL), 'machines': machines, 'baseline': baseline, 'clocks': clocks, 'memories': memories}
 check = '--check' in sys.argv
 stale = False
 for page in PAGES:

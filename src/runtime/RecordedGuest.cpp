@@ -125,8 +125,10 @@ std::string quoted(const std::string& s){std::string r="\"";for(unsigned char c:
 void tick(std::ostream& s,SimulationTime t){if(t>MAX_EXACT_JSON_TIME)s<<'"'<<t<<'"';else s<<t;}
 }
 circuit::ParameterMap recordedMachineParameters(const RecordedGuestOptions& o) {
-    circuit::ParameterMap parameters{{"machine",o.system},{"caches",o.machine.caches?"1":"0"},{"dram",o.machine.dram?"1":"0"},{"width",std::to_string(o.machine.width)},{"height",std::to_string(o.machine.height)},
+    circuit::ParameterMap parameters{{"machine",o.system},{"caches",o.machine.caches?"1":"0"},{"memory",circuit::system::mainMemoryName(o.machine.memory)},{"width",std::to_string(o.machine.width)},{"height",std::to_string(o.machine.height)},
       {"timer_divisor",std::to_string(o.machine.timer_divisor)},{"timer_frequency_hz",std::to_string(o.machine.timer_frequency_hz)}};
+    // An SRAM or DRAM main memory is set up for the run's clock.
+    if(o.machine.memory!=circuit::system::MainMemory::FF)parameters["clock_period"]=std::to_string(o.period);
     if(o.machine.video_bytes)parameters["video_bytes"]=std::to_string(o.machine.video_bytes);
     if(o.machine.console_depth!=4)parameters["console_depth"]=std::to_string(o.machine.console_depth);
     if(o.machine.button_depth!=4)parameters["button_depth"]=std::to_string(o.machine.button_depth);
@@ -153,7 +155,8 @@ uint64_t runIdentity(const rv32i::RV32IElfImage& elf,const std::vector<ButtonInp
     for(auto v:{o.start_time,o.period,o.reset_release,o.origin})h=mixValue(h,v);
     for(auto v:{o.machine.width,o.machine.height,o.machine.video_bytes,o.machine.console_depth,o.machine.button_depth})h=mixValue(h,v);
     for(auto v:{o.machine.timer_divisor,o.machine.timer_frequency_hz})h=mixValue(h,v);
-    for(bool v:{o.machine.caches,o.machine.dram,o.compact_children,o.expanded_core})h=mixValue(h,v);
+    for(bool v:{o.machine.caches,o.compact_children,o.expanded_core})h=mixValue(h,v);
+    h=mixText(h,circuit::system::mainMemoryName(o.machine.memory));
     return h;
 }
 void putTransaction(circuit::state::Writer& w,const Transaction& t){for(auto v:{t.address,t.op,t.data,t.mask,t.value,t.status})w.u32(v);w.boolean(t.sampled);}
@@ -577,7 +580,7 @@ std::string recordedGuestJson(const RecordedGuestResult& r){
         if(i<r.frame_leds.size())s<<",\"leds\":"<<quoted(binary(r.frame_leds[i],16));s<<"}";}
     s<<"],\"inputs\":[";for(size_t i=0;i<r.applied_inputs.size();++i){if(i)s<<',';const auto& input=r.applied_inputs[i];s<<"{\"time\":";tick(s,input.tick);s<<",\"sequence\":";tick(s,input.sequence);s<<",\"button\":"<<unsigned(input.button)<<",\"down\":"<<(input.down?"true":"false")<<'}';}
     s<<"],\"deviceReads\":[";for(size_t i=0;i<r.device_reads.size();++i){if(i)s<<',';const auto&d=r.device_reads[i];s<<"{\"time\":";tick(s,d.tick);s<<",\"address\":"<<d.address<<",\"value\":"<<d.value<<'}';}
-    s<<"],\"configuration\":{\"system\":"<<quoted(r.system)<<",\"caches\":"<<(r.configuration.caches?"true":"false")<<",\"dram\":"<<(r.configuration.dram?"true":"false")
+    s<<"],\"configuration\":{\"system\":"<<quoted(r.system)<<",\"caches\":"<<(r.configuration.caches?"true":"false")<<",\"memory\":"<<quoted(circuit::system::mainMemoryName(r.configuration.memory))
       <<",\"width\":"<<r.configuration.width<<",\"height\":"<<r.configuration.height<<",\"timerDivisor\":"<<r.configuration.timer_divisor
       <<",\"videoBytes\":"<<r.configuration.videoCapacityBytes()<<",\"consoleDepth\":"<<r.configuration.console_depth<<",\"buttonDepth\":"<<r.configuration.button_depth
       <<",\"timerFrequencyHz\":"<<r.configuration.timer_frequency_hz<<",\"quantumEvents\":"<<r.quantum_events<<",\"period\":";tick(s,r.period);s<<",\"startTime\":";tick(s,r.start_time);

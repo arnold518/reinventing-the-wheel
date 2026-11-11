@@ -1,7 +1,11 @@
 [
+ {"machine": "games-machine", "memory": "sram", "unit": 160, "embedded_ps": 4254, "limit_unit": "MEMORY.RAM write mask input", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"},
+ {"machine": "games-machine", "memory": "cached-sram", "unit": 156, "embedded_ps": 4254, "limit_unit": "MEMORY.RAM write mask input", "limit_embedded": "MEMORY.INSTRUCTION_CACHE.CONTROLLER pending bit"},
+ {"machine": "games-machine-two-bus", "memory": "sram", "unit": 160, "embedded_ps": 4254, "limit_unit": "MEMORY.RAM write mask input", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"},
+ {"machine": "games-machine-registered-bridge", "memory": "sram", "unit": 160, "embedded_ps": 4254, "limit_unit": "MEMORY.RAM write mask input", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"},
+ {"machine": "games-machine-leds", "memory": "sram", "unit": 160, "embedded_ps": 4254, "limit_unit": "MEMORY.RAM write mask input", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"},
  {"machine": "games-machine", "memory": "ff", "unit": 92, "embedded_ps": 4464, "limit_unit": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable", "limit_embedded": "CORE.IMEM_RSP_READ_DATA"},
  {"machine": "games-machine", "memory": "cached-ff", "unit": 84, "embedded_ps": 4254, "limit_unit": "MEMORY.INSTRUCTION_CACHE.CONTROLLER pending bit", "limit_embedded": "MEMORY.INSTRUCTION_CACHE.CONTROLLER pending bit"},
- {"machine": "games-machine-two-bus", "memory": "ff", "unit": 90, "embedded_ps": 4464, "limit_unit": "CORE.IMEM_RSP_READ_DATA", "limit_embedded": "CORE.IMEM_RSP_READ_DATA"},
- {"machine": "games-machine-registered-bridge", "memory": "ff", "unit": 90, "embedded_ps": 4464, "limit_unit": "CORE.IMEM_RSP_READ_DATA", "limit_embedded": "CORE.IMEM_RSP_READ_DATA"},
- {"machine": "games-machine-leds", "memory": "ff", "unit": 94, "embedded_ps": 4470, "limit_unit": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"}
+ {"machine": "games-machine", "memory": "dram", "unit": 84, "embedded_ps": 4254, "limit_unit": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable", "limit_embedded": "MEMORY.ARBITER.I_RESPONSE.HELD_DATA write enable"},
+ {"machine": "games-machine", "memory": "cached-dram", "unit": 84, "embedded_ps": 4254, "limit_unit": "MEMORY.INSTRUCTION_CACHE.CONTROLLER pending bit", "limit_embedded": "MEMORY.INSTRUCTION_CACHE.CONTROLLER pending bit"}
 ]

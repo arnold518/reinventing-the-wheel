@@ -119,7 +119,8 @@ the batch probe, so every instruction, data access, device read, frame and
 console byte is checked while the visualizer gets the full timeline. Its
 checkpoints are `reset released`, `press …`/`release …` (when the device
 samples the input), `console: …`, `frame N` and `halted`. The clock follows the active timing profile:
-100 ticks (`unit`) or 4.5 ns (`embedded`, `desktop`). The game scenarios
+1000 ticks (`unit`) or 4.5 ns (`embedded`, `desktop`), the clock the SRAM
+main memory is set up for and the clock certificate covers. The game scenarios
 refuse Logic and Visual (with the core built from its stages a game's wire
 history passed 3 GB natively, beyond a browser tab) and every whole computer
 refuses Gate (its RAM is beyond the structural storage limit); `computer-system-structure` is the
@@ -221,6 +222,13 @@ the frames after N must also be equal. `--out` keeps the saves for size
 measurements. `GameReplayScenarioTest` also runs `GameSessionProbe FIXTURE
 SAVE`: a session stepped and viewed in pieces, and one that jumps back to its
 save, must end byte-equal to a single run. Both take minutes (Visual runs at about 100 cycles per second).
+
+`PublishedSavesTest` runs `GameSessionProbe` on one published save of Pong
+from each long-game set (Compact and Visual). A change to any part the games
+machine uses (a pin, a width, a delay table) makes the published saves no
+longer fit; this check fails then, and the long games need re-recording. The
+page falls back to the recorded frames (`saves=off`) when the simulator
+refuses a save.
 
 `TickRecordingTest` runs `SignalTraceProbe` and compares every tick against
 retained histories, including wide time, X/Z, future pin publications, memory

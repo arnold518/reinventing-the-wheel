@@ -708,14 +708,19 @@ foreach(test_name ComputerSystemTest
     ComputerSystemWideTimeTest ComputerSystemUnsignedTimeTest
     ComputerSystemTwoBusTest ComputerSystemRegisteredBridgeTest ComputerSystemPortCheckTest ComputerSystemLockstepTest
     RV32IMLargerDisplayTest RV32IMRecordedInputValidationTest RV32IMRecordedEvidenceBudgetTest ComputerSystemFaultTest
+    # A long game's replay needs a save: GameReplayScenarioTest.py below runs it.
+    GameReplayScenarioTest
     # A real program on each machine, and the short games (GuestScenarioTests).
     ComputerSystemScenarioTest ComputerSystemTwoBusScenarioTest ComputerSystemRegisteredBridgeScenarioTest
     ComputerSystemCheckedScenarioTest ComputerSystemLedsScenarioTest
     Game2048ScenarioTest GameSokobanScenarioTest GameSnakeScenarioTest GamePongScenarioTest
     GameTetrisScenarioTest GameSnakeLedsScenarioTest ComputerSystemStructureScenarioTest)
+    list(APPEND SIMULATION_TESTS ${test_name})
+    if(test_name STREQUAL "GameReplayScenarioTest")
+        continue()
+    endif()
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;device;phase4;games" TIMEOUT 3600)
-    list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
 # The computer-system parts (§ 5), last in the registry.
@@ -930,6 +935,10 @@ target_link_libraries(GameSessionProbe PRIVATE SimulatorLib)
 add_test(NAME GameReplayScenarioTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/GameReplayScenarioTest.py
     --probe $<TARGET_FILE:MachineStateProbe> --runner $<TARGET_FILE:SimulationTestRunner> --session $<TARGET_FILE:GameSessionProbe>)
 set_tests_properties(GameReplayScenarioTest PROPERTIES LABELS "engine;rv32im;games;visualizer" TIMEOUT 900)
+# The published long-game saves still open in this build (one per set).
+add_test(NAME PublishedSavesTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/PublishedSavesTest.py
+    --session $<TARGET_FILE:GameSessionProbe>)
+set_tests_properties(PublishedSavesTest PROPERTIES LABELS "rv32im;games;published" TIMEOUT 1800)
 set_tests_properties(MachineStateResume_pong-short_Test MachineStateResume_smoke-long_Test MachineStateResume_pong-short-compact_Test PROPERTIES
     LABELS "engine;rv32im;games;slow" TIMEOUT 1800 ENVIRONMENT "CIRCUITSIM_TIMING_PROFILE=embedded")
 add_executable(SignalTraceProbe cpp/SignalTraceProbe.cpp)

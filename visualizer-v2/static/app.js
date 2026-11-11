@@ -4706,6 +4706,10 @@ function buildLocalModel(payload) {
         ? `${payload.recording.timestamps.toLocaleString()} signal ticks · ${payload.recording.checkpoints} PRESENTs`
         : `${payload.recording.checkpoints} presentation checkpoints`}` : '';
     recordingStatus.title='Saved circuit states at PRESENT; intermediate gate transitions are not retained.';
+    if(payload.recording&&new URLSearchParams(window.location.search).get('saves')==='off'){
+      recordingStatus.textContent+=' · frames only: this version of the simulator cannot open the recording\'s machine saves';
+      recordingStatus.title='The machine has changed since this game was recorded, so its saves no longer fit. The recorded frames are shown instead.';
+    }
   }
   app.recordingInfo=payload.recording||null;
   if(ui.timing)ui.timing.disabled=Boolean(payload.recording||game);
@@ -4922,6 +4926,8 @@ async function detectGameSession() {
   const params = new URLSearchParams(window.location.search);
   const recording = params.get("recording");
   if (!recording || ((window.CIRCUITSIM_RUNTIME || {}).mode || "http") !== "wasm") return;
+  // This simulator refused the recording's saves (see init): frames only.
+  if (params.get("saves") === "off") return;
   try {
     const url = new URL(recording, document.baseURI);
     if (url.origin !== location.origin) return;
@@ -5433,6 +5439,14 @@ window.addEventListener("resize", () => {
       window.CIRCUITSIM_RUNTIME || {}
     ).mode || "http";
   } catch (error) {
+    // The machine changed since the game was recorded and refuses its saves:
+    // open the recorded frames instead of failing.
+    if (game && /Saved machine state does not fit/.test(String((error && error.message) || error))) {
+      const url = new URL(window.location);
+      url.searchParams.set("saves", "off");
+      window.location.replace(url);
+      return;
+    }
     showError(error);
   }
 }());

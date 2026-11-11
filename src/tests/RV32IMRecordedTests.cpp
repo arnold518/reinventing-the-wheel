@@ -35,7 +35,7 @@ void checkSystem(unsigned configuration){
     const auto elf=tinyElf();
     {
         circuit::runtime::RecordedGuestOptions o;o.max_cycles=16000;o.max_instructions=1000;o.max_frames=2;
-        o.machine.caches=configuration==1||configuration==2;o.machine.dram=configuration==2;
+        o.machine.caches=configuration==1||configuration==2;if(configuration==2)o.machine.memory=circuit::system::MainMemory::DRAM;
         if(configuration==5)o.system="games-machine-two-bus";
         if(configuration==6)o.system="games-machine-registered-bridge";
         if(configuration==7)o.system="games-machine-checked";

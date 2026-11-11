@@ -38,7 +38,7 @@ if a.reference_only:
     print(f"PASS host reference {a.guest}: {len(expected['frames'])} frames, report {report[3:7]} (circuit not run)")
     raise SystemExit(0)
 
-run=subprocess.run([str(a.runner),a.guest,'ff','2000000','100000','compact'],capture_output=True,text=True)
+run=subprocess.run([str(a.runner),a.guest,'sram','2000000','100000','compact'],capture_output=True,text=True)
 if run.returncode:sys.stderr.write(run.stderr[-4000:]);raise SystemExit(run.returncode)
 actual=json.loads(run.stdout)
 for key in ['elfSha256','scriptSha256']:assert actual[key]==fixture[key],('Fixture mismatch',key)
