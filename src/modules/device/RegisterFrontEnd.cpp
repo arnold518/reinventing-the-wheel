@@ -146,11 +146,22 @@ void buildBody(IOComponent& self, ComponentBuilder& b, const RegisterTable& tabl
                     all.insert(all.end(), write_only.begin(), write_only.end());
                     all.insert(all.end(), read_write.begin(), read_write.end());
                     const auto is_write = in("IS_WRITE");
-                    auto status = statusChoice(inner, st, "READ_ONLY", is_write, st.constantWord(3, 0), st.constantWord(3, 3));
-                    status = statusChoice(inner, st, "MAPPED", anyOf(st, all), st.constantWord(3, 2), status);
+                    // Parts are numbered as they are built, and saved layouts
+                    // use those names, so each part is built in its own
+                    // statement: C++ leaves the order of a call's arguments to
+                    // the compiler, and GCC and Clang differ. This is the
+                    // order the native (GCC) build has always used.
+                    const auto status_three = st.constantWord(3, 3);
+                    const auto status_zero = st.constantWord(3, 0);
+                    auto status = statusChoice(inner, st, "READ_ONLY", is_write, status_zero, status_three);
+                    const auto unmapped = st.constantWord(3, 2);
+                    const auto mapped = anyOf(st, all);
+                    status = statusChoice(inner, st, "MAPPED", mapped, unmapped, status);
                     if (!write_only.empty() || !read_write.empty()) {
                         const auto wo = anyOf(st, write_only), rw = anyOf(st, read_write);
-                        const auto access = statusChoice(inner, st, "WRITE_ONLY", is_write, st.constantWord(3, 4), st.constantWord(3, 0));
+                        const auto access_zero = st.constantWord(3, 0);
+                        const auto unsupported = st.constantWord(3, 4);
+                        const auto access = statusChoice(inner, st, "WRITE_ONLY", is_write, unsupported, access_zero);
                         status = statusChoice(inner, st, "WRITE_ACCESS", wo, status, access);
                         status = statusChoice(inner, st, "READ_WRITE", rw, status, st.constantWord(3, 0));
                         const auto invalid = st.land({in("BAD_PAYLOAD"), st.land({is_write, st.any(st.split(in("WRITE_MASK")))})});

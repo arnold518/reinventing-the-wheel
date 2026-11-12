@@ -176,11 +176,85 @@ const ComponentFamily RV32IMemoryRequest{
     }};
 }
 
-RV32IMemoryRequest::RV32IMemoryRequest(std::string name, bool read_only, bool address_is_tag)
-    : IOComponent(std::move(name), requesterPins(read_only, address_is_tag)),
-      read_only_(read_only), address_is_tag_(address_is_tag) {}
+RV32IMemoryRequest::RV32IMemoryRequest(std::string name, bool read_only, bool address_is_tag, bool overlapped)
+    : IOComponent(std::move(name), [read_only, address_is_tag, overlapped](IOComponent* s) {
+          requesterPins(read_only, address_is_tag)(s);
+          if (overlapped) { s->addPin<32>("NEXT_ADDR", PinType::INPUT); s->addPin("ADVANCE", PinType::INPUT); }
+      }),
+      read_only_(read_only), address_is_tag_(address_is_tag), overlapped_(overlapped) {
+    if (overlapped && !(read_only && address_is_tag)) throw std::invalid_argument("Only a fetch requester overlaps");
+}
+
+// The overlapped fetch requester (§ 6.3). The same three state bits as the
+// plain one; in addition, when the answer of a request accepted in an
+// earlier cycle is taken (TAKE) while the core advances its PC (ADVANCE),
+// a new request for NEXT_ADDR is offered in that same cycle. A pipelined
+// router takes it at the edge it hands over the answer, so fetches can
+// follow each other every cycle. If the core's PC is not NEXT_ADDR after all
+// (a redirect), the saved address differs and the answer is discarded, as
+// for any stale fetch.
+void RV32IMemoryRequest::buildOverlapped(ComponentBuilder& b) {
+    StructuralWiring w(b);
+    auto state = [&](const char* name) {
+        auto cell = b.add(families::ClockedStateBit, name);
+        for (auto p : {"CLK", "RST"}) w.connect(getInputPin(p), cell->getInputPin(p));
+        return cell;
+    };
+    auto busy = state("BUSY"), sent = state("SENT"), abandoned = state("ABANDONED");
+    const auto busy_q = busy->getOutputPin("Q"), sent_q = sent->getOutputPin("Q");
+    auto running = w.invert("RUNNING", getInputPin("RST"));
+    auto idle = w.invert("IDLE", busy_q);
+    auto unsent = w.invert("UNSENT", sent_q);
+    auto start = w.reduce("START", {getInputPin("ISSUE"), idle, running}, true);
+    auto address = b.add(families::registerWord(32), "REQUEST_ADDR");
+    for (auto p : {"CLK", "RST"}) w.connect(getInputPin(p), address->getInputPin(p));
+    auto compare = b.addNewComponent<RV32IRequestTagMatch>("TAG_MATCH");
+    w.connect(getInputPin<32>("ADDR"), compare->getInputPin<32>("CURRENT"));
+    w.connect(address->getOutputPin<32>("Q"), compare->getInputPin<32>("SAVED"));
+    auto discard = w.both("DISCARD", busy_q, w.either("STALE", abandoned->getOutputPin("Q"), compare->getOutputPin("CHANGED")));
+    auto matching = w.invert("MATCHING", discard);
+    auto sending = w.both("SENDING", w.either("REQUEST_PRESENT", busy_q, getInputPin("ISSUE")), unsent);
+    auto valid = w.both("VALID", sending, running);
+    auto consume = w.either("CONSUME", getInputPin("TAKE"), discard);
+    auto response_running = w.both("RESPONSE_RUNNING", w.either("RESPONSE_PRESENT", sent_q, sending), running);
+    auto finished = w.reduce("FINISHED", {response_running, getInputPin("BUS_RSP_VALID"), consume}, true);
+    // The overlapped start: an answer of an earlier-accepted request is taken
+    // and the PC advances.
+    auto overlap = w.reduce("OVERLAP_START", {finished, sent_q, getInputPin("TAKE"), getInputPin("ADVANCE"),
+                                              getInputPin("ISSUE"), running}, true);
+    w.connect(w.either("CAPTURE", start, overlap), address->getInputPin("WE"));
+    w.connect(memory_detail::payloadMux(b, w, "CAPTURE_ADDR", getInputPin<32>("ADDR"), getInputPin<32>("NEXT_ADDR"), overlap),
+              address->getInputPin<32>("D"));
+    auto held = memory_detail::payloadMux(b, w, "SELECT_ADDR", getInputPin<32>("ADDR"), address->getOutputPin<32>("Q"), busy_q);
+    w.connect(memory_detail::payloadMux(b, w, "OFFER_ADDR", held, getInputPin<32>("NEXT_ADDR"), overlap), getOutputPin<32>("BUS_REQ_ADDR"));
+    auto offered = w.either("OFFERED", valid, overlap);
+    auto ready_in = getInputPin("BUS_REQ_READY");
+    auto accepted = w.both("ACCEPTED", valid, ready_in);
+    auto accepted_next = w.both("ACCEPTED_NEXT", overlap, ready_in);
+    auto unfinished = w.invert("UNFINISHED", finished);
+    w.connect(w.either("NEXT_BUSY", w.both("KEEP_BUSY", w.either("BUSY_OR_START", busy_q, start), unfinished), overlap), busy->getInputPin("D"));
+    w.connect(w.either("NEXT_SENT", w.both("KEEP_SENT", w.either("SENT_OR_ACCEPTED", sent_q, accepted), unfinished), accepted_next),
+              sent->getInputPin("D"));
+    w.connect(w.both("KEEP_ABANDONED", w.both("DISCARD_NEXT", busy_q, discard), unfinished), abandoned->getInputPin("D"));
+    auto op = b.addNewComponent<ConstantValue<3>>("READ_OPERATION", 0);
+    auto data = b.addNewComponent<ConstantValue<32>>("NO_WRITE_DATA", 0);
+    auto mask = b.addNewComponent<ConstantValue<4>>("FULL_READ_MASK", 15);
+    w.connect(op->getOutputPin<3>("OUT"), getOutputPin<3>("BUS_REQ_OP"));
+    w.connect(data->getOutputPin<32>("OUT"), getOutputPin<32>("BUS_REQ_WRITE_DATA"));
+    w.connect(mask->getOutputPin<4>("OUT"), getOutputPin<4>("BUS_REQ_WRITE_MASK"));
+    auto response = w.both("RESPONSE", w.either("RESPONSE_ELIGIBLE", sent_q, accepted), getInputPin("BUS_RSP_VALID"));
+    w.connect(w.reduce("DONE_RUNNING", {response, matching, running}, true), getOutputPin("DONE"));
+    w.connect(offered, getOutputPin("BUS_REQ_VALID"));
+    w.connect(w.both("READY_RUNNING", response_running, consume), getOutputPin("BUS_RSP_READY"));
+    auto status = b.addNewComponent<BitSplitter<3>>("STATUS");
+    w.connect(getInputPin<3>("BUS_RSP_STATUS"), status->getInputPin<3>("IN"));
+    w.connect(w.reduce("FAULT", {status->getOutputPin("OUT_0"), status->getOutputPin("OUT_1"), status->getOutputPin("OUT_2")}, false), getOutputPin("FAULT"));
+    w.connect(getInputPin<32>("BUS_RSP_READ_DATA"), getOutputPin<32>("READ_DATA"));
+    w.finish();
+}
 
 void RV32IMemoryRequest::buildInternals(ComponentBuilder& b) {
+    if (overlapped_) { buildOverlapped(b); return; }
     StructuralWiring w(b);
     auto state = [&](const char* name) {
         auto cell = b.add(families::ClockedStateBit, name);

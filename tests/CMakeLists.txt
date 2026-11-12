@@ -732,6 +732,15 @@ foreach(test_name SystemDescriptionTest BusInterconnectTest LedPanelTest BusPort
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
+# The accelerator parts (§ 6), after the computer system in the registry.
+foreach(test_name ArrayMultiplierTest ArrayMulDivUnitTest MacCellTest RequantizerTest SystolicArrayTest
+    ArrayMultiplierWidth4ScenarioTest ArrayMulDivUnitWidth4ScenarioTest MacCellScenarioTest RequantizerScenarioTest SystolicArrayWidth2ScenarioTest
+    MatrixUnitTest MatrixUnitScenarioTest PipelinedBusTest AcceleratorMachineTest AcceleratorMachineScenarioTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;accelerator" TIMEOUT 3600)
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
 add_test(
     NAME VisualizerModuleBindingsTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerModuleBindingsTest.py

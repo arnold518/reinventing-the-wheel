@@ -1,0 +1,324 @@
+
+/home/arnold/arnold/github/reinventing-the-wheel/tests/fixtures/accelerator/matmul-cpu.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	lui	sp,0x3e
+   4:	auipc	t0,0x0
+   8:	addi	t0,t0,1304 # 51c <bias>
+   c:	auipc	t1,0x2
+  10:	addi	t1,t1,-364 # 1ea0 <__bss_end>
+  14:	bgeu	t0,t1,24 <_start+0x24>
+  18:	sw	zero,0(t0)
+  1c:	addi	t0,t0,4
+  20:	j	14 <_start+0x14>
+  24:	auipc	ra,0x0
+  28:	jalr	16(ra) # 34 <main>
+  2c:	ebreak
+  30:	j	30 <_start+0x30>
+
+00000034 <main>:
+  34:	addi	sp,sp,-96 # 3dfa0 <__bss_end+0x3c100>
+  38:	lui	a5,0x31434
+  3c:	sw	s0,88(sp)
+  40:	sw	s2,80(sp)
+  44:	sw	s3,76(sp)
+  48:	sw	s4,72(sp)
+  4c:	sw	s5,68(sp)
+  50:	sw	s6,64(sp)
+  54:	sw	s7,60(sp)
+  58:	sw	s8,56(sp)
+  5c:	sw	s9,52(sp)
+  60:	sw	s10,48(sp)
+  64:	sw	s11,44(sp)
+  68:	lui	s0,0x3f
+  6c:	sw	ra,92(sp)
+  70:	sw	s1,84(sp)
+  74:	addi	a5,a5,833 # 31434341 <__bss_end+0x314324a1>
+  78:	sw	a5,0(s0) # 3f000 <__bss_end+0x3d160>
+  7c:	li	a5,1
+  80:	sw	a5,4(s0)
+  84:	sw	zero,12(s0)
+  88:	lui	s2,0x0
+  8c:	sw	zero,16(s0)
+  90:	addi	s2,s2,1268 # 4f4 <shapes>
+  94:	sw	zero,8(s0)
+  98:	addi	s4,s2,36
+  9c:	addi	s0,s0,256
+  a0:	lui	s11,0x2
+  a4:	lui	s10,0x1
+  a8:	lui	s9,0x0
+  ac:	lui	s7,0x2
+  b0:	lui	s8,0x0
+  b4:	lui	s3,0x0
+  b8:	lui	s5,0x10001
+  bc:	lui	s6,0x3f
+  c0:	lw	a1,0(s2)
+  c4:	lw	a2,4(s2)
+  c8:	lw	s1,8(s2)
+  cc:	mul	a0,a1,a2
+  d0:	beqz	a0,10c <main+0xd8>
+  d4:	lw	a5,1304(s3) # 518 <seed>
+  d8:	addi	a3,s11,-1444 # 1a5c <x>
+  dc:	add	a0,a0,a3
+  e0:	slli	a4,a5,0xd
+  e4:	xor	a5,a4,a5
+  e8:	srli	a4,a5,0x11
+  ec:	xor	a4,a4,a5
+  f0:	slli	a5,a4,0x5
+  f4:	xor	a5,a5,a4
+  f8:	srli	a4,a5,0x8
+  fc:	sb	a4,0(a3)
+ 100:	addi	a3,a3,1
+ 104:	bne	a0,a3,e0 <main+0xac>
+ 108:	sw	a5,1304(s3)
+ 10c:	mul	a0,a2,s1
+ 110:	beqz	a0,14c <main+0x118>
+ 114:	lw	a5,1304(s3)
+ 118:	addi	a3,s10,-1444 # a5c <w>
+ 11c:	add	a0,a0,a3
+ 120:	slli	a4,a5,0xd
+ 124:	xor	a5,a4,a5
+ 128:	srli	a4,a5,0x11
+ 12c:	xor	a4,a4,a5
+ 130:	slli	a5,a4,0x5
+ 134:	xor	a5,a5,a4
+ 138:	srli	a4,a5,0x8
+ 13c:	sb	a4,0(a3)
+ 140:	addi	a3,a3,1
+ 144:	bne	a0,a3,120 <main+0xec>
+ 148:	sw	a5,1304(s3)
+ 14c:	beqz	s1,2b8 <main+0x284>
+ 150:	lw	a4,1304(s3)
+ 154:	addi	a0,s9,1308 # 51c <bias>
+ 158:	slli	a6,s1,0x2
+ 15c:	add	a6,a6,a0
+ 160:	slli	a5,a4,0xd
+ 164:	xor	a4,a5,a4
+ 168:	srli	a5,a4,0x11
+ 16c:	xor	a5,a5,a4
+ 170:	slli	a4,a5,0x5
+ 174:	xor	a4,a4,a5
+ 178:	srli	a3,a4,0x8
+ 17c:	slli	a3,a3,0x18
+ 180:	srai	a3,a3,0x18
+ 184:	slli	a5,a3,0x3
+ 188:	add	a5,a5,a3
+ 18c:	slli	a5,a5,0x2
+ 190:	add	a5,a5,a3
+ 194:	sw	a5,0(a0)
+ 198:	addi	a0,a0,4
+ 19c:	bne	a6,a0,160 <main+0x12c>
+ 1a0:	sw	a4,1304(s3)
+ 1a4:	lw	t3,0(s5) # 10001000 <__bss_end+0xffff160>
+ 1a8:	li	a5,8
+ 1ac:	mv	a3,s1
+ 1b0:	sw	a5,0(sp)
+ 1b4:	addi	a4,s10,-1444
+ 1b8:	addi	a5,s9,1308
+ 1bc:	li	a7,1
+ 1c0:	sw	zero,4(sp)
+ 1c4:	addi	a6,s8,1628 # 65c <out>
+ 1c8:	addi	a0,s11,-1444
+ 1cc:	sw	a1,28(sp)
+ 1d0:	sw	t3,-356(s7) # 1e9c <section_start>
+ 1d4:	auipc	ra,0x0
+ 1d8:	jalr	336(ra) # 324 <cpu_layer>
+ 1dc:	lw	a1,28(sp)
+ 1e0:	lw	a4,16(s6) # 3f010 <__bss_end+0x3d170>
+ 1e4:	lw	a2,-356(s7)
+ 1e8:	mul	s1,a1,s1
+ 1ec:	lw	a3,0(s5)
+ 1f0:	addi	a5,a4,4
+ 1f4:	slli	a5,a5,0x2
+ 1f8:	sub	a3,a3,a2
+ 1fc:	add	a5,s6,a5
+ 200:	sw	a3,8(a5)
+ 204:	addi	a4,a4,1
+ 208:	sw	a4,16(s6)
+ 20c:	beqz	s1,31c <main+0x2e8>
+ 210:	addi	a5,s8,1628
+ 214:	add	s1,s0,s1
+ 218:	lb	a3,0(a5)
+ 21c:	mv	a4,s0
+ 220:	addi	s0,s0,1
+ 224:	sb	a3,0(a4)
+ 228:	addi	a5,a5,1
+ 22c:	bne	s0,s1,218 <main+0x1e4>
+ 230:	addi	s2,s2,12
+ 234:	beq	s4,s2,240 <main+0x20c>
+ 238:	mv	s0,s1
+ 23c:	j	c0 <main+0x8c>
+ 240:	lui	a5,0x3f
+ 244:	lw	a5,12(a5) # 3f00c <__bss_end+0x3d16c>
+ 248:	beqz	a5,2ac <main+0x278>
+ 24c:	lui	a5,0x0
+ 250:	addi	a5,a5,1252 # 4e4 <cpu_layer+0x1c0>
+ 254:	lbu	a4,0(a5)
+ 258:	lui	a3,0x10000
+ 25c:	addi	a5,a5,1
+ 260:	sw	a4,0(a3) # 10000000 <__bss_end+0xfffe160>
+ 264:	lbu	a4,0(a5)
+ 268:	bnez	a4,25c <main+0x228>
+ 26c:	lw	ra,92(sp)
+ 270:	lw	s0,88(sp)
+ 274:	lw	s1,84(sp)
+ 278:	lw	s2,80(sp)
+ 27c:	lw	s3,76(sp)
+ 280:	lw	s4,72(sp)
+ 284:	lw	s5,68(sp)
+ 288:	lw	s6,64(sp)
+ 28c:	lw	s7,60(sp)
+ 290:	lw	s8,56(sp)
+ 294:	lw	s9,52(sp)
+ 298:	lw	s10,48(sp)
+ 29c:	lw	s11,44(sp)
+ 2a0:	li	a0,0
+ 2a4:	addi	sp,sp,96
+ 2a8:	ret
+ 2ac:	lui	a5,0x0
+ 2b0:	addi	a5,a5,1260 # 4ec <cpu_layer+0x1c8>
+ 2b4:	j	254 <main+0x220>
+ 2b8:	lui	s1,0x10001
+ 2bc:	lw	t3,0(s1) # 10001000 <__bss_end+0xffff160>
+ 2c0:	li	a5,8
+ 2c4:	sw	a5,0(sp)
+ 2c8:	addi	a4,s10,-1444
+ 2cc:	addi	a5,s9,1308
+ 2d0:	li	a3,0
+ 2d4:	sw	zero,4(sp)
+ 2d8:	li	a7,1
+ 2dc:	addi	a6,s8,1628
+ 2e0:	addi	a0,s11,-1444
+ 2e4:	sw	t3,-356(s7)
+ 2e8:	auipc	ra,0x0
+ 2ec:	jalr	60(ra) # 324 <cpu_layer>
+ 2f0:	lui	a3,0x3f
+ 2f4:	lw	a4,16(a3) # 3f010 <__bss_end+0x3d170>
+ 2f8:	lw	a1,-356(s7)
+ 2fc:	lw	a2,0(s1)
+ 300:	addi	a5,a4,4
+ 304:	slli	a5,a5,0x2
+ 308:	sub	a2,a2,a1
+ 30c:	add	a5,a3,a5
+ 310:	sw	a2,8(a5)
+ 314:	addi	a4,a4,1
+ 318:	sw	a4,16(a3)
+ 31c:	mv	s1,s0
+ 320:	j	230 <main+0x1fc>
+
+00000324 <cpu_layer>:
+ 324:	addi	sp,sp,-48
+ 328:	sw	s1,40(sp)
+ 32c:	sw	s0,44(sp)
+ 330:	sw	s2,36(sp)
+ 334:	sw	s3,32(sp)
+ 338:	sw	s4,28(sp)
+ 33c:	sw	s5,24(sp)
+ 340:	sw	s6,20(sp)
+ 344:	sw	s7,16(sp)
+ 348:	sw	s8,12(sp)
+ 34c:	sw	s9,8(sp)
+ 350:	sw	s10,4(sp)
+ 354:	lw	t4,48(sp)
+ 358:	lw	s1,52(sp)
+ 35c:	beqz	a1,460 <cpu_layer+0x13c>
+ 360:	mv	s10,a5
+ 364:	addi	a5,t4,-33
+ 368:	mv	t2,a0
+ 36c:	mv	s2,a4
+ 370:	mv	s9,a1
+ 374:	mv	t0,a2
+ 378:	mv	a0,a3
+ 37c:	mv	t3,a7
+ 380:	addi	a4,t4,-1
+ 384:	bltz	a5,4d4 <cpu_layer+0x1b0>
+ 388:	li	s4,1
+ 38c:	sll	s4,s4,a5
+ 390:	li	s3,0
+ 394:	li	s5,31
+ 398:	mv	t6,a6
+ 39c:	li	s6,0
+ 3a0:	add	a6,t2,t0
+ 3a4:	addi	s0,t4,-32
+ 3a8:	sub	s5,s5,t4
+ 3ac:	li	t5,-1
+ 3b0:	li	s7,127
+ 3b4:	li	s8,-128
+ 3b8:	mv	t1,s10
+ 3bc:	li	a7,0
+ 3c0:	beqz	a0,44c <cpu_layer+0x128>
+ 3c4:	lw	a2,0(t1)
+ 3c8:	beqz	t0,3f0 <cpu_layer+0xcc>
+ 3cc:	add	a3,s2,a7
+ 3d0:	mv	a5,t2
+ 3d4:	lb	a4,0(a5)
+ 3d8:	lb	a1,0(a3)
+ 3dc:	addi	a5,a5,1
+ 3e0:	add	a3,a3,a0
+ 3e4:	mul	a4,a4,a1
+ 3e8:	add	a2,a2,a4
+ 3ec:	bne	a6,a5,3d4 <cpu_layer+0xb0>
+ 3f0:	mul	a5,t3,a2
+ 3f4:	mulhsu	a2,a2,t3
+ 3f8:	mv	a4,a5
+ 3fc:	bnez	t4,4a4 <cpu_layer+0x180>
+ 400:	slli	a5,a2,0x1
+ 404:	sll	a5,a5,s5
+ 408:	srl	a4,a4,t4
+ 40c:	or	a4,a5,a4
+ 410:	sra	a5,a2,t4
+ 414:	blt	a5,t5,498 <cpu_layer+0x174>
+ 418:	beq	a5,t5,494 <cpu_layer+0x170>
+ 41c:	blez	a5,4c8 <cpu_layer+0x1a4>
+ 420:	li	a4,127
+ 424:	li	a5,0
+ 428:	beqz	s1,438 <cpu_layer+0x114>
+ 42c:	not	a5,a5
+ 430:	srai	a5,a5,0x1f
+ 434:	and	a4,a4,a5
+ 438:	add	a5,t6,a7
+ 43c:	sb	a4,0(a5)
+ 440:	addi	a7,a7,1
+ 444:	addi	t1,t1,4
+ 448:	bne	a0,a7,3c4 <cpu_layer+0xa0>
+ 44c:	addi	s6,s6,1
+ 450:	add	t6,t6,a0
+ 454:	add	t2,t2,t0
+ 458:	add	a6,a6,t0
+ 45c:	bne	s9,s6,3b8 <cpu_layer+0x94>
+ 460:	lw	s0,44(sp)
+ 464:	lw	s1,40(sp)
+ 468:	lw	s2,36(sp)
+ 46c:	lw	s3,32(sp)
+ 470:	lw	s4,28(sp)
+ 474:	lw	s5,24(sp)
+ 478:	lw	s6,20(sp)
+ 47c:	lw	s7,16(sp)
+ 480:	lw	s8,12(sp)
+ 484:	lw	s9,8(sp)
+ 488:	lw	s10,4(sp)
+ 48c:	addi	sp,sp,48
+ 490:	ret
+ 494:	bgeu	a4,s8,41c <cpu_layer+0xf8>
+ 498:	li	a4,-128
+ 49c:	li	a5,-1
+ 4a0:	j	428 <cpu_layer+0x104>
+ 4a4:	add	a4,a5,s3
+ 4a8:	add	a2,a2,s4
+ 4ac:	sltu	a5,a4,a5
+ 4b0:	add	a5,a5,a2
+ 4b4:	mv	a2,a5
+ 4b8:	bltz	s0,400 <cpu_layer+0xdc>
+ 4bc:	sra	a4,a5,s0
+ 4c0:	srai	a5,a5,0x1f
+ 4c4:	j	414 <cpu_layer+0xf0>
+ 4c8:	bnez	a5,428 <cpu_layer+0x104>
+ 4cc:	bgeu	s7,a4,428 <cpu_layer+0x104>
+ 4d0:	j	420 <cpu_layer+0xfc>
+ 4d4:	li	s3,1
+ 4d8:	li	s4,0
+ 4dc:	sll	s3,s3,a4
+ 4e0:	j	394 <cpu_layer+0x70>

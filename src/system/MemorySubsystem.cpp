@@ -30,13 +30,18 @@ void memorySubsystemPins(IOComponent* self, const MemorySubsystemConfig& config)
 MemorySubsystemConfig memorySubsystemFromParameters(const ParameterMap& p) {
     MemorySubsystemConfig c;
     for (const auto& [key, _] : p)
-        if (key != "technology" && key != "words" && key != "caches" && key != "clock_period")
+        if (key != "technology" && key != "words" && key != "caches" && key != "clock_period" && key != "pipelined" &&
+            key != "retention_ticks")
             throw std::invalid_argument("Unknown memory subsystem parameter " + key);
     if (const auto it = p.find("technology"); it != p.end()) {
         if (it->second == "ff") c.memory.technology = memory::Technology::FF;
         else if (it->second == "sram") c.memory.technology = memory::Technology::SRAM;
         else if (it->second == "dram") c.memory.technology = memory::Technology::DRAM;
         else throw std::invalid_argument("Memory technology must be ff, sram or dram");
+    }
+    if (const auto it = p.find("pipelined"); it != p.end()) {
+        if (it->second != "0" && it->second != "1") throw std::invalid_argument("Memory subsystem pipelined must be 0 or 1");
+        c.arbiter_pipelined = it->second == "1";
     }
     size_t words = 65536;
     if (const auto it = p.find("words"); it != p.end()) words = parseUnsigned(it->second, "memory words");
@@ -56,9 +61,14 @@ MemorySubsystemConfig memorySubsystemFromParameters(const ParameterMap& p) {
     }
     if (c.memory.technology == memory::Technology::DRAM) {
         c.memory.device.words_per_row = std::min(words, reference.dram_row_words);
+        // How long a closed row keeps its data (default: the profile's).
+        if (const auto it = p.find("retention_ticks"); it != p.end())
+            c.memory.device.retention_ticks = parseUnsigned(it->second, "DRAM retention");
         if (period && reference.dram_refresh_interval)
             c.memory.device.refresh_interval_cycles = static_cast<size_t>(std::max<SimulationTime>(24, reference.dram_refresh_interval / period));
     }
+    if (p.contains("retention_ticks") && c.memory.technology != memory::Technology::DRAM)
+        throw std::invalid_argument("Memory retention_ticks applies to dram only");
     if (const auto it = p.find("caches"); it != p.end()) {
         if (it->second != "none" && it->second != "default") throw std::invalid_argument("Memory caches must be none or default");
         if (it->second == "default") {
@@ -115,7 +125,7 @@ void MemorySubsystem::buildInternals(ComponentBuilder& b) {
         else w.connect(w.constant(name + "_NO_INVALIDATION", false), part->getInputPin("INV_VALID"));
         return part;
     };
-    arbiter_ = b.addNewComponent<memory::TwoPortMemoryArbiter<32>>("ARBITER", config_.arbiter_block_words);
+    arbiter_ = b.addNewComponent<memory::TwoPortMemoryArbiter<32>>("ARBITER", config_.arbiter_block_words, config_.arbiter_pipelined);
     for (const auto* side : {"I_", "D_"}) {
         w.connect(getInputPin("CLK"), arbiter_->getInputPin(std::string(side) + "CLK"));
         w.connect(getInputPin("RST"), arbiter_->getInputPin(std::string(side) + "RST"));

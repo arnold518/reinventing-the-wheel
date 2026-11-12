@@ -25,8 +25,10 @@ public:
     std::vector<std::vector<LogicValue>> getRegisterStateAtTime(SimulationTime) const override;
 };
 class RV32IMExecuteStage : public IOComponent {
+    bool array_multiplier_ = false;
 public:
-    explicit RV32IMExecuteStage(std::string);
+    // array_multiplier: the M unit is ArrayMulDivUnit<32> (§ 6.1.2) instead of MulDivUnit<32>.
+    explicit RV32IMExecuteStage(std::string, bool array_multiplier = false);
     static constexpr const char* TypeName="RV32IMExecuteStage";
     const char* getTypeName() const override{return TypeName;}
     void buildInternals(ComponentBuilder&) override;
@@ -50,3 +52,9 @@ public:
     RV32IRetirementObservation pendingRetirement() const override;
 };
 namespace rv32im { void registerCore(circuit::ComponentCatalog&); }
+namespace rv32im {
+circuit::ParameterMap predictionParameters(circuit::ParameterMap);
+bool arrayMultiplier(const circuit::ParameterMap&);
+bool overlappedFetch(const circuit::ParameterMap&);
+bool supportsCoreParameters(const circuit::ParameterMap&);
+}

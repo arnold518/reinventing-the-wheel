@@ -418,7 +418,10 @@ Three [transaction ports](transactions.md#protocol-rules) of width W:
 | `MEM_REQ_READY`, `MEM_RSP_VALID`, `MEM_RSP_READ_DATA`, `MEM_RSP_STATUS` | Input | 1, 1, W, 3 | The lower memory's handshake and response |
 
 The construction parameter `block_words` (a power of two up to 16, default 2)
-is the number of words the lower memory returns for a burst read.
+is the number of words the lower memory returns for a burst read. The
+parameter `pipelined` (default `0`) selects the pipelined arbiter of
+[§ 6.3.2](../accelerator/6.3.md#632-the-pipelined-bus); the rules below are
+those of the default arbiter.
 
 ### Behavior
 

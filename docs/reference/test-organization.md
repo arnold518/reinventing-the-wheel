@@ -20,7 +20,9 @@ test instead of silently appearing in an arbitrary group.
 
 The menu follows foundations, ALU, memory technologies/interfaces, registers,
 RV32I building blocks/stages and programs, RV32IM components and programs,
-then Device I/O, with developer circuits last. Every component has an explicit
+then Device I/O and the short games, then the recorded long games (a group
+the page adds from the published recordings, right after the short games),
+then the AI accelerator of § 6, with developer circuits last. Every component has an explicit
 rank within its group; supporting parts precede complete devices/cores and
 widths increase numerically. Python and JavaScript apply the same ordering,
 including deterministic core/prediction tie breaks for program variants. The
@@ -48,7 +50,10 @@ Headless sweeps (`AdderWidthSweepTest`, `RV32IALUSweepTest`, `WordGateSweepTest`
 `RV32IPipelineControlSweepTest`, `MulDivGateLevelTest` and the 16/32-bit grid in
 `ALUWidthContractTest`) declare no contract of their own. A sweep that the
 catalog names as a contract owner (`AdderWidthSweepTest`, `WordGateSweepTest`)
-must be in the registry's headless set, or it becomes a visualizer scenario. Each contract
+must be in the registry's headless set, or it becomes a visualizer scenario.
+The § 6 checks behind recorded scenarios (`ArrayMultiplierTest`,
+`ArrayMulDivUnitTest`, `MacCellTest`, `RequantizerTest`, `SystolicArrayTest`,
+`MatrixUnitTest`) are in that set for the same reason. Each contract
 has exactly one logical owner, and `BuiltinComponentCatalogInventoryTest`
 enforces that. For the word families, `contractOwner` and `equivalenceOwner`
 in `src/modules/composite/WordDatapath.cpp` choose the catalog evidence: the

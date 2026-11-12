@@ -20,7 +20,7 @@ void routerPins(IOComponent*p,const std::vector<Region>&r,size_t width=32) {
     circuit::memory::protocolPins(p,width);
     for(const auto&region:r)circuit::memory::protocolPins(p,width,region.prefix,true);
 }
-void buildRouter(IOComponent& root,ComponentBuilder& b,const std::vector<Region>& regions,bool fetch,size_t width=32) {
+void buildRouter(IOComponent& root,ComponentBuilder& b,const std::vector<Region>& regions,bool fetch,size_t width=32,bool pipelined=false) {
     Logic l(b);const auto count=regions.size();const auto suffix="<"+std::to_string(width)+","+std::to_string(count)+">";
     Fields decode_out{{"STATUS",3},{"ERROR",1}};
     for(size_t i=0;i<count;++i)decode_out.emplace_back("SELECT_"+std::to_string(i),1);
@@ -78,14 +78,21 @@ void buildRouter(IOComponent& root,ComponentBuilder& b,const std::vector<Region>
     for(size_t i=0;i<count;++i)l.wire(decode->getOutputPin("SELECT_"+std::to_string(i)),request->getInputPin("SELECT_"+std::to_string(i)));
     Fields ctrl_in{{"CLK",1},{"RST",1},{"REQ_VALID",1},{"RSP_READY",1},{"STATUS",3}};
     for(size_t i=0;i<count;++i){ctrl_in.emplace_back("GRANT_"+std::to_string(i),1);ctrl_in.emplace_back("RESPONSE_"+std::to_string(i),1);}
-    auto control=group(b,"CONTROL","DeviceRouterControl<"+std::to_string(count)+">",ctrl_in,
+    auto control=group(b,"CONTROL",std::string(pipelined?"DevicePipelinedRouterControl<":"DeviceRouterControl<")+std::to_string(count)+">",ctrl_in,
         {{"REQ_READY",1},{"RSP_VALID",1},{"ACCEPT",1},{"ACTIVE",1},{"ISSUED",1}},
-        [count](IOComponent& self,ComponentBuilder& gates) {
+        [count,pipelined](IOComponent& self,ComponentBuilder& gates) {
             Logic c(gates);auto running=c.inv(input(self,"RST"));auto busy=c.reg("BUSY",1,input(self,"CLK"),input(self,"RST"),c.bit(true));
             auto sent=c.reg("SENT",1,input(self,"CLK"),input(self,"RST"),c.bit(true));auto active=busy->getOutputPin("Q"),issued=sent->getOutputPin("Q");
-            auto ready=c.land({running,c.inv(active)}),accept=c.land({ready,input(self,"REQ_VALID")});V grants,responses;
+            V grants,responses;
             for(size_t i=0;i<count;++i){grants.push_back(input(self,"GRANT_"+std::to_string(i)));responses.push_back(input(self,"RESPONSE_"+std::to_string(i)));}
-            auto valid=c.land({running,c.land({active,c.lor({c.any(c.split(input(self,"STATUS"))),c.any(responses)})})});auto done=c.land({valid,input(self,"RSP_READY")});
+            P ready,accept,valid,done;
+            if(!pipelined){   // the chapter 5 router, gates built in their original order
+                ready=c.land({running,c.inv(active)});accept=c.land({ready,input(self,"REQ_VALID")});
+                valid=c.land({running,c.land({active,c.lor({c.any(c.split(input(self,"STATUS"))),c.any(responses)})})});done=c.land({valid,input(self,"RSP_READY")});
+            }else{            // the slot frees at the edge its answer is taken
+                valid=c.land({running,c.land({active,c.lor({c.any(c.split(input(self,"STATUS"))),c.any(responses)})})});done=c.land({valid,input(self,"RSP_READY")});
+                ready=c.land({running,c.lor({c.inv(active),done})});accept=c.land({ready,input(self,"REQ_VALID")});
+            }
             c.wire(c.lor({accept,c.land({active,c.inv(done)})}),busy->getInputPin("D"));
             c.wire(c.land({active,c.land({c.inv(done),c.lor({issued,c.any(grants)})})}),sent->getInputPin("D"));
             for(auto pair:std::array<std::pair<const char*,P>,5>{{{"REQ_READY",ready},{"RSP_VALID",valid},{"ACCEPT",accept},{"ACTIVE",active},{"ISSUED",issued}}})c.wire(pair.second,output(self,pair.first));
@@ -252,5 +259,5 @@ void registerWordBusComponents(ComponentCatalog& catalog) {
 }
 namespace circuit::device {
 void addressRouterPins(IOComponent* p,const std::vector<AddressRegion>& r,size_t width){routerPins(p,r,width);}
-void buildAddressRouter(IOComponent& root,ComponentBuilder& b,const std::vector<AddressRegion>& r,bool fetch,size_t width){buildRouter(root,b,r,fetch,width);}
+void buildAddressRouter(IOComponent& root,ComponentBuilder& b,const std::vector<AddressRegion>& r,bool fetch,size_t width,bool pipelined){buildRouter(root,b,r,fetch,width,pipelined);}
 }

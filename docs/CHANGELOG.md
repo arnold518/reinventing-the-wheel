@@ -5,7 +5,150 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-11-13
+
+### Part I passes the full test suite: delay tables, two timing tests, device layouts
+
+- The proven delay tables (`ProvenPartDelays.generated.inc` and its
+  embedded and desktop variants) were regenerated. Part I had not done
+  this, so `PartDelayTablesCompleteTest` and its embedded variant failed.
+  Each table only adds 14 chapter-6 entries (MAC cell, requantizer,
+  systolic arrays, array multipliers and multiply-dividers); no earlier
+  entry changed. `NoGateList.generated.inc` adds the systolic arrays
+  4/8/16 and `arithmetic.array-mul-div.32`. In its comments the gate counts
+  of four RV32I/RV32IM cores drop slightly (28 to 509 nodes); the test
+  compares only the list. The cause of that drift was not investigated;
+  this change's code does not reach the single-cycle core.
+- `tests/cpp/DelayRuleTest.cpp`:
+  - `FULL_RUN_SKIPPED` leaves `accelerator.systolic-array.16` (2.6 GB, 17
+    minutes alone; passes when named) and the `device.matrix-unit.*`
+    devices out of the all-parts run. The devices have no delay table, so
+    nothing was compared, but building their gates alone exceeded memory.
+  - The requantizer gets a recorded exception `{65, 100}`: timed from its
+    gates, but the gate list's settling bound is loose when several pins
+    change at once. It breaks no rule.
+- `tests/cpp/SettlingBoundTest.cpp`: `LARGE_CLOCKED` skips five large
+  clocked chapter-6 parts before building them. The test skipped them
+  after building, and building them exceeded memory.
+- `visualizer-v2/layout.json`: 38 child keys in the five device scenarios'
+  `RegisterStatus<…>` blocks renamed to the order both builds now use.
+  The keys had been saved under the browser build's old names. Native
+  builds never matched them, so `VisualizerStaticLayoutTest` most likely
+  already failed; since the 2026-11-12 build-order fix, the browser no
+  longer matched them either. This corrects that entry's claim that
+  layouts were unchanged. Preview copy updated.
+- Docs: `docs/guides/tests-and-scenarios.md` and
+  `docs/reference/circuit-timing-analyzer.md` describe the skipped parts
+  and the requantizer exception; the Part I record has the per-part
+  measurements.
+- Checks (`build-accel`, Release, one test at a time under a 3 GB cap):
+  all 631 CTests pass, one skipped (`RecordedTraceAssetsTest`, no MkDocs
+  in CTest's Python).
+  - `DelayRuleTest` and `SettlingBoundTest` passed run directly with
+    CTest's command after their changes. `DelayRuleTest`: 404 parts, 0
+    rule breaks, 718 MB peak, about 20 minutes. `SettlingBoundTest`: 394
+    s, 505 MB peak.
+  - Each chapter-6 part also passed both tests on its own.
+  - The 16 layout, palette and catalog tests were rerun after the layout
+    change.
+- Not run: `tools/build-pages.sh`, `tools/run-web-tests.py`, a browser
+  look at an expanded device status block.
+
+## 2026-11-12
+
+### Part II plan agreed: floating point, RV32F, campaign 2
+
+- The [roadmap record](records/2026-11-09-gpu-and-ai-accelerator-roadmap.md)
+  details Part II as floating point in general:
+  - format-generated float units (FP16, FP32) with IEEE rounding and flags;
+  - RV32F on the CPU as stage 5e (an option, so earlier results stay
+    unchanged);
+  - a Volta-faithful 4 × 4 × 4 tensor core;
+  - site chapter 7, with the GPU moving to chapter 8.
+- A new campaign 2 at the end of Part II covers hardware cost, MNIST
+  accuracy by number format, tensor-core numerics and CPU software against
+  hardware floats. The former campaign 2 becomes campaign 3 (the GPU).
+- The record restates the page-template and rich-scenario rules every new
+  component must meet, and notes that every size is generated from one
+  builder through templates.
+- Checked: the xPack RISC-V GCC has the `rv32imf_zicsr/ilp32f` libraries.
+  Planning only: no code changed, nothing run.
+
+### Chapter-6 component colours
+
+- `visualizer-v2/palette.json` gives the 16 chapter-6 types their own
+  colours (array multipliers near the existing multiplier purples; cells
+  and array warm; sequencer, engines, ports and lanes distinct). They were
+  drawn in the neutral fallback, which `VisualizerColorPaletteTest`
+  rejects; it now passes. The preview bundle's palette was replaced, and
+  Chrome opens `systolic-array-2` and `matrix-unit-4` with the new colours.
+
+### Native and browser builds now build ALU16's shifter and the device status block in the same order
+
+- `WordExtended.cpp` (ALU16 shifter fill: `SHIFT_n_FILL_WORD`,
+  `SHIFT_n_OUT_JOIN`) and `RegisterFrontEnd.cpp` (the `STATUS` block of
+  every chapter-5 device's register checks) built two parts as arguments
+  of one call. C++ leaves that order to the compiler, so GCC (native) and
+  Clang (WebAssembly) differed: ALU16's part list was in another order and
+  10–15 status parts per device had other names, so saved layouts did not
+  fit in the browser. Each part is now built in its own statement, in the
+  order the native build already used, so native names, layouts and saved
+  machines are unchanged.
+- `docs/guides/adding-a-component.md` states the rule (one part per
+  statement; braced lists are safe).
+- Checks: native part lists of ALU 8/16/32 and the four device scenarios
+  identical before and after; `circuitsim_wasm` rebuilt;
+  `VisualizerScenarioWasmParityTest` now passes (it failed on ALU16; run
+  with `CIRCUITSIM_PROBE_DEFAULT_FIDELITY=test` as `run-web-tests.py`
+  sets); part names equal native for ALU16, the four device scenarios,
+  `systolic-array-2` and `matrix-unit-4` (79,030 parts, previously 15
+  differed); 19 native ALU and device tests (ctest, `build-accel`); example
+  rows regenerated for ALU and device tables, identical; headless Chrome
+  opens `alu`, `timer-device`, `console-device` and `matrix-unit-4`. Not
+  run: the full test suite, `tools/build-pages.sh`, the other web tests.
+  Other scenarios were not audited for the same fault.
+
 ## 2026-11-11
+
+### § 6 menu place, finest profiles, floorplans, upgraded rows, internal blocks documented
+
+- The AI Accelerator group follows the recorded long games: the page now
+  inserts the long-game group right after the short games (`app.js`), and
+  `VisualizerScenarioBrowserTest` asserts that order.
+- Scenarios open in the finest profile a browser handles, measured:
+  `systolic-array-2` Gate (13,077 parts, was Logic), `matrix-unit-4` Logic
+  (79,030 parts, about 30–40 s and 1 GB in Chrome, was Compact, which
+  showed one closed box; Gate passes 1.5 GB natively); the machine stays
+  Compact (Visual passed 1.6 GB natively over its 69,671 cycles).
+- Floorplans in `device_layout.py` for `SystolicArray<N>` (the cell grid
+  with its skew and de-skew registers, instead of a diagonal automatic
+  placement) and `MatrixUnit<N>` (commands left, data path right); layouts
+  filled and reflowed for the new profiles; 0 static-layout problems.
+- Fixed: 1,676 of the matrix unit's part names differed between native
+  and WebAssembly builds, because its engines passed two part-building
+  calls as arguments of one call (order left to the compiler), so saved
+  layouts did not fit in the browser. One merged duplicate NOT gate leaves
+  79,030 parts. Found, not fixed (chapters 2 and 5): the same fault in
+  `WordExtended.cpp` (ALU16) and `RegisterFrontEnd.cpp` (15 parts in every
+  device's register front end).
+- Rows: signed values in the multiplier and M-unit labels; the M unit adds
+  divide by zero, signed remainder, the −8 ÷ −1 overflow and a cancelled
+  divide (the first test of `CANCEL`); the requantizer adds the negative
+  clamp.
+- Documentation: § 6.4 documents the matrix unit's control blocks
+  (sequencer, engines, buffer ports, lanes, bias, store select) with pins
+  and behaviour, § 6.3.1 the copy engine's pins, § 6.1.2 the M unit's parts
+  and `ArrayMultiplyUnit`; profile statements updated; the tests guide and
+  the test-organization reference describe the profiles, floorplans, layout
+  refresh and menu order.
+- Checks: the chapter-6 component tests and scenarios,
+  `AcceleratorMachineScenarioTest`, `MatrixUnitTest`,
+  `VisualizerScenarioCatalogTest`, `BuiltinComponentCatalogInventoryTest`,
+  `TestRegistryCoverageTest`; WASM rebuilt; the six tables regenerated with
+  the per-row check; WASM against native for all six component scenarios;
+  Chrome on the 8893 preview (menu test, every § 6 component scenario,
+  § 6.1 and § 6.4 embeds); strict preview build. Not run:
+  `tools/build-pages.sh`, the other web tests, earlier chapters' tests.
 
 ### SRAM is the games machines' main memory; long games re-recorded
 
@@ -62,6 +205,136 @@ history remains in Git and the archived reports.
   [main-memory comparison](records/2026-11-08-games-machine-main-memory.md)).
   The FF recordings are kept only
   outside the repository (`build-milestone/ff-long-games-backup/`).
+
+### Chapter 6 pages and scenarios follow the page and scenario rules
+
+- Every § 6 component now has the template's sections: IO pins, behavior
+  (with a C++ reference), unknown inputs and timing, structural and
+  behavioral implementation, a generated example table with the embedded
+  simulator, and source links with its tests. 6.3, 6.5 and 6.6 gained
+  examples or reproduction steps and source links; the index lists the
+  scenarios. 6.4's reset text corrected (reset clears the bias registers
+  and the array, not the memories).
+- New scenario `ArrayMulDivUnitWidth4ScenarioTest` (`array-muldiv-w4`):
+  the four multiplies (2 edges) and a divide (W + 1 edges).
+- `MatrixUnitScenarioTest` checkpoints are now checked: each command
+  accepted, each byte STORE writes (address, lane, value from the integer
+  reference), the final `DONE` and `STATUS`; before, its `edge-N` rows
+  asserted nothing. `MacCell`, `SystolicArray<2>` and the M unit check
+  every output at every checkpoint. `SystolicArray<2>` opens in Logic
+  (6,553 parts, against 13,077 at Gate).
+- Fixed: the catalog's evidence made the six § 6 checks visualizable, and
+  `server.py` failed at import (`KeyError: 'ArrayMultiplierTest'`); they
+  are now in the registry's headless set. The machine scenario belongs to
+  `AcceleratorMachineTest`.
+- Saved layouts for the seven scenarios (added only); the
+  `VisualizerScenarioCatalogTest` group list includes `accelerator`.
+- Earlier pages list the Part I options: router and bus `pipelined`,
+  two-port arbiter `pipelined`, core `multiplier` and `overlapped_fetch`.
+- Guides: a § 6 section in the tests-and-scenarios guide; test
+  organization reference updated. The Part I record's undated section
+  moved into its summary; the roadmap summary says Part I is built.
+- Checks: the seven § 6 scenarios, `VisualizerScenarioCatalogTest`,
+  `BuiltinComponentCatalogInventoryTest`, `TestRegistryCoverageTest`,
+  `check-static-layouts.py` (0 problems), strict MkDocs build with the
+  preview configuration. Limits: the WASM module was not rebuilt, so the
+  example rows on the preview are the native export (the same
+  `exampleRowsJson`) added to its bundle, without the WASM generator's
+  per-row state cross-check, and the embedded simulators cannot open § 6
+  scenarios until a Pages build; no browser checks; the rest of the earlier
+  chapters' tests were not run. (Closed by the next entry.)
+
+### The accelerator's programs are embedded; WebAssembly and browser checks of § 6
+
+- Fixed: the machine scenario read its program
+  (`tests/fixtures/accelerator/demo-n4.elf`) from the source directory,
+  which the WebAssembly simulator does not have, so `accelerator-machine`
+  and the § 6.5 embed could not open in a browser. CMake now embeds every
+  accelerator `*.elf` (`AcceleratorPrograms.generated.hpp`), as it does
+  `systems/*.json`; `acceleratorFixture()` reads no file.
+- § 6.5 says the machine takes about 3½ minutes to open in the browser
+  (it runs the whole program first); the tests-and-scenarios guide notes
+  the embedding.
+- Checks: native `AcceleratorMachineScenarioTest` (69,671 cycles) and
+  `AcceleratorMachineTest`; `circuitsim_wasm` rebuilt in
+  `build-wasm-milestone`; `generate-example-rows.mjs` for § 6 with its
+  per-row check (rows identical to the earlier native export); all seven
+  § 6 scenarios in WebAssembly equal native (topology summary,
+  checkpoints, rows, final state); headless Chrome opens each § 6 scenario
+  and § 6.1's four embeds with no page errors; 8893 preview rebuilt
+  strictly; `VisualizerWasmRuntimeTest`, `ALUWidth8WasmRuntimeSmoke`.
+- `VisualizerScenarioWasmParityTest` fails, for a reason older than § 6:
+  `WordExtended.cpp` builds two shifter parts as arguments of one call, and
+  GCC and Clang order them differently, so ALU16's part list differs
+  between native and WebAssembly. Not fixed here (chapter 2; earlier
+  chapters are not changed in this part). Not run: full
+  `tools/build-pages.sh`, the other web tests.
+
+## 2026-11-10
+
+### Chapter 6: the AI accelerator (roadmap Part I)
+
+- New parts, each with gates and a compact form proven equal:
+  `ArrayMultiplier<W>` (Dadda tree, Baugh-Wooley signs), `ArrayMulDivUnit<W>`
+  (multiply in 2 edges; RV32IM core option `multiplier=array`), `MacCell`,
+  `Requantizer`, weight-stationary `SystolicArray<N>` (N = 2–16), and the
+  device `MatrixUnit<N>` (N = 4, 8, 16: register table, command queue, copy
+  engine as a DMA master, buffers, array, requantizers).
+- Pipelined bus (roadmap stage 3, bus record level 2) as **options, off by
+  default**: bus `"pipelined": true` (router and arbiter `pipelined=1`), the
+  memory subsystem's `pipelined=1`, core `overlapped_fetch=1`. Default
+  construction of every chapter 3–5 part is unchanged, so no earlier test,
+  layout or recording changes; making them the default is left for when
+  the earlier chapters' tests are updated (owner's instruction for Part I).
+- `systems/accelerator-machine.json` and `-cpu.json`, the runner
+  `src/runtime/AcceleratorGuest.cpp`, `accelerator_experiment`, the campaign
+  script `tools/accelerator/run-campaign.py`; MNIST networks trained and
+  quantized by `tools/accelerator/model.py` (int8: MLP 96.79 %, CNN 97.34 %
+  on the 10,000 test images); C driver and programs in
+  `tools/accelerator/guest/`, 14 ELFs in `tests/fixtures/accelerator/`.
+- Site chapter § 6 (`site-docs/accelerator/`, two diagrams, nav), the
+  simulator menu group **AI Accelerator** (six scenarios), the `MATRIX`
+  register table in `DeviceRegisters.cpp`, the catalog inventory.
+- Campaign 1 (§ 6.6, `tools/accelerator/run-campaign.py`): the 16 × 16
+  unit against the CPU alone on SRAM, timed cycles: matrix multiply 107×,
+  CNN 57×, MLP 14×; 4 → 8 gains 2.1–3.4×, 8 → 16 only 8–17 %; the array is
+  busy 4–17 % of each layer (data movement dominates); the array
+  multiplier and pipelined bus halve the CPU-alone time. All 20 runs
+  halted with the reference outputs. The `unit` profile's DRAM has no
+  refresh and a row read after 1,000,000 cycles is X (confirmed with
+  `demo-cpu` at a 50× clock period, on both buses), so the 1.76-million-cycle
+  matrix multiply first hung; the DRAM runs now use a 64 ms retention
+  through the new `memory.subsystem.32` parameter `retention_ticks` (DRAM
+  only, default the profile's). The MLP and CNN DRAM runs gave identical
+  cycles and event counts with either retention.
+- The runner stops a run with no retired instruction for `stall_cycles`
+  (default 1,000,000) or with an unknown commit signal, listing the
+  machine's handshake pins. `PipelinedBusTest` adds DRAM and requesters
+  that refuse answers at random.
+- Checks: listed in the [Part I record](records/2026-11-10-part1-accelerator-implementation.md)
+  (component tests, the six scenarios, `PipelinedBusTest`,
+  `AcceleratorMachineTest`, registry and inventory checks, strict MkDocs
+  build); no earlier-chapter test was changed or run; the WebAssembly
+  build and browser checks were not run, so the published simulator lacks
+  the new scenarios until the next Pages build; no clock certificate.
+
+### GPU and AI accelerator roadmap agreed
+
+- New [roadmap record](records/2026-11-09-gpu-and-ai-accelerator-roadmap.md)
+  for the owner's grand goal. It replaces the GPU and AI sections of the
+  future steps plan, which now points to it. Agreed with the owner: a
+  Volta-shaped GPU (compute first, then graphics) at reduced size with
+  every real component present and all sizes as parameters (warp size
+  4–64, default 32); CUDA kernels compiled to PTX and translated by our
+  own translator into a SASS-like instruction set; 14 stages in three
+  parts (an integer TPU-style accelerator on the chapter-5 computer,
+  floating point and the tensor-core unit, then the GPU); two experiment
+  campaigns, at the end of Parts I and III, compared with published Volta
+  figures.
+- Checks: planning only. One compiler check (GCC 12.4 emits custom-0
+  instructions through `.insn`; recorded, though the RISC-V-based GPU
+  option it supported was not chosen). No build, test or simulation; no
+  product code changed.
 
 ## 2026-11-08
 

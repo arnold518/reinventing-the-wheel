@@ -1,6 +1,8 @@
 """Readable device architecture and the computer-system floorplans: the
-machine (core, buses, memory, devices), a bus (routers over arbiters) and the
-memory subsystem (caches over the arbiter over the memory)."""
+machine (core, buses, memory, devices), a bus (routers over arbiters), the
+memory subsystem (caches over the arbiter over the memory) and the
+accelerator's systolic array (its cell grid) and matrix unit (commands left,
+data path right)."""
 
 PUBLIC_PREFIXES = ("ClockedCounter<", "SynchronousFifo<", "DeviceRegisterPort<",
                    "BusRouter<", "BusFetchRouter<", "BusBridge<", "RegisteredBridge<")
@@ -32,6 +34,9 @@ def defaults(kind):
         return dict(aspect_ratio=.85, min_aspect_ratio=.4, title_bar_ratio=.065,
                     pin_size_ratio=.012 if not kind.startswith(("BusRouter<", "BusFetchRouter<")) else .007,
                     boundary_area_ratio=.025)
+    if kind.startswith("MatrixUnit<"):
+        return dict(aspect_ratio=.62, min_aspect_ratio=.4, title_bar_ratio=.045,
+                    pin_size_ratio=.010, boundary_area_ratio=.025)
     if kind.startswith(PRIVATE_PREFIXES):
         return dict(aspect_ratio=.75, min_aspect_ratio=.4, title_bar_ratio=.06,
                     pin_size_ratio=.018, boundary_area_ratio=.025)
@@ -70,6 +75,10 @@ def placements(kind, aspects, parent_aspect, title_fraction=0):
         return _bus(aspects, parent_aspect, title_fraction)
     if kind.startswith("MemorySubsystem"):
         return _memory(aspects, parent_aspect, title_fraction)
+    if kind.startswith("SystolicArray<") and "CELL_0_0" in aspects:
+        return _systolic_array(aspects, parent_aspect, title_fraction)
+    if kind.startswith("MatrixUnit<") and {"SEQUENCER", "ARRAY"} <= set(aspects):
+        return _matrix_unit(aspects, parent_aspect, title_fraction)
     return None
 
 
@@ -197,4 +206,69 @@ def _memory(aspects, parent_aspect, title_fraction):
             # Centre a single part.
             result[names[0]]["rel_pos"][0] = (1 - result[names[0]]["rel_width"]) / 2
         y += height + gap
+    return _rest(result, put, aspects)
+
+
+def _matrix_unit(aspects, parent_aspect, title_fraction):
+    """Left to right as a command flows: the register PORT over the REGISTERS
+    front end; the command queues over the SEQUENCER; the engines it starts
+    (copy, shift, multiply, activate) over the buffer ports and the STORE
+    byte select. The data path fills the right half, one column per array
+    column j, top to bottom as numbers move: weight and activation banks,
+    the bias registers, the ARRAY, then each column's lane, accumulator bank
+    and requantizer. Splits, joins and constants go in the leftover rows."""
+    result, put = _placer(aspects, parent_aspect)
+    top = max(.11, title_fraction + .035)
+    span = .90 - top
+
+    def slot(name, x, y, width, height):
+        if name in aspects:
+            put(name, x, top + y * span, width, height * span)
+
+    slot("PORT", .03, 0, .10, .22)
+    slot("REGISTERS", .03, .26, .10, .74)
+    for index, name in enumerate(("QUEUE_OP", "QUEUE_ARG0", "QUEUE_ARG1", "QUEUE_ARG2", "QUEUE_ARG3")):
+        slot(name, .16, index * .125, .09, .105)
+    slot("SEQUENCER", .16, .64, .09, .36)
+    for name, y, height in (("COPY_ENGINE", 0, .25), ("SHIFT_ENGINE", .28, .11), ("MATMUL_ENGINE", .42, .17),
+                            ("ACTIVATE_ENGINE", .62, .13), ("BUFFER_PORTS", .78, .10), ("STORE_SELECT", .91, .09)):
+        slot(name, .28, y, .11, height)
+    columns = sorted(int(n.rsplit("_", 1)[1]) for n in aspects if re.fullmatch(r"LANE_\d+", n))
+    left, width = .43, .54
+    step = width / max(1, len(columns))
+    for j in columns:
+        x = left + j * step
+        for prefix, y, height in (("WEIGHT_BANK_", 0, .10), ("ACT_BANK_", .12, .10), ("LANE_", .67, .09),
+                                  ("ACC_BANK_", .79, .09), ("REQUANTIZE_", .91, .09)):
+            slot(prefix + str(j), x + step * .06, y, step * .88, height)
+    slot("BIAS", left, .24, width, .07)
+    slot("ARRAY", left + width * .15, .33, width * .70, .31)
+    return _rest(result, put, aspects)
+
+
+def _systolic_array(aspects, parent_aspect, title_fraction):
+    """The cells as the N x N grid they form: CELL_i_j in row i (weights and
+    sums move down) and column j (inputs move right). Row i's SKEW_i_k
+    registers stand to its left in order, column j's DESKEW_j_k registers
+    below it in order. The constants go in the leftover row."""
+    result, put = _placer(aspects, parent_aspect)
+    top = max(.11, title_fraction + .035)
+    n = 1 + max(int(name.split("_")[1]) for name in aspects if name.startswith("CELL_"))
+    grid_left, grid_width, skew_width = .30, .64, .21
+    grid_height = (.78 - top) if n > 1 else (.90 - top)
+    cell_w, cell_h = grid_width / n, grid_height / n
+    for i in range(n):
+        for j in range(n):
+            put(f"CELL_{i}_{j}", grid_left + j * cell_w + cell_w * .08, top + i * cell_h + cell_h * .08,
+                cell_w * .84, cell_h * .84)
+        for k in range(i):
+            step = skew_width / max(1, n - 1)
+            put(f"SKEW_{i}_{k}", .07 + k * step + step * .1, top + i * cell_h + cell_h * .3, step * .8, cell_h * .4)
+    deskew_top, deskew_height = top + grid_height + .01, .90 - (top + grid_height + .01)
+    for j in range(n):
+        count = n - 1 - j
+        for k in range(count):
+            step = deskew_height / max(1, n - 1)
+            put(f"DESKEW_{j}_{k}", grid_left + j * cell_w + cell_w * .25, deskew_top + k * step + step * .1,
+                cell_w * .5, step * .8)
     return _rest(result, put, aspects)

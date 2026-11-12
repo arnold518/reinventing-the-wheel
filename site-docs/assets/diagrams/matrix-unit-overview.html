@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>The matrix unit on the bus</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="matrix-unit-overview">
+<div class="diagram-viewport" role="region" aria-label="The matrix unit on the bus" tabindex="0">
+<svg viewBox="0 0 640 392" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="matrix-unit-overview-title matrix-unit-overview-desc">
+<title id="matrix-unit-overview-title">The matrix unit on the bus</title>
+<desc id="matrix-unit-overview-desc">The RV32IM core and the matrix unit share the bus. The core writes commands into the unit's registers; the unit's copy engine reads operands from main memory as a second bus master, the systolic array multiplies, the requantizers turn sums into bytes, and the copy engine stores results back.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="matrix-unit-overview-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="matrix-unit-overview-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+</defs>
+<rect width="640" height="392" fill="var(--dg-paper)"/>
+<rect x="24" y="24" width="150" height="52" rx="6" class="dg-box"/>
+<text x="99.0" y="47.0" class="dg-name" text-anchor="middle">RV32IM core</text>
+<text x="99.0" y="66.0" class="dg-small" text-anchor="middle">fetch · data</text>
+<rect x="250" y="24" width="150" height="52" rx="6" class="dg-box"/>
+<text x="325.0" y="47.0" class="dg-name" text-anchor="middle">bus</text>
+<text x="325.0" y="66.0" class="dg-small" text-anchor="middle">routers · arbiters</text>
+<rect x="476" y="24" width="140" height="52" rx="6" class="dg-store"/>
+<text x="546.0" y="47.0" class="dg-name" text-anchor="middle">main memory</text>
+<text x="546.0" y="66.0" class="dg-small" text-anchor="middle">SRAM, 256 KiB</text>
+<path class="dg-edge" d="M 174 50 L 250 50" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 400 50 L 476 50" marker-end="url(#matrix-unit-overview-arrow)"/>
+<rect x="24" y="112" width="592" height="260" rx="8" class="dg-zone"/>
+<text x="40" y="134" class="dg-tag" text-anchor="start">MATRIXUNIT&lt;N&gt;</text>
+<rect x="40" y="146" width="150" height="52" rx="6" class="dg-box"/>
+<text x="115.0" y="169.0" class="dg-name" text-anchor="middle">registers</text>
+<text x="115.0" y="188.0" class="dg-small" text-anchor="middle">ARG0..3 · COMMAND</text>
+<rect x="40" y="214" width="150" height="44" rx="6" class="dg-box"/>
+<text x="115.0" y="241.0" class="dg-name" text-anchor="middle">command queue</text>
+<rect x="40" y="274" width="150" height="52" rx="6" class="dg-box"/>
+<text x="115.0" y="297.0" class="dg-name" text-anchor="middle">sequencer</text>
+<text x="115.0" y="316.0" class="dg-small" text-anchor="middle">five engines</text>
+<rect x="250" y="146" width="150" height="52" rx="6" class="dg-focus"/>
+<text x="325.0" y="169.0" class="dg-name" text-anchor="middle">copy engine</text>
+<text x="325.0" y="188.0" class="dg-small" text-anchor="middle">the DMA master</text>
+<rect x="250" y="214" width="150" height="44" rx="6" class="dg-store"/>
+<text x="325.0" y="233.0" class="dg-name" text-anchor="middle">buffers</text>
+<text x="325.0" y="252.0" class="dg-small" text-anchor="middle">act · weight · acc</text>
+<rect x="450" y="146" width="150" height="52" rx="6" class="dg-focus"/>
+<text x="525.0" y="169.0" class="dg-name" text-anchor="middle">systolic array</text>
+<text x="525.0" y="188.0" class="dg-small" text-anchor="middle">N × N cells</text>
+<rect x="450" y="214" width="150" height="44" rx="6" class="dg-box"/>
+<text x="525.0" y="241.0" class="dg-name" text-anchor="middle">requantize ×N</text>
+<rect x="250" y="290" width="350" height="40" rx="6" class="dg-box"/>
+<text x="425.0" y="315.0" class="dg-name" text-anchor="middle">lanes: bias + sum, ReLU, write back</text>
+<path class="dg-edge" d="M 325 112 L 325 76" marker-end="url(#matrix-unit-overview-arrow-accent)"/>
+<text x="334" y="100" class="dg-tag" text-anchor="start">DMA reads, writes</text>
+<path class="dg-edge" d="M 300 76 L 300 112" marker-end="url(#matrix-unit-overview-arrow)"/>
+<text x="212" y="100" class="dg-tag" text-anchor="start">registers</text>
+<path class="dg-edge" d="M 115 198 L 115 214" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 115 258 L 115 274" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 190 300 L 250 300" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 325 198 L 325 214" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 400 236 L 450 236" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 400 172 L 450 172" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 525 198 L 525 214" marker-end="url(#matrix-unit-overview-arrow)"/>
+<path class="dg-edge" d="M 525 258 L 525 290" marker-end="url(#matrix-unit-overview-arrow)"/>
+
+</svg>
+</div>
+<figcaption><strong>A device with its own master port.</strong> The core writes four arguments and a command; the command waits in a queue until the sequencer starts the engine it names. The copy engine moves bytes between main memory and the buffers through the unit's DMA port; the array, the requantizers and the lanes work on the buffers only.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

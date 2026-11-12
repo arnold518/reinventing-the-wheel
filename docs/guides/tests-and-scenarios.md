@@ -259,6 +259,56 @@ are bounded to three attempts; other game failures do not skip later games.
 Live progress and logs are in `campaign.json` and `jobs/` under the output.
 These long sessions can take days; a healthy launch is not a completed run.
 
+### Accelerator checks (§ 6)
+
+The chapter-6 tests carry the CTest label `accelerator` and run under the
+`unit` profile:
+
+```sh
+ctest --test-dir build-cleanup -L '^accelerator$' -j1 --output-on-failure
+```
+
+| Test | What it runs |
+| --- | --- |
+| `ArrayMultiplierTest`, `ArrayMulDivUnitTest`, `MacCellTest`, `RequantizerTest`, `SystolicArrayTest` | The arithmetic parts and the array, gates and compact against integer references (6.1, 6.2) |
+| `MatrixUnitTest` | `MatrixUnit<N>` through its registers with a host memory on its DMA port (6.4) |
+| `PipelinedBusTest` | The pipelined arbiter and whole programs on the plain and pipelined bus (6.3) |
+| `AcceleratorMachineTest` | The MLP, CNN and matrix-multiply programs on the machine; the longest of them (registry label `slow`) |
+| `*ScenarioTest` (7) | The recorded scenarios of the **AI Accelerator** menu group |
+
+The six checks above `PipelinedBusTest` are in the registry's headless set:
+the catalog names them as evidence, which would otherwise make them
+visualizer scenarios that `server.py` cannot place in a menu group. Six of
+the scenarios are `ComponentScenarioTest`s with generated example tables; the
+machine scenario is a program recording with checkpoints `reset released`,
+`console: done` and `halted`, like the chapter-5 machines.
+
+Each opens in the finest profile a browser handles: Gate for the four
+arithmetic parts and `systolic-array-2` (13,077 parts), Logic for
+`matrix-unit-4` (79,030 parts, about 30 s and 1 GB in a browser; Gate
+passes 1.5 GB natively), Compact for the machine (a finer unit over its
+69,671 cycles passes 1.6 GB). `SystolicArray<N>` and `MatrixUnit<N>` have
+floorplans in `visualizer-v2/device_layout.py` (the cell grid; commands
+left, data path right). Refreshing `matrix-unit-4`'s layouts
+(`recalculate_layouts.py --fill-missing matrix-unit-4 [--reflow-types …]`)
+takes about 3 minutes and 1.1 GB. Run it from the repository root with the
+build's backend first on `sys.path` (for example through `runpy`): a script
+started inside `visualizer-v2/` imports the older `circuit_backend` module
+kept in that folder, which can fail at import on scenarios it does not
+know.
+`VisualizerSessionProbe examples TEST ALIAS` prints the same row export
+natively (without `--fidelity` it uses the catalog profile), which is a
+quick check of a scenario's rows before a Pages build.
+
+The guest programs are built by `tools/accelerator/build-guests.py` (GCC
+`-O2`, into `tests/fixtures/accelerator/`). CMake embeds every `*.elf`
+there in the build (`AcceleratorPrograms.generated.hpp`), so native,
+Python and WebAssembly builds run the same bytes and no file is read at
+run time; reconfigure (any build does) after rebuilding them. The § 6.6
+campaign is
+`tools/accelerator/run-campaign.py run`, one capped run at a time, and
+`run-campaign.py table` checks and prints its tables.
+
 ### Timing profiles
 
 The native suite runs under the `unit` timing profile (the code default:
@@ -506,6 +556,12 @@ errors. Its filter still selects sessions by alias. With screenshots enabled,
 zero comparisons cannot establish a pass. Diagnostic `--report`/`--floors`
 outputs describe measured conservatism and do not replace the normal test's
 safety and floor checks. `DelayRuleSelectionTest` covers unmatched selection.
+A run over every part skips the parts in `FULL_RUN_SKIPPED`, which need too
+much memory on this host: `accelerator.systolic-array.16` (2.6 GB and 17
+minutes alone) and the `device.matrix-unit.*` devices (no delay table, so
+nothing is compared, but their gates alone take 1.6 GB at 4 wide). Run the
+array by naming it, under a memory cap and with nothing else heavy running,
+after changing it or its 2 × 2 source table.
 
 ### Named fidelity presets
 

@@ -361,6 +361,14 @@ void boundaries() {
     invalid(CircuitTimingAnalyzer::settling(latch.root), "cycle");
 }
 
+// Clocked parts too large to build here (this bench skips clocked parts after
+// building them twice): 1.2 GB for the 8 x 8 array, over 2.5 GB for the
+// 4-wide matrix unit. The 2 x 2 and 4 x 4 arrays are still built and skipped.
+const std::set<std::string> LARGE_CLOCKED = {
+    "accelerator.systolic-array.8", "accelerator.systolic-array.16",
+    "device.matrix-unit.4", "device.matrix-unit.8", "device.matrix-unit.16",
+};
+
 // Every gate-level part in the catalog: the three bounds must be ordered and
 // the simulator must respect them.
 void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::string>& only) {
@@ -372,6 +380,7 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
               << "seen" << std::setw(7) << "seen01" << std::setw(9) << "compact" << '\n';
     for (const auto& contract : catalog.contracts()) {
         if (!only.empty() && !only.contains(contract.id)) continue;
+        if (only.empty() && LARGE_CLOCKED.contains(contract.id)) continue;
         std::shared_ptr<IOComponent> part, twin;
         try {
             part = std::dynamic_pointer_cast<IOComponent>(

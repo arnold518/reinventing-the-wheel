@@ -303,6 +303,14 @@ nav:
       - 5.5. System Description: system/5.5.md
       - 5.6. Games: system/5.6.md
       - 5.7. Experiments: system/5.7.md
+  - AI Accelerator:
+      - accelerator/index.md
+      - 6.1. Arithmetic: accelerator/6.1.md
+      - 6.2. Systolic Array: accelerator/6.2.md
+      - 6.3. Data Movement: accelerator/6.3.md
+      - 6.4. Matrix Unit: accelerator/6.4.md
+      - 6.5. Networks: accelerator/6.5.md
+      - 6.6. Experiments: accelerator/6.6.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

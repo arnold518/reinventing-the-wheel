@@ -53,6 +53,9 @@
 #include "system/MemorySubsystem.hpp"
 #include "system/ComputerSystem.hpp"
 #include "modules/device/DeviceComponents.hpp"
+#include "modules/composite/ArrayMultiplier.hpp"
+#include "modules/accelerator/MatrixParts.hpp"
+#include "modules/accelerator/MatrixUnit.hpp"
 #include <algorithm>
 #include <charconv>
 #include <stdexcept>
@@ -865,8 +868,11 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     memory::registerCaches(*catalog);
     memory::registerArbiters(*catalog);
     rv32im::registerArithmetic(*catalog);
+    arithmetic::registerArrayMultipliers(*catalog);
+    accelerator::registerMatrixParts(*catalog);
     rv32im::registerCore(*catalog);
     device::registerComponents(*catalog);
+    accelerator::registerMatrixUnits(*catalog);
     storage::registerRegisterFiles(*catalog);
     logic::registerDecoders(*catalog);
     word::registerMuxes(*catalog);

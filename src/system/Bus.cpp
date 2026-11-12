@@ -48,7 +48,7 @@ public:
     // Each route set has its own pins, so its own floorplan.
     std::string componentLayoutVariant() const override { return "routes-" + shortHash(routerParameters(config_).at("routes")); }
     void buildInternals(ComponentBuilder& builder) override {
-        device::buildAddressRouter(*this, builder, config_.routes, config_.fetch, config_.width);
+        device::buildAddressRouter(*this, builder, config_.routes, config_.fetch, config_.width, config_.pipelined);
     }
 private:
     RouterConfig config_;
@@ -90,13 +90,20 @@ ParameterMap routerParameters(const RouterConfig& config) {
         std::snprintf(text, sizeof text, "@0x%08x+0x%llx%s", r.base, static_cast<unsigned long long>(r.bytes), r.local ? "" : "!");
         routes += (routes.empty() ? "" : ",") + r.prefix + text;
     }
-    return {{"access", config.fetch ? "fetch" : "data"}, {"routes", routes}};
+    ParameterMap parameters{{"access", config.fetch ? "fetch" : "data"}, {"routes", routes}};
+    if (config.pipelined) parameters["pipelined"] = "1";
+    return parameters;
 }
 
 RouterConfig routerFromParameters(const ParameterMap& parameters, size_t width) {
-    if (parameters.size() != 2 || !parameters.contains("access") || !parameters.contains("routes"))
-        throw std::invalid_argument("A bus router takes access and routes");
+    const bool pipelined = parameters.contains("pipelined");
+    if (parameters.size() != 2u + pipelined || !parameters.contains("access") || !parameters.contains("routes"))
+        throw std::invalid_argument("A bus router takes access, routes and optionally pipelined");
     RouterConfig config;
+    if (pipelined) {
+        if (parameters.at("pipelined") != "1") throw std::invalid_argument("Router pipelined must be 1 when given");
+        config.pipelined = true;
+    }
     config.width = width;
     const auto& access = parameters.at("access");
     if (access != "fetch" && access != "data") throw std::invalid_argument("Router access must be fetch or data");
@@ -194,7 +201,7 @@ void Bus::buildInternals(ComponentBuilder& builder) {
     const auto width = description_.width;
     std::map<std::string, std::shared_ptr<IOComponent>> routers;
     for (const auto& master : description_.masters) {
-        RouterConfig config{routesOf(description_, master), master.fetch, width};
+        RouterConfig config{routesOf(description_, master), master.fetch, width, description_.pipelined};
         auto router = builder.addByContract({routerContractId(width), master.name + "_ROUTER", routerParameters(config)});
         routers[master.name] = router;
         const auto prefix = master.name + "_";
@@ -231,7 +238,8 @@ void Bus::buildInternals(ComponentBuilder& builder) {
             for (size_t i = 0; i + 1 < level.size(); i += 2) {
                 const auto name = prefix + "ARBITER" + (masters.size() == 2 ? "" : "_" + std::to_string(made));
                 ++made;
-                auto arbiter = builder.addByContract({"memory.arbiter." + std::to_string(width), name, {}});
+                auto arbiter = builder.addByContract({"memory.arbiter." + std::to_string(width), name,
+                    description_.pipelined ? ParameterMap{{"pipelined", "1"}} : ParameterMap{}});
                 // The arbiter runs on I_CLK and does not read D_CLK; both
                 // resets are read.
                 l.wire(getInputPin("CLK"), arbiter->getInputPin("I_CLK"));

@@ -26,13 +26,17 @@ with sync_playwright() as p:
         keys:scenarioOptions.filter(o=>o.group===g.id && !o.hidden && (!o.workload || o.core==='single')).map(o=>o.key)
       })).filter(g=>g.keys.length)
     })""")
-    # The published long-game recordings are one extra group, before the
-    # developer circuits, with one entry per game (its recorded fidelities
-    # are the Fidelity menu's choices); choosing one opens the recording.
+    # The published long-game recordings are one extra group, right after the
+    # short games (so the AI accelerator follows it), with one entry per game
+    # (its recorded fidelities are the Fidelity menu's choices); choosing one
+    # opens the recording.
     recorded = [g for g in menu['actual'] if g['title'] == 'Computer System / Games (long versions, recorded)']
     assert len(recorded) == 1 and len(recorded[0]['keys']) == 6, recorded
     assert all(key.startswith('recording:../assets/system/long-games/') for key in recorded[0]['keys']), recorded
-    assert [g['title'] for g in menu['actual']][-2:] == [recorded[0]['title'], 'Developer circuits'], menu['actual']
+    titles_in_order = [g['title'] for g in menu['actual']]
+    at = titles_in_order.index(recorded[0]['title'])
+    assert titles_in_order[at - 1:at + 2] == ['Computer System / Games (short versions)', recorded[0]['title'],
+                                              'AI Accelerator'], titles_in_order
     assert [g for g in menu['actual'] if g is not recorded[0]] == menu['expected'], menu
     titles = page.locator('#scenario-select option').all_text_contents()
     assert sum('Conditional branches and fallthrough' in text for text in titles) == 1

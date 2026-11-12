@@ -492,6 +492,11 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         expected_types.insert("Mux<"+n+","+w+">");
     for(size_t bits=1;bits<=5;++bits)for(bool suppress:{false,true})
         expected_types.insert("Decoder<"+std::to_string(bits)+(suppress?",zero-disabled>":">"));
+    // Chapter 6: the accelerator parts.
+    for(const std::string w:{"4","8","16","32"}){expected_types.insert("ArrayMultiplier<"+w+">");expected_types.insert("ArrayMulDivUnit<"+w+">");}
+    expected_types.insert("MacCell");expected_types.insert("Requantizer");
+    for(const std::string n:{"2","4","8","16"})expected_types.insert("SystolicArray<"+n+">");
+    for(const std::string n:{"4","8","16"})expected_types.insert("MatrixUnit<"+n+">");
     // Word gates exist at every width 2..32 (§ 1.3).
     for(unsigned w=2;w<=32;++w)for(const std::string kind:{"AND","NAND","OR","NOR","XOR","NOT"})
         expected_types.insert(kind+"Gate<"+std::to_string(w)+">");

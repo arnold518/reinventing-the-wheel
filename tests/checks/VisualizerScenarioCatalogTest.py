@@ -20,7 +20,7 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
             'ff', 'sram', 'dram', 'rom', 'flash', 'memory-interface', 'memory-cache',
             'registers', 'rv32i-alu', 'rv32i-blocks', 'single', 'baseline',
             'prediction', 'advanced', 'memory-systems', 'examples', 'faults',
-            'performance', 'rv32im', 'rv32im-programs', 'system', 'games', 'developer',
+            'performance', 'rv32im', 'rv32im-programs', 'system', 'games', 'accelerator', 'developer',
             # The game replay opens from a recording only (hidden from the menu).
             'replays'])
         def aliases(group):
@@ -50,6 +50,8 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
             'computer-system-checked'])
         self.assertEqual(aliases('games'), ['game-2048', 'game-sokoban', 'game-snake', 'game-pong',
             'game-tetris', 'game-snake-leds'])
+        self.assertEqual(aliases('accelerator'), ['array-multiplier-w4', 'array-muldiv-w4', 'mac-cell',
+            'requantizer', 'systolic-array-2', 'matrix-unit-4', 'accelerator-machine'])
 
     def test_explicit_ranks_are_complete_and_registry_order_independent(self):
         groups = [group['id'] for group in catalog.CATALOG['groups']]

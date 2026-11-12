@@ -20,6 +20,8 @@ struct MemorySubsystemConfig {
     std::optional<memory::CacheConfig> instruction_cache, data_cache, shared_cache;
     // Words per burst the arbiter keeps one owner for (a cache line below it).
     size_t arbiter_block_words = 2;
+    // § 6.3: the fetch/data arbiter in its pipelined form (parameter pipelined=1).
+    bool arbiter_pipelined = false;
     // Adds inputs INV_L1 (both port caches) and INV_L2 (the shared cache);
     // otherwise cache invalidation is tied off.
     bool invalidation_inputs = false;

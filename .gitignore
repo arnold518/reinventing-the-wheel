@@ -21,3 +21,4 @@
 /visualizer/circuit_backend*.so
 /build-cleanup/
 /build-wasm-cleanup/
+/build-accel/

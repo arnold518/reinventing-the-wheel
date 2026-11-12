@@ -18,16 +18,22 @@ void memoryRequestPins(IOComponent*, const std::string& prefix);
 // response buffer, or legacy READ_EN/SIZE interface is present here.
 class RV32IMemoryRequest : public IOComponent {
 public:
+    // overlapped (§ 6.3, fetch only): with inputs NEXT_ADDR and ADVANCE, the
+    // next fetch starts in the cycle the current answer is taken, from the
+    // PC the core will hold after that edge. A wrong guess is discarded by
+    // the usual address check. Off by default.
     explicit RV32IMemoryRequest(std::string name, bool read_only = false,
-                                bool address_is_tag = false);
+                                bool address_is_tag = false, bool overlapped = false);
     static constexpr const char* TypeName = "RV32IMemoryRequest";
     const char* getTypeName() const override {
-        return read_only_ && address_is_tag_ ? "RV32IFetchRequest" : TypeName;
+        return overlapped_ ? "RV32IOverlappedFetchRequest" : read_only_ && address_is_tag_ ? "RV32IFetchRequest" : TypeName;
     }
     void buildInternals(ComponentBuilder&) override;
 private:
+    void buildOverlapped(ComponentBuilder&);
     bool read_only_;
     bool address_is_tag_;
+    bool overlapped_ = false;
 };
 
 // CPU load/store formatting; independent of request acceptance/completion.

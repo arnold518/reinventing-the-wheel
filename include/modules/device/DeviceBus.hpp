@@ -18,7 +18,9 @@ const ComponentFamily& busFamily(BusUnit,size_t width);
 // region's target port (pins prefixed with the region's prefix). A fetch
 // router accepts reads only.
 void addressRouterPins(IOComponent*,const std::vector<AddressRegion>&,size_t width);
-void buildAddressRouter(IOComponent&,ComponentBuilder&,const std::vector<AddressRegion>&,bool fetch,size_t width);
+// pipelined (§ 6.3): a new request is taken at the edge the previous answer is
+// taken, not one edge later. Off by default: the chapter 5 router.
+void buildAddressRouter(IOComponent&,ComponentBuilder&,const std::vector<AddressRegion>&,bool fetch,size_t width,bool pipelined=false);
 void registerWordBusComponents(ComponentCatalog&);
 }
 template<size_t W> class DeviceRegisterPort : public circuit::device::WordBusComponent {

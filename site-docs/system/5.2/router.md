@@ -16,6 +16,7 @@ serves a fetch master). Parameters:
 | --- | --- |
 | `access` | `fetch` (reads only) or `data` (reads and writes) |
 | `routes` | Comma-separated `PREFIX@0xBASE+0xBYTES`; a trailing `!` passes the whole address instead of the offset |
+| `pipelined` | Optional, and only `1` is accepted: take the next request at the edge the previous answer is taken, instead of one edge later. A bus description sets it with `"pipelined": true` ([§ 6.3.2](../../accelerator/6.3.md#632-the-pipelined-bus)) |
 
 For example `MEMORY_@0x00000000+0x1000,DEVICE_@0x10000000+0x100` gives two
 routes whose ports are named `MEMORY_*` and `DEVICE_*`.

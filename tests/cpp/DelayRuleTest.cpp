@@ -65,6 +65,7 @@ const char* const DATA = "a whole core is too large for a gate list with state, 
 const char* const CELLS = "its cells are not gates (they hold charge and are sensed or programmed in timed steps), so it has no gate list and stays on its table";
 const char* const LAUNCH = "it times itself, so it has no gate list; after a clock edge it answers at the latest time its table allows, a few ticks after its gates";
 const char* const SAMPLE = "this sample of changes did not reach its slowest case";
+const char* const BOUND = "timed from its gates, whose settling bound is loose when several pins change at once (a multiply, a rounding add, a shift and a clamp in a row)";
 
 // Parts below a target, with the shares measured for them. A listed part
 // passes while it stays at or above these; it fails if it drops lower.
@@ -107,6 +108,19 @@ const std::map<std::string, Floor> FLOORS = {
     {"memory.sram.endpoint.8", {63, -1, LAUNCH}},
     {"rv32i.core.baseline-pipeline", {59, 20, DATA}},
     {"rv32i.core.educational-single-cycle", {54, 66, DATA}},
+    // Measured 2026-11-12; it breaks no rule (worst 100%).
+    {"accelerator.requantize", {65, 100, BOUND}},
+};
+
+// Parts left out of a run over every part because this bench needs too much
+// memory for them; naming one on the command line still runs it.
+const char* const NO_TABLE_DEVICE = "a device whose compact form has no delay table, so nothing would be compared; building its gates takes 1.6 GB at 4 wide";
+const std::map<std::string, std::string> FULL_RUN_SKIPPED = {
+    {"accelerator.systolic-array.16", "2.3 million gate nodes: 2.6 GB and 17 minutes alone (passed 2026-11-12); "
+                                      "its table is composed from the 2 x 2 array, like the 4 x 4 and 8 x 8 ones compared here"},
+    {"device.matrix-unit.4", NO_TABLE_DEVICE},
+    {"device.matrix-unit.8", NO_TABLE_DEVICE},
+    {"device.matrix-unit.16", NO_TABLE_DEVICE},
 };
 
 // Parts whose pins must not move a few ticks apart.
@@ -804,6 +818,10 @@ int main(int argc, char** argv) {
         for (const auto& contract : subjects) {
             if (!only.empty() && !only.contains(contract.id) && !only.contains(contract.contract)) continue;
             build_parameters = contract.parameters;
+            if (const auto reason = FULL_RUN_SKIPPED.find(contract.id); reason != FULL_RUN_SKIPPED.end() && !only.contains(contract.id)) {
+                std::cout << std::left << std::setw(38) << contract.id << "  not run over all parts: " << reason->second << '\n';
+                continue;
+            }
             if (const auto reason = NOT_DRIVEN.find(contract.id); reason != NOT_DRIVEN.end()) {
                 std::cout << std::left << std::setw(38) << contract.id << "  not driven: " << reason->second << '\n';
                 continue;

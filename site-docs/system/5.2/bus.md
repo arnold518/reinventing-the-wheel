@@ -33,6 +33,7 @@ the bus's JSON description (below). The bus is part of a
 
 | Field | Meaning |
 | --- | --- |
+| bus `pipelined` | `true` builds every router of this bus with `pipelined=1` ([§ 6.3.2](../../accelerator/6.3.md#632-the-pipelined-bus)); default `false` |
 | master `port` | The part and pin prefix of the master's port: `CORE.IMEM_` is the core's `IMEM_REQ_VALID`, … |
 | master `access` | `fetch` masters only read, and only reach regions with `"execute": true` |
 | region `target` | The port every master reaches through this window |

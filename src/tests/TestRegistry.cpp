@@ -1,3 +1,4 @@
+#include "tests/AcceleratorTests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/RV32IMPhase3Tests.hpp"
 #include "tests/WordALUTests.hpp"
@@ -220,6 +221,8 @@ void markVisualizable(
         "ALUWidthContractTest", "WidthComponentsTest", "ALUFidelityContractTest", "AdderWidthSweepTest", "WordGateSweepTest", "CompactFormEquivalenceTest", "GateListCompactEquivalenceTest",
         "SystemDescriptionTest", "BusInterconnectTest", "LedPanelTest", "GuestHeaderContentTest", "BusPortCheckerTest",
         "CacheReadTest", "CacheControllerLockstepTest", "TwoPortMemoryArbiterTest",
+        // § 6: the checks behind the recorded accelerator scenarios.
+        "ArrayMultiplierTest", "ArrayMulDivUnitTest", "MacCellTest", "RequantizerTest", "SystolicArrayTest", "MatrixUnitTest",
     };
     for (auto& entry : entries) {
         if (headless.count(entry.name) != 0) {
@@ -584,6 +587,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         appendSimulationTimeTests(entries);
         appendRV32IMRecordedTests(entries);
         appendSystemTests(entries);
+        appendAcceleratorTests(entries);
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);
         markVisualizable(entries);

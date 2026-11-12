@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "name": "accelerator-machine",
+  "parts": [
+    {"name": "CORE", "family": "rv32im.core.educational-five-stage"},
+    {"name": "MEMORY", "family": "memory.subsystem.32",
+     "parameters": {"technology": "sram", "words": "65536", "caches": "none"}},
+    {"name": "CONSOLE", "family": "device.console"},
+    {"name": "TIMER", "family": "device.timer", "parameters": {"divisor": "1", "frequency_hz": "0"}},
+    {"name": "MATRIX", "family": "device.matrix-unit.16",
+     "parameters": {"act_rows": "512", "acc_rows": "64"}}
+  ],
+  "buses": [
+    {"name": "BUS", "width": 32,
+     "masters": [
+       {"name": "CPU_I", "port": "CORE.IMEM_", "access": "fetch"},
+       {"name": "CPU_D", "port": "CORE.DMEM_", "access": "data"},
+       {"name": "MATRIX_DMA", "port": "MATRIX.DMA_", "access": "data"}
+     ],
+     "regions": [
+       {"name": "RAM", "base": "0x00000000", "bytes": "0x40000", "execute": true,
+        "targets": {"CPU_I": "MEMORY.I_", "CPU_D": "MEMORY.D_", "MATRIX_DMA": "MEMORY.D_"}},
+       {"name": "CONSOLE", "base": "0x10000000", "bytes": "0x100", "targets": {"CPU_D": "CONSOLE"}},
+       {"name": "TIMER", "base": "0x10001000", "bytes": "0x100", "targets": {"CPU_D": "TIMER"}},
+       {"name": "MATRIX", "base": "0x10005000", "bytes": "0x100", "targets": {"CPU_D": "MATRIX"}}
+     ]}
+  ],
+  "inputs": [
+    {"name": "ENABLE", "to": "CORE.ENABLE"},
+    {"name": "TX_READY", "to": "CONSOLE.TX_READY"}
+  ],
+  "outputs": [
+    {"name": "TX_VALID", "from": "CONSOLE.TX_VALID"},
+    {"name": "TX_DATA", "from": "CONSOLE.TX_DATA"},
+    {"name": "HALTED", "from": "CORE.HALTED"},
+    {"name": "TRAPPED", "from": "CORE.TRAPPED"},
+    {"name": "TRAP_CAUSE", "from": "CORE.TRAP_CAUSE"},
+    {"name": "COMMIT_VALID", "from": "CORE.COMMIT_VALID"}
+  ]
+}

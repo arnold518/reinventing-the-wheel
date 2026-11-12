@@ -1,0 +1,143 @@
+{
+ "compiler": "riscv-none-elf-gcc (xPack GNU RISC-V Embedded GCC x86_64) 12.4.0",
+ "flags": [
+  "-march=rv32im",
+  "-mabi=ilp32",
+  "-msmall-data-limit=0",
+  "-mno-relax",
+  "-O2",
+  "-ffreestanding",
+  "-fno-builtin",
+  "-fno-tree-loop-distribute-patterns",
+  "-fno-stack-protector",
+  "-nostdlib",
+  "-nostartfiles",
+  "-ffunction-sections",
+  "-fdata-sections",
+  "-Wall",
+  "-Wextra",
+  "-Werror",
+  "-Wno-unused-function",
+  "-Wno-unused-variable",
+  "-Wl,--gc-sections",
+  "-Wl,--no-relax",
+  "-Wl,--build-id=none"
+ ],
+ "sources": {
+  "tools/rv32im/guest/start.S": "f9de5b7c5574b5e9528d4aefbbebddc33bb38225512c35342b49788dab0e7ea3",
+  "tools/accelerator/guest/workloads.c": "8cd0f88e63e73c667e85cfbe961809e10c854691bc721e262ae30f6a717199bd",
+  "tools/accelerator/guest/matrix.c": "6a3203fe9e8101bf7caf58712091fdc9acc578b12d6a29b73a113bd3c2464484",
+  "tools/accelerator/guest/images.h": "9415022d09b29a30fe46173fdfafdda494d8c413153b0738cd3c88ad2160873e",
+  "tools/accelerator/guest/matrix.h": "563f785ab33fee903b0dcd305142717cbb761e9cbf8e7ded4c5ac7305ca256d8",
+  "tools/accelerator/guest/model_cpu.h": "76258850fdbf23c63134224dc0cfead6529d9a4137cd6d9dcf6ced32ec8e96c0",
+  "tools/accelerator/guest/model_tiled_n16.h": "0d63ae94e20412020108ca87f091ab58e3174ff2c60561af689ec90a3eee5049",
+  "tools/accelerator/guest/model_tiled_n4.h": "2f42e0064f51a1b13a324716a23b7b1f4a2ae038d30fb7cd5329091989efdcff",
+  "tools/accelerator/guest/model_tiled_n8.h": "0658f8c79ade7bd97f3fa186acc9b21e560f583c0e2611dc62ab7ba79eb360b5",
+  "tools/accelerator/guest/system.h": "3f27a7919d27bd41663fe3103a99d9c0a385480d3209bf50e501710fc2345880",
+  "tools/rv32im/guest/link.ld": "80c66e00fa534f2c3fa0581702c31666b24352516ecf20a1556e3151a6a791b3"
+ },
+ "elfs": {
+  "matmul-cpu.elf": {
+   "defines": [
+    "-DWORKLOAD=1"
+   ],
+   "sha256": "094f73c0c0ac8a677bc05c7b153e5c14907c1947f81e62114949ee0abff83185"
+  },
+  "matmul-n4.elf": {
+   "defines": [
+    "-DWORKLOAD=1",
+    "-DMATRIX_N=4"
+   ],
+   "sha256": "fa039ef215ff1b93ba9bfa7f44b22c71d470e3e2619fe6061fbc5cec48f0af82"
+  },
+  "matmul-n8.elf": {
+   "defines": [
+    "-DWORKLOAD=1",
+    "-DMATRIX_N=8"
+   ],
+   "sha256": "19c6131dd67f565b64a9ffda69c61f7263c1c502cb76f1b7e69908b3b216a228"
+  },
+  "matmul-n16.elf": {
+   "defines": [
+    "-DWORKLOAD=1",
+    "-DMATRIX_N=16"
+   ],
+   "sha256": "4f49574eda7babd7d68a9c22ff5d6f1da8228fe89871f38852a2b7fa6efc222a"
+  },
+  "mlp-cpu.elf": {
+   "defines": [
+    "-DWORKLOAD=2",
+    "-DIMAGES_RUN=1"
+   ],
+   "sha256": "4e1c47a0331e9f012e0a1fc8110c001678cfc2cbb9eb30167bb162fc26352c87"
+  },
+  "mlp-n4.elf": {
+   "defines": [
+    "-DWORKLOAD=2",
+    "-DMATRIX_N=4",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "747dac85fb66b1b935945094f61f9e5d12fee6ee4e190f6f345abd21047e33d9"
+  },
+  "mlp-n8.elf": {
+   "defines": [
+    "-DWORKLOAD=2",
+    "-DMATRIX_N=8",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "74b802179aeee5ef6ac4b38f6228f398dc31f146f5ade68739a1e0f16db8b3b5"
+  },
+  "mlp-n16.elf": {
+   "defines": [
+    "-DWORKLOAD=2",
+    "-DMATRIX_N=16",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "e84bf11679dfb869b716824a4380cf83784fceb3be4f245e9e8c7669662e969e"
+  },
+  "cnn-cpu.elf": {
+   "defines": [
+    "-DWORKLOAD=3",
+    "-DIMAGES_RUN=1"
+   ],
+   "sha256": "efd7d7608ffca0f027cda72c7f7e03724f72a6d49f316c679ea62c6e3b8bcb45"
+  },
+  "cnn-n4.elf": {
+   "defines": [
+    "-DWORKLOAD=3",
+    "-DMATRIX_N=4",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "5433007d9f979bda70c9d0567b4e6c04e67083df49e548bdae3af8cd69efdee5"
+  },
+  "cnn-n8.elf": {
+   "defines": [
+    "-DWORKLOAD=3",
+    "-DMATRIX_N=8",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "76c87e6f2f8881cf73be01e7155cc063a3cbc2ece3b2c0df053c682d505634f8"
+  },
+  "cnn-n16.elf": {
+   "defines": [
+    "-DWORKLOAD=3",
+    "-DMATRIX_N=16",
+    "-DIMAGES_RUN=2"
+   ],
+   "sha256": "795876c21dbadadfe42a3ad3faeca702d38cf310dfab4c9d3279753cc2621ca4"
+  },
+  "demo-cpu.elf": {
+   "defines": [
+    "-DWORKLOAD=4"
+   ],
+   "sha256": "1260a044c525c9d86c018c4a97c84eb3e5cd200a20795b81fe536cf3a0a1ea37"
+  },
+  "demo-n4.elf": {
+   "defines": [
+    "-DWORKLOAD=4",
+    "-DMATRIX_N=4"
+   ],
+   "sha256": "b422ab777ff0ecdc9c00df2957c7c54f97305d81d86f2a73da88277cca671d03"
+  }
+ }
+}

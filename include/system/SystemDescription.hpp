@@ -57,6 +57,9 @@ struct RegionDescription {
 struct BusDescription {
     std::string name;
     size_t width = 32;
+    // § 6.3: routers and arbiters take the next request at the edge the
+    // current one completes. Off by default (the chapter 5 bus).
+    bool pipelined = false;
     std::vector<MasterDescription> masters;
     std::vector<RegionDescription> regions;
     // Every distinct target port, in first-use order.

@@ -12,12 +12,12 @@
 namespace circuit::memory {
 
 template<size_t Width>
-TwoPortMemoryArbiter<Width>::TwoPortMemoryArbiter(std::string name, size_t block_words)
+TwoPortMemoryArbiter<Width>::TwoPortMemoryArbiter(std::string name, size_t block_words, bool pipelined)
     : IOComponent(std::move(name), [](IOComponent* self) {
           protocolPins(self, Width, "I_");
           protocolPins(self, Width, "D_");
           protocolPins(self, Width, "MEM_", true);
-      }), block_words_(block_words), type_("TwoPortMemoryArbiter<" + std::to_string(Width) + ">") {
+      }), block_words_(block_words), pipelined_(pipelined), type_("TwoPortMemoryArbiter<" + std::to_string(Width) + ">") {
     static_assert(Width == 8 || Width == 16 || Width == 32);
     if (!std::has_single_bit(block_words_) || block_words_ > 16)
         throw std::invalid_argument("Arbiter burst block must be a power of two up to 16 words");
@@ -173,6 +173,7 @@ public:
 
 template<size_t Width>
 void TwoPortMemoryArbiter<Width>::buildInternals(ComponentBuilder& builder) {
+    if (pipelined_) { buildPipelined(builder); return; }
     StructuralWiring w(builder);
     // Both requesters run on one clock. The state is clocked straight from
     // I_CLK: a gate in the clock path (such as an AND of both clocks) would
@@ -231,6 +232,111 @@ void TwoPortMemoryArbiter<Width>::buildInternals(ComponentBuilder& builder) {
     w.finish();
 }
 
+// The pipelined arbiter (§ 6.3). The same round-robin choice, burst hold and
+// one response buffer per port. Differences:
+//  - FREE = idle, or the request in flight completes (its last word) this
+//    cycle: a new request is offered and accepted at that same edge;
+//  - from idle, MEM_RSP_READY is also high for the request being accepted, so
+//    a memory that answers in the same cycle is not held for an edge.
+// The answer this cycle belongs to the request in flight when BUSY, else to
+// the one being accepted. No signal here depends on itself in one cycle: the
+// lower memory's REQ_READY comes from its registered state (§ 3.4).
+template<size_t Width>
+void TwoPortMemoryArbiter<Width>::buildPipelined(ComponentBuilder& builder) {
+    StructuralWiring w(builder);
+    auto shared_clock = getInputPin("I_CLK");
+    auto reset = w.either("RESET", getInputPin("I_RST"), getInputPin("D_RST"));
+    w.connect(memory_detail::bridge(builder, w, "LOWER_CLOCK", shared_clock), getOutputPin("MEM_CLK"));
+    w.connect(memory_detail::bridge(builder, w, "LOWER_RESET", reset), getOutputPin("MEM_RST"));
+    auto bit = [&](const std::string& name) {
+        auto state = builder.add(circuit::families::ClockedStateBit, name);
+        w.connect(shared_clock, state->getInputPin("CLK"));
+        w.connect(reset, state->getInputPin("RST"));
+        return state;
+    };
+    auto busy = bit("BUSY"), owner_d = bit("OWNER_D"), prefer_d = bit("PREFER_D"), burst = bit("BURST");
+    const auto active = busy->getOutputPin("Q");
+    const auto i_wants = getInputPin("I_REQ_VALID"), d_wants = getInputPin("D_REQ_VALID");
+    const auto select_d = w.both("SELECT_D", d_wants,
+        w.either("D_PRIORITY_OR_I_IDLE", prefer_d->getOutputPin("Q"), w.invert("I_IDLE", i_wants)));
+    const auto select_i = w.invert("SELECT_I", select_d);
+    // Payload of the chosen request.
+    std::shared_ptr<PinBase> selected_op;
+    for (auto field : {"REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK"}) {
+        auto selected = memory_detail::payloadMux(builder, w, std::string("SELECT_") + field,
+            getInputPinDynamic(std::string("I_") + field), getInputPinDynamic(std::string("D_") + field), select_d);
+        w.connect(selected, getOutputPinDynamic(std::string("MEM_") + field));
+        if (std::string(field) == "REQ_OP") selected_op = selected;
+    }
+    auto op_bits = builder.addNewComponent<BitSplitter<3>>("SELECTED_OP_BITS");
+    w.connect(selected_op, op_bits->getInputPin<3>("IN"));
+    const auto burst_request = w.reduce("BURST_REQUEST", {w.invert("NOT_OP_0", op_bits->getOutputPin("OUT_0")),
+        w.invert("NOT_OP_1", op_bits->getOutputPin("OUT_1")), op_bits->getOutputPin("OUT_2")}, true);
+    // Response buffers (filled below) and which one is empty.
+    std::map<std::string, std::shared_ptr<IOComponent>> buffers;
+    for (const std::string port : {"I", "D"}) {
+        auto buffer = builder.addNewComponent<MemoryResponseBuffer>(port + "_RESPONSE", Width);
+        w.connect(shared_clock, buffer->getInputPin("CLK"));
+        w.connect(reset, buffer->getInputPin("RST"));
+        w.connect(getInputPin(port + "_RSP_READY"), buffer->getInputPin("OUT_READY"));
+        w.connect(getInputPinDynamic("MEM_RSP_READ_DATA"), buffer->getInputPinDynamic("IN_DATA"));
+        w.connect(this->template getInputPin<3>("MEM_RSP_STATUS"), buffer->template getInputPin<3>("IN_STATUS"));
+        w.connect(buffer->getOutputPin("OUT_VALID"), getOutputPin(port + "_RSP_VALID"));
+        w.connect(buffer->getOutputPinDynamic("OUT_DATA"), getOutputPinDynamic(port + "_RSP_READ_DATA"));
+        w.connect(buffer->template getOutputPin<3>("OUT_STATUS"), this->template getOutputPin<3>(port + "_RSP_STATUS"));
+        buffers[port] = buffer;
+    }
+    const auto i_empty = w.invert("I_BUFFER_EMPTY", buffers["I"]->getOutputPin("FULL"));
+    const auto d_empty = w.invert("D_BUFFER_EMPTY", buffers["D"]->getOutputPin("FULL"));
+    const auto owner_empty = memory_detail::payloadMux(builder, w, "OWNER_BUFFER_EMPTY", i_empty, d_empty, owner_d->getOutputPin("Q"));
+    const auto selected_empty = memory_detail::payloadMux(builder, w, "SELECTED_BUFFER_EMPTY", i_empty, d_empty, select_d);
+    // Completion of the request in flight; a burst completes with its last word.
+    std::vector<std::shared_ptr<PinBase>> beat;
+    std::vector<std::shared_ptr<IOComponent>> beat_bits;
+    const size_t beat_width = std::countr_zero(block_words_);
+    for (size_t i = 0; i < beat_width; ++i) { beat_bits.push_back(bit("BEAT_" + std::to_string(i))); beat.push_back(beat_bits.back()->getOutputPin("Q")); }
+    const auto last_beat = beat_width ? w.reduce("LAST_BEAT", beat, true) : w.constant("ONE_BEAT", true);
+    const auto valid = getInputPin("MEM_RSP_VALID");
+    const auto busy_ready = w.both("BUSY_RESPONSE_READY", active, owner_empty);
+    const auto complete_busy = w.both("COMPLETE", busy_ready, valid);
+    const auto final_busy = w.both("FINAL_COMPLETE", complete_busy,
+        w.either("SINGLE_OR_LAST", w.invert("NOT_BURST", burst->getOutputPin("Q")), last_beat));
+    const auto free = w.either("FREE", w.invert("IDLE", active), final_busy);
+    const auto offered = w.both("LOWER_OFFER", free, w.either("ANY_REQUEST", i_wants, d_wants));
+    const auto lower_ready = getInputPin("MEM_REQ_READY");
+    const auto accept = w.both("ACCEPT", offered, lower_ready);
+    w.connect(offered, getOutputPin("MEM_REQ_VALID"));
+    w.connect(w.reduce("I_REQ_READY", {offered, select_i, lower_ready}, true), getOutputPin("I_REQ_READY"));
+    w.connect(w.reduce("D_REQ_READY", {offered, select_d, lower_ready}, true), getOutputPin("D_REQ_READY"));
+    // From idle: the accepted request's same-cycle answer (not a burst's).
+    const auto new_ready = w.reduce("NEW_RESPONSE_READY", {w.invert("WAS_IDLE", active), accept, selected_empty,
+        w.invert("NOT_BURST_REQUEST", burst_request)}, true);
+    const auto complete_new = w.both("COMPLETE_NEW", new_ready, valid);
+    w.connect(w.either("MEM_RESPONSE_READY", busy_ready, new_ready), getOutputPin("MEM_RSP_READY"));
+    const auto response_owner_d = memory_detail::payloadMux(builder, w, "RESPONSE_OWNER", select_d, owner_d->getOutputPin("Q"), active);
+    const auto answered = w.either("ANSWERED", complete_busy, complete_new);
+    w.connect(w.both("I_ANSWER", answered, w.invert("RESPONSE_OWNER_I", response_owner_d)), buffers["I"]->getInputPin("IN_VALID"));
+    w.connect(w.both("D_ANSWER", answered, response_owner_d), buffers["D"]->getInputPin("IN_VALID"));
+    // State.
+    const auto not_accept = w.invert("NOT_ACCEPT", accept);
+    w.connect(w.either("NEXT_BUSY", w.both("STILL_NEW", accept, w.invert("NOT_COMPLETE_NEW", complete_new)),
+        w.reduce("STILL_BUSY", {not_accept, active, w.invert("NOT_FINAL", final_busy)}, true)), busy->getInputPin("D"));
+    w.connect(w.either("NEXT_OWNER_D", w.both("ACCEPT_D", accept, select_d), w.both("HOLD_OWNER_D", owner_d->getOutputPin("Q"), not_accept)),
+              owner_d->getInputPin("D"));
+    w.connect(w.either("NEXT_PREFER_D", w.both("ACCEPT_I", accept, select_i), w.both("HOLD_PREFER_D", prefer_d->getOutputPin("Q"), not_accept)),
+              prefer_d->getInputPin("D"));
+    w.connect(w.either("NEXT_BURST", w.both("ACCEPT_BURST", accept, burst_request), w.both("HOLD_BURST", burst->getOutputPin("Q"), not_accept)),
+              burst->getInputPin("D"));
+    std::shared_ptr<PinBase> carry = w.both("BEAT_STEP", complete_busy, burst->getOutputPin("Q"));
+    for (size_t i = 0; i < beat_width; ++i) {
+        const auto n = std::to_string(i);
+        auto next = w.binary<XORGate>("BEAT_NEXT_" + n, beat[i], carry);
+        carry = w.both("BEAT_CARRY_" + n, beat[i], carry);
+        w.connect(w.both("BEAT_KEEP_" + n, next, w.invert("BEAT_NOT_ACCEPT_" + n, accept)), beat_bits[i]->getInputPin("D"));
+    }
+    w.finish();
+}
+
 template class TwoPortMemoryArbiter<8>;
 template class TwoPortMemoryArbiter<16>;
 template class TwoPortMemoryArbiter<32>;
@@ -239,7 +345,9 @@ void registerArbiters(ComponentCatalog& catalog) {
     for (size_t width : {8, 16, 32}) {
         const auto id = "memory.arbiter." + std::to_string(width);
         auto blockWords = [](const ParameterMap& parameters) {
-            memory_device::keys(parameters, {"block_words"});
+            memory_device::keys(parameters, {"block_words", "pipelined"});
+            if (const auto it = parameters.find("pipelined"); it != parameters.end() && it->second != "0" && it->second != "1")
+                throw std::invalid_argument("Arbiter pipelined must be 0 or 1");
             const size_t words = memory_device::parameter(parameters, "block_words", 2);
             if (!std::has_single_bit(words) || words > 16)
                 throw std::invalid_argument("Arbiter burst block must be a power of two up to 16 words");
@@ -267,9 +375,10 @@ void registerArbiters(ComponentCatalog& catalog) {
         implementation.factory = [width, blockWords](const std::string& name, const ParameterMap& parameters,
                                          const std::shared_ptr<BuildContext>& context) -> std::shared_ptr<Component> {
             const size_t words = blockWords(parameters);
-            if (width == 8) return Component::createWithContext<TwoPortMemoryArbiter<8>>(context, name, words);
-            if (width == 16) return Component::createWithContext<TwoPortMemoryArbiter<16>>(context, name, words);
-            return Component::createWithContext<TwoPortMemoryArbiter<32>>(context, name, words);
+            const bool pipelined = parameters.contains("pipelined") && parameters.at("pipelined") == "1";
+            if (width == 8) return Component::createWithContext<TwoPortMemoryArbiter<8>>(context, name, words, pipelined);
+            if (width == 16) return Component::createWithContext<TwoPortMemoryArbiter<16>>(context, name, words, pipelined);
+            return Component::createWithContext<TwoPortMemoryArbiter<32>>(context, name, words, pipelined);
         };
         implementation.evidence = {VerificationStatus::Characterized,
             {"structural round-robin grant, burst hold and one response buffer per port"},

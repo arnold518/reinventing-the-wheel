@@ -394,7 +394,12 @@ The rule: a compact part takes at least as long as its gates, and not much
 longer. `DelayRuleTest` runs every part as gates and as its compact form
 through the same situations (one pin, X or Z, a few pins, all pins, edge
 patterns, two pins a few ticks apart, clock edges) and compares them output
-by output.
+by output. A run over every part leaves out `accelerator.systolic-array.16`
+(2.6 GB and 17 minutes alone on this host); naming it runs it, and it
+passed on 2026-11-12. Its table is composed from the 2 × 2 array, like the
+4 × 4 and 8 × 8 ones the full run compares. It also leaves out the
+`device.matrix-unit.*` devices: their compact form has no delay table, so
+nothing would be compared, and building their gates takes 1.6 GB at 4 wide.
 
 In the recorded delay-rule comparison (138 parts and sizes, 120,081
 situations and about 140,000 output changes), these checks held:
@@ -421,7 +426,10 @@ Does not hold, and why:
   ROM and NOR-flash controllers and endpoints (57% to 67%: they time
   themselves, so they have no gate list, and after a clock edge they answer
   at the latest time their table allows, a few ticks after their gates).
-  At a clock they are exact: same period, same cycles.
+  At a clock they are exact: same period, same cycles. One part with a gate
+  list is listed too: the requantizer (65% typical, 100% worst), whose
+  gate-list settling bound is loose when several pins change at once (a
+  multiply, a rounding add, a shift and a clamp in a row).
 - Pulses. Gates can leave a value and come back to it; a compact part
   computes the final value once and stays still, so a parent built from
   compact parts can go quiet sooner than the same parent in gates. The

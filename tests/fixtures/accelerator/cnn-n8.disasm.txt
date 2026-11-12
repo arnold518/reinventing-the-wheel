@@ -1,0 +1,656 @@
+
+/home/arnold/arnold/github/reinventing-the-wheel/tests/fixtures/accelerator/cnn-n8.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00000000 <_start>:
+   0:	lui	sp,0x3e
+   4:	auipc	t0,0x5
+   8:	addi	t0,t0,-964 # 4c40 <logits>
+   c:	auipc	t1,0x5
+  10:	addi	t1,t1,1056 # 542c <__bss_end>
+  14:	bgeu	t0,t1,24 <_start+0x24>
+  18:	sw	zero,0(t0)
+  1c:	addi	t0,t0,4
+  20:	j	14 <_start+0x14>
+  24:	auipc	ra,0x0
+  28:	jalr	16(ra) # 34 <main>
+  2c:	ebreak
+  30:	j	30 <_start+0x30>
+
+00000034 <main>:
+  34:	addi	sp,sp,-96 # 3dfa0 <__bss_end+0x38b74>
+  38:	lui	a5,0x31434
+  3c:	sw	s0,88(sp)
+  40:	sw	s1,84(sp)
+  44:	sw	ra,92(sp)
+  48:	sw	s2,80(sp)
+  4c:	sw	s3,76(sp)
+  50:	sw	s4,72(sp)
+  54:	sw	s5,68(sp)
+  58:	sw	s6,64(sp)
+  5c:	sw	s7,60(sp)
+  60:	sw	s8,56(sp)
+  64:	sw	s9,52(sp)
+  68:	sw	s10,48(sp)
+  6c:	sw	s11,44(sp)
+  70:	lui	s0,0x3f
+  74:	addi	a5,a5,833 # 31434341 <__bss_end+0x3142ef15>
+  78:	sw	a5,0(s0) # 3f000 <__bss_end+0x39bd4>
+  7c:	li	a5,3
+  80:	sw	a5,4(s0)
+  84:	sw	zero,12(s0)
+  88:	li	s1,8
+  8c:	sw	zero,16(s0)
+  90:	sw	s1,8(s0)
+  94:	auipc	ra,0x0
+  98:	jalr	1208(ra) # 54c <matrix_size>
+  9c:	beq	a0,s1,114 <main+0xe0>
+  a0:	lw	a5,12(s0)
+  a4:	beqz	a5,108 <main+0xd4>
+  a8:	lui	a5,0x1
+  ac:	li	a4,119
+  b0:	addi	a5,a5,-1556 # 9ec <matrix_conv+0x258>
+  b4:	lui	a3,0x10000
+  b8:	addi	a5,a5,1
+  bc:	sw	a4,0(a3) # 10000000 <__bss_end+0xfffabd4>
+  c0:	lbu	a4,0(a5)
+  c4:	bnez	a4,b8 <main+0x84>
+  c8:	lw	ra,92(sp)
+  cc:	lw	s0,88(sp)
+  d0:	lw	s1,84(sp)
+  d4:	lw	s2,80(sp)
+  d8:	lw	s3,76(sp)
+  dc:	lw	s4,72(sp)
+  e0:	lw	s5,68(sp)
+  e4:	lw	s6,64(sp)
+  e8:	lw	s7,60(sp)
+  ec:	lw	s8,56(sp)
+  f0:	lw	s9,52(sp)
+  f4:	lw	s10,48(sp)
+  f8:	lw	s11,44(sp)
+  fc:	li	a0,0
+ 100:	addi	sp,sp,96
+ 104:	ret
+ 108:	li	a5,1
+ 10c:	sw	a5,12(s0)
+ 110:	j	a8 <main+0x74>
+ 114:	lui	t1,0x3
+ 118:	lui	a5,0xa
+ 11c:	lui	s0,0x5
+ 120:	addi	s9,t1,944 # 33b0 <images>
+ 124:	lui	s5,0x5
+ 128:	addi	a5,a5,-820 # 9ccc <__bss_end+0x48a0>
+ 12c:	lui	s4,0x5
+ 130:	lui	s3,0xe
+ 134:	addi	s11,s9,1568
+ 138:	addi	s0,s0,-960 # 4c40 <logits>
+ 13c:	lui	s8,0x5
+ 140:	addi	s10,s5,-304 # 4ed0 <a1>
+ 144:	lui	s7,0x10001
+ 148:	li	s2,1
+ 14c:	li	s1,24
+ 150:	sw	a5,28(sp)
+ 154:	lui	s6,0x3f
+ 158:	lw	t1,0(s7) # 10001000 <__bss_end+0xfffbbd4>
+ 15c:	lui	a5,0x3
+ 160:	lui	t3,0xe
+ 164:	addi	t3,t3,1463 # e5b7 <__bss_end+0x918b>
+ 168:	addi	a7,a5,784 # 3310 <cnn_l1_bias>
+ 16c:	lui	a5,0x3
+ 170:	sw	t3,4(sp)
+ 174:	mv	a0,s9
+ 178:	addi	a6,a5,816 # 3330 <cnn_l1_tiles>
+ 17c:	li	a4,8
+ 180:	li	a5,2
+ 184:	li	a3,1
+ 188:	li	a2,28
+ 18c:	li	a1,28
+ 190:	sw	s2,12(sp)
+ 194:	sw	s1,8(sp)
+ 198:	sw	s10,0(sp)
+ 19c:	sw	t1,1048(s8) # 5418 <section_start>
+ 1a0:	auipc	ra,0x0
+ 1a4:	jalr	1524(ra) # 794 <matrix_conv>
+ 1a8:	lw	t1,28(sp)
+ 1ac:	lui	a5,0x3
+ 1b0:	addi	a7,a5,-432 # 2e50 <cnn_l2_bias>
+ 1b4:	sw	t1,4(sp)
+ 1b8:	lui	t1,0x5
+ 1bc:	addi	t1,t1,-880 # 4c90 <a2>
+ 1c0:	lui	a5,0x3
+ 1c4:	addi	a6,a5,-368 # 2e90 <cnn_l2_tiles>
+ 1c8:	li	a4,16
+ 1cc:	li	a5,2
+ 1d0:	li	a3,8
+ 1d4:	li	a2,13
+ 1d8:	li	a1,13
+ 1dc:	addi	a0,s5,-304
+ 1e0:	sw	t1,0(sp)
+ 1e4:	sw	s2,12(sp)
+ 1e8:	sw	s1,8(sp)
+ 1ec:	auipc	ra,0x0
+ 1f0:	jalr	1448(ra) # 794 <matrix_conv>
+ 1f4:	li	t1,25
+ 1f8:	lui	a5,0x1
+ 1fc:	lui	a4,0x1
+ 200:	mv	a6,s0
+ 204:	addi	a7,s3,-69 # dfbb <__bss_end+0x8b8f>
+ 208:	addi	a5,a5,-1520 # a10 <cnn_l3_bias>
+ 20c:	addi	a4,a4,-1456 # a50 <cnn_l3_tiles>
+ 210:	li	a3,10
+ 214:	li	a2,576
+ 218:	li	a1,1
+ 21c:	addi	a0,s4,-880 # 4c90 <a2>
+ 220:	sw	t1,0(sp)
+ 224:	sw	zero,4(sp)
+ 228:	auipc	ra,0x0
+ 22c:	jalr	920(ra) # 5c0 <matrix_layer>
+ 230:	auipc	ra,0x0
+ 234:	jalr	872(ra) # 598 <matrix_wait>
+ 238:	addi	s9,s9,784
+ 23c:	beqz	a0,248 <main+0x214>
+ 240:	lw	a5,12(s6) # 3f00c <__bss_end+0x39be0>
+ 244:	beqz	a5,2ec <main+0x2b8>
+ 248:	lw	a4,16(s6)
+ 24c:	lw	a2,1048(s8)
+ 250:	lw	a3,0(s7)
+ 254:	addi	a5,a4,4
+ 258:	slli	a5,a5,0x2
+ 25c:	sub	a3,a3,a2
+ 260:	add	a5,s6,a5
+ 264:	sw	a3,8(a5)
+ 268:	addi	a4,a4,1
+ 26c:	sw	a4,16(s6)
+ 270:	addi	s0,s0,10
+ 274:	bne	s9,s11,158 <main+0x124>
+ 278:	lui	a4,0x5
+ 27c:	lui	s0,0x3f
+ 280:	addi	a5,a4,-960 # 4c40 <logits>
+ 284:	addi	a1,s0,256 # 3f100 <__bss_end+0x39cd4>
+ 288:	addi	a4,a4,-960
+ 28c:	addi	a2,a4,20
+ 290:	sub	a1,a1,a5
+ 294:	lb	a3,0(a5)
+ 298:	add	a4,a1,a5
+ 29c:	addi	a5,a5,1
+ 2a0:	sb	a3,0(a4)
+ 2a4:	bne	a2,a5,294 <main+0x260>
+ 2a8:	auipc	ra,0x0
+ 2ac:	jalr	740(ra) # 58c <matrix_commands>
+ 2b0:	sw	a0,20(s0)
+ 2b4:	lw	a5,12(s0)
+ 2b8:	bnez	a5,2e0 <main+0x2ac>
+ 2bc:	lui	a5,0x1
+ 2c0:	addi	a5,a5,-1528 # a08 <matrix_conv+0x274>
+ 2c4:	lbu	a4,0(a5)
+ 2c8:	lui	a3,0x10000
+ 2cc:	addi	a5,a5,1
+ 2d0:	sw	a4,0(a3) # 10000000 <__bss_end+0xfffabd4>
+ 2d4:	lbu	a4,0(a5)
+ 2d8:	bnez	a4,2cc <main+0x298>
+ 2dc:	j	c8 <main+0x94>
+ 2e0:	lui	a5,0x1
+ 2e4:	addi	a5,a5,-1536 # a00 <matrix_conv+0x26c>
+ 2e8:	j	2c4 <main+0x290>
+ 2ec:	li	a5,2
+ 2f0:	sw	a5,12(s6)
+ 2f4:	j	248 <main+0x214>
+
+000002f8 <compute_group>:
+ 2f8:	lui	t1,0x5
+ 2fc:	lw	t0,1060(t1) # 5424 <size_n>
+ 300:	addi	sp,sp,-80
+ 304:	sw	s2,68(sp)
+ 308:	mv	s2,a1
+ 30c:	addi	a1,t0,-1
+ 310:	sw	s7,48(sp)
+ 314:	sw	s8,44(sp)
+ 318:	add	a1,a1,s2
+ 31c:	sw	s0,76(sp)
+ 320:	sw	s1,72(sp)
+ 324:	sw	s3,64(sp)
+ 328:	sw	s4,60(sp)
+ 32c:	sw	s5,56(sp)
+ 330:	sw	s6,52(sp)
+ 334:	sw	s9,40(sp)
+ 338:	sw	s10,36(sp)
+ 33c:	sw	s11,32(sp)
+ 340:	divu	s8,a1,t0
+ 344:	mul	s7,a4,a0
+ 348:	bltu	a1,t0,514 <compute_group+0x21c>
+ 34c:	mv	s3,a2
+ 350:	mv	s4,a5
+ 354:	slli	t3,t0,0x18
+ 358:	slli	a5,t0,0x10
+ 35c:	or	t3,t3,a5
+ 360:	mv	s5,a3
+ 364:	lui	a5,0x1000
+ 368:	slli	a3,t0,0x12
+ 36c:	mul	a2,t0,t0
+ 370:	slli	a4,a4,0x10
+ 374:	or	s10,a3,a5
+ 378:	or	a5,a4,s7
+ 37c:	sw	a5,20(sp)
+ 380:	lw	t1,80(sp)
+ 384:	lw	a1,84(sp)
+ 388:	slli	s9,t0,0x2
+ 38c:	slli	t1,t1,0x10
+ 390:	snez	a1,a1
+ 394:	mul	a5,a2,a0
+ 398:	or	t1,t1,a7
+ 39c:	slli	a1,a1,0x18
+ 3a0:	lui	a7,0x10005
+ 3a4:	or	s11,t1,a1
+ 3a8:	or	a3,t3,t0
+ 3ac:	li	s6,0
+ 3b0:	addi	t4,a7,8 # 10005008 <__bss_end+0xffffbdc>
+ 3b4:	li	t2,1
+ 3b8:	lui	s1,0x40000
+ 3bc:	sw	a5,16(sp)
+ 3c0:	lui	a5,0x10
+ 3c4:	or	a5,a6,a5
+ 3c8:	sw	a5,24(sp)
+ 3cc:	lui	a6,0x5
+ 3d0:	lui	a5,0x10
+ 3d4:	li	s0,3
+ 3d8:	li	a1,4
+ 3dc:	sw	s9,28(sp)
+ 3e0:	mv	t6,t0
+ 3e4:	bgeu	s2,t0,3ec <compute_group+0xf4>
+ 3e8:	mv	t6,s2
+ 3ec:	sw	s5,4(a7)
+ 3f0:	sw	a5,0(t4)
+ 3f4:	sw	s10,12(a7)
+ 3f8:	lui	t1,0x80000
+ 3fc:	sw	t1,16(a7)
+ 400:	sw	t2,0(a7)
+ 404:	lw	t3,1064(a6) # 5428 <queued>
+ 408:	mv	t5,s3
+ 40c:	li	t1,0
+ 410:	addi	t3,t3,1
+ 414:	sw	t3,1064(a6)
+ 418:	beqz	a0,498 <compute_group+0x1a0>
+ 41c:	sw	s3,12(sp)
+ 420:	sw	t5,4(a7)
+ 424:	sw	a5,0(t4)
+ 428:	sw	a3,12(a7)
+ 42c:	sw	s1,16(a7)
+ 430:	sw	t2,0(a7)
+ 434:	lw	t3,1064(a6)
+ 438:	or	s9,a4,t1
+ 43c:	snez	s3,t1
+ 440:	addi	t3,t3,1
+ 444:	sw	t3,1064(a6)
+ 448:	sw	zero,4(a7)
+ 44c:	sw	zero,0(t4)
+ 450:	sw	zero,12(a7)
+ 454:	sw	zero,16(a7)
+ 458:	sw	s0,0(a7)
+ 45c:	lw	t3,1064(a6)
+ 460:	addi	t1,t1,1 # 80000001 <__bss_end+0x7fffabd5>
+ 464:	add	t5,t5,a2
+ 468:	addi	t3,t3,1
+ 46c:	sw	t3,1064(a6)
+ 470:	sw	s9,4(a7)
+ 474:	sw	a0,0(t4)
+ 478:	sw	s3,12(a7)
+ 47c:	sw	zero,16(a7)
+ 480:	sw	a1,0(a7)
+ 484:	lw	t3,1064(a6)
+ 488:	addi	t3,t3,1
+ 48c:	sw	t3,1064(a6)
+ 490:	bne	a0,t1,420 <compute_group+0x128>
+ 494:	lw	s3,12(sp)
+ 498:	sw	a4,4(a7)
+ 49c:	sw	s7,0(t4)
+ 4a0:	sw	s11,12(a7)
+ 4a4:	sw	zero,16(a7)
+ 4a8:	li	t1,5
+ 4ac:	sw	t1,0(a7)
+ 4b0:	lw	t1,1064(a6)
+ 4b4:	slli	t6,t6,0x10
+ 4b8:	lui	t3,0x1000
+ 4bc:	addi	t1,t1,1
+ 4c0:	sw	t1,1064(a6)
+ 4c4:	lw	t1,20(sp)
+ 4c8:	sw	s4,4(a7)
+ 4cc:	or	t6,t6,t3
+ 4d0:	sw	t1,0(t4)
+ 4d4:	lw	t1,24(sp)
+ 4d8:	sw	t6,12(a7)
+ 4dc:	addi	s6,s6,1
+ 4e0:	sw	t1,16(a7)
+ 4e4:	li	t1,2
+ 4e8:	sw	t1,0(a7)
+ 4ec:	lw	t1,1064(a6)
+ 4f0:	sub	s2,s2,t0
+ 4f4:	add	s4,s4,t0
+ 4f8:	addi	t1,t1,1
+ 4fc:	sw	t1,1064(a6)
+ 500:	lw	t1,28(sp)
+ 504:	add	s5,s5,t1
+ 508:	lw	t1,16(sp)
+ 50c:	add	s3,s3,t1
+ 510:	bltu	s6,s8,3e0 <compute_group+0xe8>
+ 514:	lw	s0,76(sp)
+ 518:	lw	s1,72(sp)
+ 51c:	lw	s2,68(sp)
+ 520:	lw	s3,64(sp)
+ 524:	lw	s4,60(sp)
+ 528:	lw	s5,56(sp)
+ 52c:	lw	s6,52(sp)
+ 530:	lw	s7,48(sp)
+ 534:	lw	s8,44(sp)
+ 538:	lw	s9,40(sp)
+ 53c:	lw	s10,36(sp)
+ 540:	lw	s11,32(sp)
+ 544:	addi	sp,sp,80
+ 548:	ret
+
+0000054c <matrix_size>:
+ 54c:	lui	a4,0x5
+ 550:	lw	a0,1060(a4) # 5424 <size_n>
+ 554:	bnez	a0,588 <matrix_size+0x3c>
+ 558:	lui	a5,0x10005
+ 55c:	lw	a0,32(a5) # 10005020 <__bss_end+0xffffbf4>
+ 560:	sw	a0,1060(a4)
+ 564:	lw	a3,36(a5)
+ 568:	lui	a4,0x5
+ 56c:	sw	a3,1056(a4) # 5420 <act_rows>
+ 570:	lw	a3,40(a5)
+ 574:	lui	a4,0x5
+ 578:	sw	a3,1052(a4) # 541c <acc_rows>
+ 57c:	lw	a4,24(a5)
+ 580:	lui	a5,0x5
+ 584:	sw	a4,1064(a5) # 5428 <queued>
+ 588:	ret
+
+0000058c <matrix_commands>:
+ 58c:	lui	a5,0x5
+ 590:	lw	a0,1064(a5) # 5428 <queued>
+ 594:	ret
+
+00000598 <matrix_wait>:
+ 598:	lui	a5,0x5
+ 59c:	lw	a3,1064(a5) # 5428 <queued>
+ 5a0:	lui	a4,0x10005
+ 5a4:	lw	a5,24(a4) # 10005018 <__bss_end+0xffffbec>
+ 5a8:	bne	a5,a3,5a4 <matrix_wait+0xc>
+ 5ac:	fence
+ 5b0:	lw	a0,20(a4)
+ 5b4:	srli	a0,a0,0x1
+ 5b8:	andi	a0,a0,1
+ 5bc:	ret
+
+000005c0 <matrix_layer>:
+ 5c0:	lui	t5,0x5
+ 5c4:	lw	t1,1060(t5) # 5424 <size_n>
+ 5c8:	addi	sp,sp,-112
+ 5cc:	sw	s2,96(sp)
+ 5d0:	sw	s11,60(sp)
+ 5d4:	sw	ra,108(sp)
+ 5d8:	sw	s0,104(sp)
+ 5dc:	sw	s1,100(sp)
+ 5e0:	sw	s3,92(sp)
+ 5e4:	sw	s4,88(sp)
+ 5e8:	sw	s5,84(sp)
+ 5ec:	sw	s6,80(sp)
+ 5f0:	sw	s7,76(sp)
+ 5f4:	sw	s8,72(sp)
+ 5f8:	sw	s9,68(sp)
+ 5fc:	sw	s10,64(sp)
+ 600:	mv	t4,a2
+ 604:	mv	t3,a0
+ 608:	mv	s2,a3
+ 60c:	mv	a2,a4
+ 610:	mv	s11,a6
+ 614:	beqz	t1,760 <matrix_layer+0x1a0>
+ 618:	lui	a4,0x5
+ 61c:	lw	s1,1056(a4) # 5420 <act_rows>
+ 620:	lui	a4,0x5
+ 624:	lw	a4,1052(a4) # 541c <acc_rows>
+ 628:	addi	t6,t4,-1
+ 62c:	add	t6,t6,t1
+ 630:	divu	t6,t6,t1
+ 634:	addi	a3,t6,1
+ 638:	divu	s1,s1,a3
+ 63c:	bgeu	a4,s1,644 <matrix_layer+0x84>
+ 640:	mv	s1,a4
+ 644:	beqz	a1,724 <matrix_layer+0x164>
+ 648:	lui	s5,0x5
+ 64c:	slli	s4,t1,0x10
+ 650:	li	s6,0
+ 654:	or	s4,s4,t1
+ 658:	slli	a4,t6,0x18
+ 65c:	slli	s3,t6,0x10
+ 660:	sw	a5,40(sp)
+ 664:	mv	a5,s5
+ 668:	mul	s9,t4,s1
+ 66c:	mv	s10,s11
+ 670:	mv	s5,s6
+ 674:	or	s4,s4,a4
+ 678:	mv	s6,s1
+ 67c:	or	s3,s3,t4
+ 680:	lui	s0,0x10005
+ 684:	sw	t6,28(sp)
+ 688:	mv	s7,a1
+ 68c:	sw	a1,32(sp)
+ 690:	mul	s8,s2,s1
+ 694:	sw	a2,36(sp)
+ 698:	sw	a7,44(sp)
+ 69c:	mv	s1,a5
+ 6a0:	mv	s11,t3
+ 6a4:	lw	a7,44(sp)
+ 6a8:	lw	a3,40(sp)
+ 6ac:	lw	a2,36(sp)
+ 6b0:	lw	a0,28(sp)
+ 6b4:	mv	a5,s10
+ 6b8:	mv	a6,s2
+ 6bc:	mv	a1,s2
+ 6c0:	add	s5,s5,s6
+ 6c4:	mv	a4,s6
+ 6c8:	bgeu	s7,s6,6d0 <matrix_layer+0x110>
+ 6cc:	mv	a4,s7
+ 6d0:	sw	s11,4(s0) # 10005004 <__bss_end+0xffffbd8>
+ 6d4:	slli	t3,a4,0x10
+ 6d8:	sw	t3,8(s0)
+ 6dc:	sw	s4,12(s0)
+ 6e0:	sw	s3,16(s0)
+ 6e4:	li	t1,1
+ 6e8:	sw	t1,0(s0)
+ 6ec:	lw	t1,116(sp)
+ 6f0:	lw	t3,1064(s1) # 40000428 <__bss_end+0x3fffaffc>
+ 6f4:	sub	s7,s7,s6
+ 6f8:	sw	t1,4(sp)
+ 6fc:	lw	t1,112(sp)
+ 700:	addi	t3,t3,1 # 1000001 <__bss_end+0xffabd5>
+ 704:	sw	t3,1064(s1)
+ 708:	sw	t1,0(sp)
+ 70c:	auipc	ra,0x0
+ 710:	jalr	-1044(ra) # 2f8 <compute_group>
+ 714:	lw	a5,32(sp)
+ 718:	add	s11,s11,s9
+ 71c:	add	s10,s10,s8
+ 720:	bltu	s5,a5,6a4 <matrix_layer+0xe4>
+ 724:	lw	ra,108(sp)
+ 728:	lw	s0,104(sp)
+ 72c:	lw	s1,100(sp)
+ 730:	lw	s2,96(sp)
+ 734:	lw	s3,92(sp)
+ 738:	lw	s4,88(sp)
+ 73c:	lw	s5,84(sp)
+ 740:	lw	s6,80(sp)
+ 744:	lw	s7,76(sp)
+ 748:	lw	s8,72(sp)
+ 74c:	lw	s9,68(sp)
+ 750:	lw	s10,64(sp)
+ 754:	lw	s11,60(sp)
+ 758:	addi	sp,sp,112
+ 75c:	ret
+ 760:	lui	a3,0x10005
+ 764:	lw	t1,32(a3) # 10005020 <__bss_end+0xffffbf4>
+ 768:	lui	a4,0x5
+ 76c:	lui	a0,0x5
+ 770:	sw	t1,1060(t5)
+ 774:	lw	s1,36(a3)
+ 778:	lui	s5,0x5
+ 77c:	sw	s1,1056(a4) # 5420 <act_rows>
+ 780:	lw	a4,40(a3)
+ 784:	sw	a4,1052(a0) # 541c <acc_rows>
+ 788:	lw	a3,24(a3)
+ 78c:	sw	a3,1064(s5) # 5428 <queued>
+ 790:	j	628 <matrix_layer+0x68>
+
+00000794 <matrix_conv>:
+ 794:	lui	t3,0x5
+ 798:	lw	t1,1060(t3) # 5424 <size_n>
+ 79c:	addi	sp,sp,-112
+ 7a0:	sw	s10,64(sp)
+ 7a4:	sw	a4,20(sp)
+ 7a8:	sw	ra,108(sp)
+ 7ac:	sw	s0,104(sp)
+ 7b0:	sw	s1,100(sp)
+ 7b4:	sw	s2,96(sp)
+ 7b8:	sw	s3,92(sp)
+ 7bc:	sw	s4,88(sp)
+ 7c0:	sw	s5,84(sp)
+ 7c4:	sw	s6,80(sp)
+ 7c8:	sw	s7,76(sp)
+ 7cc:	sw	s8,72(sp)
+ 7d0:	sw	s9,68(sp)
+ 7d4:	sw	s11,60(sp)
+ 7d8:	mv	t4,a0
+ 7dc:	mv	s10,a2
+ 7e0:	mv	a4,a5
+ 7e4:	beqz	t1,9b8 <matrix_conv+0x224>
+ 7e8:	lui	a5,0x5
+ 7ec:	lw	t6,1056(a5) # 5420 <act_rows>
+ 7f0:	lui	a5,0x5
+ 7f4:	lw	a5,1052(a5) # 541c <acc_rows>
+ 7f8:	slli	s4,a3,0x3
+ 7fc:	add	s4,s4,a3
+ 800:	addi	s4,s4,-1
+ 804:	add	s4,s4,t1
+ 808:	divu	s4,s4,t1
+ 80c:	addi	s1,s10,-3
+ 810:	addi	t2,a1,-3
+ 814:	divu	s1,s1,a4
+ 818:	addi	a2,s4,1
+ 81c:	divu	t2,t2,a4
+ 820:	addi	s1,s1,1
+ 824:	divu	s7,t6,a2
+ 828:	addi	t2,t2,1
+ 82c:	mul	t2,t2,s1
+ 830:	bgeu	a5,s7,838 <matrix_conv+0xa4>
+ 834:	mv	s7,a5
+ 838:	beqz	t2,97c <matrix_conv+0x1e8>
+ 83c:	slli	s9,a3,0x1
+ 840:	add	s9,s9,a3
+ 844:	slli	s9,s9,0x10
+ 848:	lw	a5,112(sp)
+ 84c:	slli	s11,s4,0x10
+ 850:	sw	s10,44(sp)
+ 854:	mul	a2,a3,s10
+ 858:	li	s3,0
+ 85c:	lui	s2,0x5
+ 860:	lui	s0,0x10005
+ 864:	li	s8,1
+ 868:	sw	t2,28(sp)
+ 86c:	sw	t4,40(sp)
+ 870:	mv	s6,a5
+ 874:	sw	a6,32(sp)
+ 878:	sw	a7,36(sp)
+ 87c:	mul	s5,a3,a4
+ 880:	or	s9,s9,a2
+ 884:	lui	a4,0x3000
+ 888:	or	s9,s9,a4
+ 88c:	lw	a4,20(sp)
+ 890:	mul	a4,a4,s7
+ 894:	or	s11,s11,s5
+ 898:	mv	s10,s11
+ 89c:	mv	s11,s7
+ 8a0:	mv	s7,s9
+ 8a4:	mv	s9,s5
+ 8a8:	mv	s5,t2
+ 8ac:	sw	a4,24(sp)
+ 8b0:	mv	a4,s11
+ 8b4:	bgeu	s5,s11,8bc <matrix_conv+0x128>
+ 8b8:	mv	a4,s5
+ 8bc:	add	ra,a4,s3
+ 8c0:	mv	a2,s3
+ 8c4:	bgeu	s3,ra,930 <matrix_conv+0x19c>
+ 8c8:	lw	t4,40(sp)
+ 8cc:	lw	t6,44(sp)
+ 8d0:	remu	a0,a2,s1
+ 8d4:	sub	a1,ra,a2
+ 8d8:	sub	a3,a2,s3
+ 8dc:	divu	a5,a2,s1
+ 8e0:	sub	a6,s1,a0
+ 8e4:	mul	a5,a5,t6
+ 8e8:	bgeu	a6,a1,8f0 <matrix_conv+0x15c>
+ 8ec:	mv	a1,a6
+ 8f0:	add	a5,a5,a0
+ 8f4:	slli	a6,a1,0x10
+ 8f8:	add	a2,a2,a1
+ 8fc:	mul	a5,a5,s9
+ 900:	mul	a3,a3,s4
+ 904:	add	a5,t4,a5
+ 908:	sw	a5,4(s0) # 10005004 <__bss_end+0xffffbd8>
+ 90c:	or	a3,a3,a6
+ 910:	sw	a3,8(s0)
+ 914:	sw	s7,12(s0)
+ 918:	sw	s10,16(s0)
+ 91c:	sw	s8,0(s0)
+ 920:	lw	a5,1064(s2) # 5428 <queued>
+ 924:	addi	a5,a5,1
+ 928:	sw	a5,1064(s2)
+ 92c:	bltu	a2,ra,8d0 <matrix_conv+0x13c>
+ 930:	lw	a3,124(sp)
+ 934:	lw	a1,20(sp)
+ 938:	lw	a7,116(sp)
+ 93c:	sw	a3,4(sp)
+ 940:	lw	a3,120(sp)
+ 944:	lw	a2,32(sp)
+ 948:	mv	a5,s6
+ 94c:	sw	a3,0(sp)
+ 950:	lw	a3,36(sp)
+ 954:	mv	a6,a1
+ 958:	mv	a0,s4
+ 95c:	auipc	ra,0x0
+ 960:	jalr	-1636(ra) # 2f8 <compute_group>
+ 964:	lw	a5,24(sp)
+ 968:	add	s3,s3,s11
+ 96c:	sub	s5,s5,s11
+ 970:	add	s6,s6,a5
+ 974:	lw	a5,28(sp)
+ 978:	bltu	s3,a5,8b0 <matrix_conv+0x11c>
+ 97c:	lw	ra,108(sp)
+ 980:	lw	s0,104(sp)
+ 984:	lw	s1,100(sp)
+ 988:	lw	s2,96(sp)
+ 98c:	lw	s3,92(sp)
+ 990:	lw	s4,88(sp)
+ 994:	lw	s5,84(sp)
+ 998:	lw	s6,80(sp)
+ 99c:	lw	s7,76(sp)
+ 9a0:	lw	s8,72(sp)
+ 9a4:	lw	s9,68(sp)
+ 9a8:	lw	s10,64(sp)
+ 9ac:	lw	s11,60(sp)
+ 9b0:	addi	sp,sp,112
+ 9b4:	ret
+ 9b8:	lui	a2,0x10005
+ 9bc:	lw	t1,32(a2) # 10005020 <__bss_end+0xffffbf4>
+ 9c0:	lui	a5,0x5
+ 9c4:	lui	a0,0x5
+ 9c8:	sw	t1,1060(t3)
+ 9cc:	lw	t6,36(a2)
+ 9d0:	lui	s2,0x5
+ 9d4:	sw	t6,1056(a5) # 5420 <act_rows>
+ 9d8:	lw	a5,40(a2)
+ 9dc:	sw	a5,1052(a0) # 541c <acc_rows>
+ 9e0:	lw	a2,24(a2)
+ 9e4:	sw	a2,1064(s2) # 5428 <queued>
+ 9e8:	j	7f8 <matrix_conv+0x64>

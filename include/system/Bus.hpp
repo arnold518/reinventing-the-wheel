@@ -38,6 +38,7 @@ struct RouterConfig {
     std::vector<device::AddressRegion> routes;
     bool fetch = false;
     size_t width = 32;
+    bool pipelined = false;   // § 6.3; parameter pipelined=1
 };
 std::string routerContractId(size_t width);
 IOComponent::PinInitFunction routerPinsFor(const RouterConfig&);

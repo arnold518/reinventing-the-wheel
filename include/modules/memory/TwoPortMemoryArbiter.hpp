@@ -14,17 +14,22 @@ public:
     // `block_words`: the words of a granted burst read (op 4), as the lower
     // memory returns them; the arbiter stays with that requester until the
     // last one.
-    explicit TwoPortMemoryArbiter(std::string name, size_t block_words = 2);
+    // `pipelined` (§ 6.3): an answer is passed on in the cycle its request is
+    // accepted, and the next request is accepted at the edge the current one
+    // completes. Off by default: the chapter 3–5 arbiter.
+    explicit TwoPortMemoryArbiter(std::string name, size_t block_words = 2, bool pipelined = false);
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder&) override;
 
 private:
+    void buildPipelined(ComponentBuilder&);
     size_t block_words_;
+    bool pipelined_ = false;
     std::string type_;
 };
 
-// Contracts memory.arbiter.<8|16|32> (structural only); parameter
-// `block_words` (default 2).
+// Contracts memory.arbiter.<8|16|32> (structural only); parameters
+// `block_words` (default 2) and `pipelined` (0 or 1, default 0).
 void registerArbiters(ComponentCatalog&);
 
 } // namespace circuit::memory

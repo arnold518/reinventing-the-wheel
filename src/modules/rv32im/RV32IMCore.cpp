@@ -1,6 +1,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/rv32im/RV32IMCore.hpp"
 #include "modules/rv32im/MulDiv.hpp"
+#include "modules/composite/ArrayMultiplier.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IPipelineStages.hpp"
@@ -83,9 +84,32 @@ namespace circuit::families {
 const ComponentFamily RV32IMDecodeControl{"rv32im.decode-control","RV32IMDecodeControlUnit",controlPins,structuralFactory<::RV32IMDecodeControlUnit>()};
 const ComponentFamily RV32IMDecodeStage{"rv32im.pipeline.stage.decode","RV32IMDecodeStage",decodePins,structuralFactory<::RV32IMDecodeStage>()};
 const ComponentFamily RV32IMExecuteStage{"rv32im.pipeline.stage.execute","RV32IMExecuteStage",executePins,structuralFactory<::RV32IMExecuteStage>()};
+// The same stage with the array multiplier (core parameter multiplier=array).
+const ComponentFamily RV32IMExecuteStageArrayMultiplier{"rv32im.pipeline.stage.execute-array-multiplier","RV32IMExecuteStage",executePins,
+    [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::RV32IMExecuteStage>(c,n,true);}};
 const ComponentFamily RV32IMPipelineCoordinator{"rv32im.pipeline.coordinator","RV32IMPipelineCoordinator",coordinatorPins,structuralFactory<::RV32IMPipelineCoordinator>()};
 const ComponentFamily RV32IMFiveStageCore{"rv32im.core.educational-five-stage","RV32IMFiveStageCore",corePins,
-    [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::RV32IMFiveStageCore>(c,n,c?rv32i::predictionConfig(c->parameters()):rv32i::PredictionConfig{});},rv32im::detail::createCoreBehavioral};
+    [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::RV32IMFiveStageCore>(c,n,c?rv32i::predictionConfig(rv32im::predictionParameters(c->parameters())):rv32i::PredictionConfig{});},rv32im::detail::createCoreBehavioral};
+}
+namespace rv32im {
+// The core's parameters: the branch predictor's, plus multiplier=iterative|array.
+circuit::ParameterMap predictionParameters(circuit::ParameterMap parameters){parameters.erase("multiplier");parameters.erase("overlapped_fetch");return parameters;}
+bool overlappedFetch(const circuit::ParameterMap& parameters){
+    auto it=parameters.find("overlapped_fetch");
+    if(it==parameters.end()||it->second=="0")return false;
+    if(it->second=="1")return true;
+    throw std::invalid_argument("overlapped_fetch must be 0 or 1");
+}
+bool arrayMultiplier(const circuit::ParameterMap& parameters){
+    auto it=parameters.find("multiplier");
+    if(it==parameters.end()||it->second=="iterative")return false;
+    if(it->second=="array")return true;
+    throw std::invalid_argument("multiplier must be iterative or array");
+}
+bool supportsCoreParameters(const circuit::ParameterMap& parameters){
+    try{(void)arrayMultiplier(parameters);(void)overlappedFetch(parameters);}catch(const std::exception&){return false;}
+    return rv32i::supportsPredictionParameters(predictionParameters(parameters));
+}
 }
 RV32IMDecodeControlUnit::RV32IMDecodeControlUnit(std::string n):IOComponent(std::move(n),controlPins){}
 void RV32IMDecodeControlUnit::buildInternals(ComponentBuilder& b) {
@@ -118,7 +142,7 @@ std::vector<std::vector<LogicValue>> RV32IMDecodeStage::getRegisterStateAtTime(S
     auto v=std::dynamic_pointer_cast<RegisterStateView>(registers_);if(!v)throw std::logic_error("M register observation unavailable");
     return v->getRegisterStateAtTime(t);
 }
-RV32IMExecuteStage::RV32IMExecuteStage(std::string n):IOComponent(std::move(n),executePins){}
+RV32IMExecuteStage::RV32IMExecuteStage(std::string n,bool array_multiplier):IOComponent(std::move(n),executePins),array_multiplier_(array_multiplier){}
 void RV32IMExecuteStage::buildInternals(ComponentBuilder& b) {
     Logic l(b);auto base=b.add(circuit::families::RV32IExecuteStage,"INTEGER");
     for(auto&[n,p]:base->getAllInputPins())l.wire(getInputPinDynamic(n),p);
@@ -132,7 +156,7 @@ void RV32IMExecuteStage::buildInternals(ComponentBuilder& b) {
     l.drive(V(addresses.begin()+5,addresses.begin()+10),forward->getInputPin<5>("ID_EX_RS2"));
     auto control=b.addNewComponent<MExecutionControl>("M_CONTROL");
     for(auto&[n,pin]:control->getAllInputPins())if(n!="DONE")l.wire(getInputPinDynamic(n),pin);
-    auto unit=b.add(circuit::families::mulDivUnit(32),"MULDIV");
+    auto unit=b.add(array_multiplier_?circuit::families::arrayMulDivUnit(32):circuit::families::mulDivUnit(32),"MULDIV");
     for(auto n:{"CLK","RST","ENABLE","CANCEL","TAKE"})l.wire(getInputPin(n),unit->getInputPin(n));
     l.wire(forward->getOutputPin<32>("VALUE_A"),unit->getInputPin<32>("A"));
     l.wire(forward->getOutputPin<32>("VALUE_B"),unit->getInputPin<32>("B"));
@@ -178,7 +202,9 @@ void RV32IMPipelineCoordinator::buildInternals(ComponentBuilder& b) {
 }
 RV32IMFiveStageCore::RV32IMFiveStageCore(std::string n,rv32i::PredictionConfig prediction):IOComponent(std::move(n),corePins),prediction_(prediction){prediction_.validate();}
 void RV32IMFiveStageCore::buildInternals(ComponentBuilder& b) {
-    rv32i::detail::FiveStageFamilies f{circuit::families::RV32IMDecodeStage,circuit::families::RV32IMExecuteStage,circuit::families::RV32IMPipelineCoordinator,
+    const bool array=b.getBuildContext()&&rv32im::arrayMultiplier(b.getBuildContext()->parameters());
+    rv32i::detail::FiveStageFamilies f{circuit::families::RV32IMDecodeStage,
+      array?circuit::families::RV32IMExecuteStageArrayMultiplier:circuit::families::RV32IMExecuteStage,circuit::families::RV32IMPipelineCoordinator,
       [](IOComponent&root,ComponentBuilder& builder,circuit::detail::StructuralWiring&w,const rv32i::detail::FiveStageNodes&n){
         for(auto p:{"CLK","RST","ENABLE"})w.connect(root.getInputPin(p),n.execute->getInputPin(p));
         auto cancel=w.reduce("M_CANCEL",{n.memory->getOutputPin("PRETERMINAL"),n.parts.writeback->getOutputPin("TERMINAL"),
@@ -188,6 +214,7 @@ void RV32IMFiveStageCore::buildInternals(ComponentBuilder& b) {
         w.connect(n.execute->getOutputPin("EXECUTION_WAIT"),n.coordinator->getInputPin("EXECUTION_WAIT"));
         w.connect(n.coordinator->getOutputPin("EXECUTION_STALL"),root.getOutputPin("EXECUTION_STALL"));
       }};
+    f.overlapped_fetch=b.getBuildContext()&&rv32im::overlappedFetch(b.getBuildContext()->parameters());
     auto p=rv32i::detail::buildFiveStageBlueprint(*this,b,prediction_,f);
     retirement_=p.retirement;decode_=p.decode;writeback_=p.writeback;status_=p.status;
 }
@@ -202,15 +229,16 @@ void registerCore(circuit::ComponentCatalog&c){
     detail::registerStructural(c,circuit::families::RV32IMDecodeControl,"RV32IMDecodeControlTest","stable-after-settle",{},{},"known-binary");
     detail::registerStructural(c,circuit::families::RV32IMDecodeStage,"RV32IMDecodeStageTest","clock-boundary",{},{"register-state-view"},"known-binary");
     detail::registerStructural(c,circuit::families::RV32IMExecuteStage,"RV32IMExecuteStageTest","clock-boundary",{},{},"known-binary");
+    detail::registerStructural(c,circuit::families::RV32IMExecuteStageArrayMultiplier,"ArrayMulDivUnitTest","clock-boundary",{},{},"known-binary");
     detail::registerStructural(c,circuit::families::RV32IMPipelineCoordinator,"RV32IMPipelineCoordinatorTest","stable-after-settle",{},{},"known-binary");
-    detail::registerStructural(c,circuit::families::RV32IMFiveStageCore,"RV32IMFiveStageCoreTest","instruction-commit",rv32i::supportsPredictionParameters,
+    detail::registerStructural(c,circuit::families::RV32IMFiveStageCore,"RV32IMFiveStageCoreTest","instruction-commit",supportsCoreParameters,
         {"rv32i-pipeline-state-view","rv32i-retirement-view"},"known-binary");
     circuit::ImplementationDescriptor compact;
     compact.id="rv32im.core.educational-five-stage.behavioral";
     compact.contract_id="rv32im.core.educational-five-stage";
     compact.fidelity=circuit::Fidelity::Behavioral;compact.concrete_type_name="RV32IMFiveStageCore";
     compact.capabilities={"rv32i-pipeline-state-view","rv32i-retirement-view"};
-    compact.supports=rv32i::supportsPredictionParameters;
+    compact.supports=supportsCoreParameters;
     compact.factory=[](const std::string& n,const circuit::ParameterMap&,const std::shared_ptr<circuit::BuildContext>& context){
         return detail::createCoreBehavioral(n,context);
     };

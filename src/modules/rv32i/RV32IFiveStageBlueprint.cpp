@@ -18,7 +18,7 @@ FiveStageParts buildFiveStageBlueprint(IOComponent& root,ComponentBuilder& build
     auto& execution_status_=parts.status;
 
     circuit::detail::StructuralWiring w(builder);
-    auto fetch_request=builder.addNewComponent<RV32IMemoryRequest>("FETCH_REQUEST", true, true);
+    auto fetch_request=builder.addNewComponent<RV32IMemoryRequest>("FETCH_REQUEST", true, true, families.overlapped_fetch);
     auto data_request=builder.addNewComponent<RV32IMemoryRequest>("DATA_REQUEST");
     auto lanes=builder.addNewComponent<RV32IMemoryLanes>("LOAD_STORE");
     auto data_op=builder.addNewComponent<BitJoiner<3>>("DATA_OPERATION");
@@ -55,7 +55,9 @@ FiveStageParts buildFiveStageBlueprint(IOComponent& root,ComponentBuilder& build
     const auto prediction = rv32i::detail::addFamilyOrBehavioral<RV32IPredictionPath>(
         builder, circuit::families::RV32IPredictionPath, "PREDICTION", configuration.parameters(), configuration);
     w.connect(prediction->getOutputPinDynamic("FETCH_NEXT_PC"),
-        {fetch->getInputPinDynamic("REDIRECT_PC")});
+        families.overlapped_fetch
+            ? std::vector<std::shared_ptr<PinBase>>{fetch->getInputPinDynamic("REDIRECT_PC"), fetch_request->getInputPinDynamic("NEXT_ADDR")}
+            : std::vector<std::shared_ptr<PinBase>>{fetch->getInputPinDynamic("REDIRECT_PC")});
     w.connect(execute->getOutputPinDynamic("IS_BRANCH"),
         {prediction->getInputPinDynamic("EX_IS_BRANCH")});
     w.connect(execute->getOutputPinDynamic("BRANCH_TAKEN"),
@@ -235,7 +237,9 @@ FiveStageParts buildFiveStageBlueprint(IOComponent& root,ComponentBuilder& build
     w.connect(coordinator->getOutputPinDynamic("FETCH_VALID"),
         {fetch->getInputPinDynamic("FETCH_VALID")});
     w.connect(coordinator->getOutputPinDynamic("FETCH_PC_WRITE"),
-        {fetch->getInputPinDynamic("PC_WRITE")});
+        families.overlapped_fetch
+            ? std::vector<std::shared_ptr<PinBase>>{fetch->getInputPinDynamic("PC_WRITE"), fetch_request->getInputPinDynamic("ADVANCE")}
+            : std::vector<std::shared_ptr<PinBase>>{fetch->getInputPinDynamic("PC_WRITE")});
     w.connect(coordinator->getOutputPinDynamic("FETCH_PC_REDIRECT"),
         {prediction->getInputPinDynamic("REDIRECT_APPLY")});
     w.connect(coordinator->getOutputPinDynamic("IF_ID_WRITE"),

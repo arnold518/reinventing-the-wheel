@@ -84,6 +84,18 @@ Create components through `Component::create<T>()`,
 wire identities stable when changing an existing component because saved
 layouts and profile paths use them.
 
+Build each part in its own statement. Builders number parts (`CONSTANT_WORD_n`,
+`ANY_n`, `SPLIT_n`) and list them in creation order, and C++ leaves the order
+of a call's arguments to the compiler: GCC (native) and Clang (WebAssembly)
+differ. So `f(l.constantWord(3, 0), l.constantWord(3, 3))` gives the two
+builds different names or part orders, and a layout saved natively no longer
+fits the browser. Put each part-building argument in a named value first. In
+existing code, keep the order the native build already uses (GCC usually builds the
+last argument first; compare the native part list before and after) so saved
+layouts stay valid. Braced lists (`l.land({a,
+b})`) are evaluated left to right and are safe. `VisualizerScenarioWasmParityTest`
+and the per-scenario WASM parity tests catch a difference.
+
 Add new `.cpp` files, including scenario sources, to `CORE_LOGIC_SOURCES` in
 the root `CMakeLists.txt`. Header-only templates need their concrete
 instantiations or owning source wired into the build as appropriate.

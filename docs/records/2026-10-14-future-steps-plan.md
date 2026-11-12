@@ -639,3 +639,11 @@ RV32IM, device I/O, deterministic game fixtures and recorded display/keyboard
 views are implemented in the isolated milestone checkout. The owner requested
 merging that work into `alpha`; [integration and remaining phase-6 gates](2026-10-22-rv32im-milestone-wrap-and-integration.md)
 are tracked explicitly. Phase 7 interactive sessions have not started.
+
+## 2026-11-09 — GPU and AI accelerator planning moves to its own record
+
+The owner started planning the general-purpose GPU, with AI accelerators
+on the way. That planning now lives in the
+[GPU and AI accelerator roadmap](2026-11-09-gpu-and-ai-accelerator-roadmap.md),
+which replaces this record's "Goal 2", "Goal 3" and step 6 as the current
+plan. The research sections above stay as dated background.

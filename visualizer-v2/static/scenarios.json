@@ -106,6 +106,10 @@
       "title": "Computer System / Games (short versions)"
     },
     {
+      "id": "accelerator",
+      "title": "AI Accelerator"
+    },
+    {
       "id": "developer",
       "title": "Developer circuits"
     },
@@ -561,6 +565,27 @@
     ],
     "GameReplayScenarioTest": [
       "game-replay"
+    ],
+    "ArrayMultiplierWidth4ScenarioTest": [
+      "array-multiplier-w4"
+    ],
+    "ArrayMulDivUnitWidth4ScenarioTest": [
+      "array-muldiv-w4"
+    ],
+    "MacCellScenarioTest": [
+      "mac-cell"
+    ],
+    "RequantizerScenarioTest": [
+      "requantizer"
+    ],
+    "SystolicArrayWidth2ScenarioTest": [
+      "systolic-array-2"
+    ],
+    "MatrixUnitScenarioTest": [
+      "matrix-unit-4"
+    ],
+    "AcceleratorMachineScenarioTest": [
+      "accelerator-machine"
     ]
   },
   "components": {
@@ -1877,6 +1902,55 @@
       "fidelity": "visual",
       "root": "MACHINE",
       "hidden": true
+    },
+    "ArrayMultiplierWidth4ScenarioTest": {
+      "title": "ArrayMultiplier<4>",
+      "group": "accelerator",
+      "root": "ARRAY_MULTIPLIER_W4_ROOT",
+      "order": 0,
+      "fidelity": "gate"
+    },
+    "ArrayMulDivUnitWidth4ScenarioTest": {
+      "title": "ArrayMulDivUnit<4>",
+      "group": "accelerator",
+      "root": "ARRAY_MULDIV_W4_ROOT",
+      "order": 1,
+      "fidelity": "gate"
+    },
+    "MacCellScenarioTest": {
+      "title": "MacCell",
+      "group": "accelerator",
+      "root": "MAC_CELL_ROOT",
+      "order": 2,
+      "fidelity": "gate"
+    },
+    "RequantizerScenarioTest": {
+      "title": "Requantizer",
+      "group": "accelerator",
+      "root": "REQUANTIZER_ROOT",
+      "order": 3,
+      "fidelity": "gate"
+    },
+    "SystolicArrayWidth2ScenarioTest": {
+      "title": "SystolicArray<2>",
+      "group": "accelerator",
+      "root": "SYSTOLIC_ARRAY_2_ROOT",
+      "order": 4,
+      "fidelity": "gate"
+    },
+    "MatrixUnitScenarioTest": {
+      "title": "MatrixUnit<4>: a 2 × 4 → 3 layer",
+      "group": "accelerator",
+      "root": "MATRIX_UNIT_4_ROOT",
+      "order": 5,
+      "fidelity": "logic"
+    },
+    "AcceleratorMachineScenarioTest": {
+      "title": "Accelerator machine: one layer on the CPU and the unit",
+      "group": "accelerator",
+      "root": "ACCELERATOR_MACHINE_ROOT",
+      "order": 6,
+      "fidelity": "compact"
     }
   },
   "programs": [

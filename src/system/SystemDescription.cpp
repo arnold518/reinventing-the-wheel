@@ -72,6 +72,7 @@ SystemDescription SystemDescription::fromJson(const Json& json) {
         BusDescription b;
         b.name = bus.at("name").string("buses[].name");
         if (const auto* width = bus.find("width")) b.width = width->unsignedInteger("bus " + b.name + " width");
+        if (const auto* pipelined = bus.find("pipelined")) b.pipelined = pipelined->boolean("bus " + b.name + " pipelined");
         for (const auto& master : bus.at("masters").array("bus " + b.name + " masters")) {
             MasterDescription m;
             m.name = master.at("name").string("master name");
@@ -128,7 +129,8 @@ Json SystemDescription::toJson() const {
     out += "],\"buses\":[";
     for (size_t i = 0; i < buses.size(); ++i) {
         const auto& b = buses[i];
-        out += std::string(i ? "," : "") + "{\"name\":\"" + b.name + "\",\"width\":" + std::to_string(b.width) + ",\"masters\":[";
+        out += std::string(i ? "," : "") + "{\"name\":\"" + b.name + "\",\"width\":" + std::to_string(b.width)
+             + (b.pipelined ? ",\"pipelined\":true" : "") + ",\"masters\":[";
         for (size_t m = 0; m < b.masters.size(); ++m)
             out += std::string(m ? "," : "") + "{\"name\":\"" + b.masters[m].name + "\",\"port\":\"" + b.masters[m].port
                  + "\",\"access\":\"" + (b.masters[m].fetch ? "fetch" : "data") + "\"}";

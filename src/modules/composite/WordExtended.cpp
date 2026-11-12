@@ -108,8 +108,12 @@ void buildShift(IOComponent& self,ComponentBuilder& builder,size_t width) {
         WordBuilder::Bits wrapped(distance);
         if (distance >= 4) {
             WordBuilder::Bits shifted_out(previous.begin(), previous.begin() + distance);
-            auto word = n.wordMux(prefix + "_FILL", n.broadcast(prefix + "_FILL_WORD", fill, distance),
-                                  n.joinBits(prefix + "_OUT_JOIN", shifted_out), rotate);
+            // One statement per part: the build order sets the part order
+            // the visualizer and saved layouts see, and C++ leaves argument
+            // order to the compiler. This is the native (GCC) order.
+            auto out_join = n.joinBits(prefix + "_OUT_JOIN", shifted_out);
+            auto fill_word = n.broadcast(prefix + "_FILL_WORD", fill, distance);
+            auto word = n.wordMux(prefix + "_FILL", fill_word, out_join, rotate);
             wrapped = n.splitBits(prefix + "_FILL_SPLIT", word);
         } else {
             for (size_t i = 0; i < distance; ++i)

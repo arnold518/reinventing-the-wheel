@@ -15,6 +15,11 @@ and `prediction_entries` as for the advanced RV32I core.
 
 `prediction` is `not-taken` (default), `taken`, `backward-taken`, `one-bit`
 or `two-bit`; `prediction_entries` is a power of two in 1–256 (default 16).
+Two more parameters come from chapter 6: `multiplier` is `iterative`
+(default) or `array`, the M unit with the one-pass multiplier
+([§ 6.1.2](../../accelerator/6.1.md#612-arraymuldivunitw)); `overlapped_fetch=1`
+starts the next fetch in the cycle a fetch answer is taken
+([§ 6.3.2](../../accelerator/6.3.md#632-the-pipelined-bus), default `0`).
 These configure hardware at construction, independently of fidelity.
 
 ## IO pins

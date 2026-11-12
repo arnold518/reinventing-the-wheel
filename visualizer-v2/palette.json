@@ -1032,6 +1032,102 @@
       135,
       60,
       190
+    ],
+    "ArrayMultiplier<": [
+      155,
+      85,
+      195,
+      190
+    ],
+    "ArrayMulDivUnit<": [
+      115,
+      70,
+      170,
+      190
+    ],
+    "ArrayMultiplyUnit": [
+      170,
+      110,
+      185,
+      190
+    ],
+    "MacCell": [
+      205,
+      115,
+      55,
+      190
+    ],
+    "SystolicArray<": [
+      175,
+      75,
+      50,
+      190
+    ],
+    "Requantizer": [
+      60,
+      150,
+      90,
+      190
+    ],
+    "MatrixUnit<": [
+      45,
+      85,
+      150,
+      190
+    ],
+    "MatrixSequencer": [
+      40,
+      150,
+      130,
+      190
+    ],
+    "MatrixCopyEngine<": [
+      55,
+      125,
+      170,
+      190
+    ],
+    "MatrixShiftEngine<": [
+      150,
+      105,
+      50,
+      190
+    ],
+    "MatrixMultiplyEngine<": [
+      195,
+      90,
+      70,
+      190
+    ],
+    "MatrixActivateEngine": [
+      80,
+      160,
+      100,
+      190
+    ],
+    "MatrixBufferPorts<": [
+      125,
+      95,
+      155,
+      190
+    ],
+    "MatrixLane": [
+      95,
+      120,
+      170,
+      190
+    ],
+    "MatrixBias<": [
+      175,
+      130,
+      60,
+      190
+    ],
+    "MatrixStoreSelect<": [
+      190,
+      105,
+      45,
+      190
     ]
   },
   "type_colors": {

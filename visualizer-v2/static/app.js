@@ -5098,9 +5098,13 @@ async function loadScenarios() {
     const element = document.createElement("optgroup");
     element.label = "Computer System / Games (long versions, recorded)";
     for (const entry of recordings) element.appendChild(new Option(entry.title, "recording:" + entry.path));
-    // Before the developer circuits, like the live games group.
-    const developer = [...ui.scenario.querySelectorAll("optgroup")].find(g => g.label === "Developer circuits");
-    ui.scenario.insertBefore(element, developer || null);
+    // Right after the short games, so later chapters (the AI accelerator)
+    // follow the long games; before the developer circuits otherwise.
+    const groups = [...ui.scenario.querySelectorAll("optgroup")];
+    const games = scenarioCatalogData?.groups?.find(g => g.id === "games")?.title;
+    const after = groups.find(g => g.label === games);
+    const developer = groups.find(g => g.label === "Developer circuits");
+    ui.scenario.insertBefore(element, after ? after.nextSibling : developer || null);
   }
   if (recording) {
     const key = syncScenarioSelection(payload.default);

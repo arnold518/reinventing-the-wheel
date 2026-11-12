@@ -253,6 +253,62 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
+- [GPU and AI accelerator roadmap](records/2026-11-09-gpu-and-ai-accelerator-roadmap.md):
+  planning agreed; Part I built (next entry). Goal: a Volta-shaped GPU (compute, then
+  graphics) at reduced, parameterized size with every real component,
+  running CUDA kernels through PTX and our own translator into a SASS-like
+  instruction set. Order in 14 stages: Part I, an integer TPU-style
+  accelerator on the chapter-5 computer (multiply-add cells, systolic
+  array, DMA and bus work, an MNIST network); Part II, floating point and
+  the tensor-core unit; Part III, the GPU from software foundation to
+  several SMs, then per-thread program counters and graphics. Three
+  experiment campaigns, at the end of Parts I, II (cost and accuracy of
+  floating point) and III (the GPU), compared with published Volta
+  figures. Part II plan agreed 2026-11-12: floating point in general
+  (FP16/FP32 units generated from templates over format sizes, RV32F on
+  the CPU as an option, a Volta-faithful tensor core, site chapter 7),
+  campaign 2 in four parts, every new component held to the page template
+  and rich scenarios. Next: Part II.
+
+- [Part I implementation](records/2026-11-10-part1-accelerator-implementation.md):
+  the integer accelerator is built, tested and measured (site § 6).
+  Campaign 1, 16 × 16 unit against the CPU alone (SRAM, cycles): matrix
+  multiply 107×, CNN 57×, MLP 14×; the array is busy only 4–17 % of each
+  layer, so data movement limits the unit. All 20 runs pass; DRAM runs use
+  a 64 ms row retention, since the `unit` profile's DRAM has no refresh and
+  keeps rows only 1,000,000 cycles. Pipelined bus and array multiplier are
+  default-off options. The § 6 pages and seven scenarios follow the page
+  and scenario rules (generated example tables, embedded simulators, saved
+  layouts); the WebAssembly module with § 6 matches native and loads every
+  § 6 scenario in a browser (the machine scenario's programs are now
+  embedded in the build). Open: owner decisions (make them the default;
+  the `unit` profile's DRAM retention or refresh); a full
+  `tools/build-pages.sh` before publishing; clock certificate; two-deep
+  router; whether the compact systolic array should leave X where its
+  gates do after an X or Z input (it differs there, without breaking the
+  delay rule). The full CTest suite passes (2026-11-13, `build-accel`,
+  631 tests; `RecordedTraceAssetsTest` skips without MkDocs): delay tables
+  regenerated with the chapter-6 parts; `DelayRuleTest` and
+  `SettlingBoundTest` leave out the largest chapter-6 parts in their
+  all-parts runs (memory; listed in the tests), and the requantizer has a
+  recorded delay-rule exception. The § 6 scenarios open in the finest
+  profile a browser handles (the matrix unit in Logic, 79,030 parts), with
+  floorplans for the array and the unit. GCC (native) and Clang
+  (WebAssembly) built some parts in a different order, so part names or
+  order differed and saved layouts did not fit in the browser; fixed in
+  the matrix unit's engines, ALU16's shifter (`WordExtended.cpp`) and the
+  register front end's status block of every chapter-5 device
+  (`RegisterFrontEnd.cpp`), keeping the native order; the devices' saved
+  status-block layouts were renamed to that order.
+
+- [Bus interconnect speed-up](records/2026-11-10-bus-interconnect-speedup.md):
+  level 2 (pipelined in-order protocol) chosen by the owner as the new
+  default; built in Part I as **options, off by default** (router and
+  arbiter `pipelined=1`, core `overlapped_fetch=1`). Measured: CPU-alone
+  matrix multiply in half the cycles with the array multiplier. Making it
+  the default reruns § 4.6–4.8 delayed/shared-memory results, § 5.6–5.7
+  and the long games. A two-deep router (hiding SRAM's wait) is not built.
+
 - [Replayable recordings](records/2026-11-06-replayable-recordings.md): a
   whole machine saves and restores exactly (`circuit::state`); the six long
   games are published in Compact and in Visual with a save after every frame
@@ -460,8 +516,8 @@ work state changes. Keep dated decisions and validation results in
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
   general-purpose GPU and AI accelerators. The owner chose cache work,
-  then games, then AI accelerators; the GPU goal is
-  unscheduled. Scalable FF timing is address-independent within one
+  then games, then AI accelerators; GPU and accelerator planning now
+  continues in the roadmap record above. Scalable FF timing is address-independent within one
   configuration; DRAM latency depends on row state and refresh.
   The owner selected RV32IM and predetermined device input first. The
   adopted roadmap starts scripted games with 2048, then Sokoban, Snake,
